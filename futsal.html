@@ -777,6 +777,7 @@ function resetScore() {
   gameState.period = 1;
   document.getElementById('period').textContent = '1';
   document.getElementById('periodStatus').textContent = 'เริ่มใหม่';
+  sendScoreUpdate();
 }
 
 function showWinner() {
