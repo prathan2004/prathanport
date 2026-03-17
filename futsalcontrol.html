@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ควบคุมสกอร์บอร์ดฟุตซอล | Futsal Scoreboard Control</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Prompt', sans-serif;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #404040 100%);
+      color: white;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      padding: 30px;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      margin-bottom: 30px;
+    }
+    
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      margin-bottom: 10px;
+    }
+    
+    .connection-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 1.2rem;
+      margin-top: 15px;
+    }
+    
+    .status-indicator {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #ff4444;
+      animation: pulse 2s infinite;
+    }
+    
+    .status-indicator.connected {
+      background: #10b981;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .control-section {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      padding: 30px;
+      margin-bottom: 20px;
+    }
+    
+    .control-section h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #ffd700;
+      text-align: center;
+    }
+    
+    .team-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+    
+    .team-control {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .team-control h3 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #3b82f6;
+    }
+    
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .btn {
+      padding: 15px 20px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .btn-score-add {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-score-add:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+    }
+    
+    .btn-score-subtract {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-score-subtract:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+    }
+    
+    .btn-foul-add {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+    
+    .btn-foul-add:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+    }
+    
+    .btn-foul-subtract {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      color: white;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+    
+    .btn-foul-subtract:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+    }
+    
+    .timer-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+    
+    .system-controls {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+    
+    .input-group {
+      margin-bottom: 20px;
+    }
+    
+    .input-group label {
+      display: block;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #e5e7eb;
+    }
+    
+    .input-group input {
+      width: 100%;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      border-radius: 8px;
+      font-family: 'Prompt', sans-serif;
+      font-size: 1rem;
+    }
+    
+    .input-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .info-panel {
+      background: rgba(59, 130, 246, 0.1);
+      border: 2px solid rgba(59, 130, 246, 0.3);
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    
+    .info-panel h3 {
+      color: #3b82f6;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+    }
+    
+    .info-panel p {
+      color: #e5e7eb;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    
+    .score-display {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #ffd700;
+      text-align: center;
+      margin: 10px 0;
+      padding: 15px;
+      background: rgba(255, 215, 0, 0.1);
+      border-radius: 10px;
+      border: 2px solid rgba(255, 215, 0, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>ควบคุมสกอร์บอร์ดฟุตซอล</h1>
+    <div class="connection-status">
+      <div class="status-indicator" id="statusIndicator"></div>
+      <span id="connectionStatus">ไม่ได้เชื่อมต่อ</span>
+    </div>
+  </div>
+
+  <div class="control-section">
+    <h2>ควบคุมคะแนน</h2>
+    <div class="team-controls">
+      <div class="team-control">
+        <h3>ทีม A</h3>
+        <div class="score-display" id="team1ScoreDisplay">0</div>
+        <div class="button-group">
+          <button class="btn btn-score-subtract" onclick="sendCommand('subtractScore', 1)">-1 คะแนน</button>
+          <button class="btn btn-score-add" onclick="sendCommand('addScore', 1)">+1 คะแนน</button>
+        </div>
+      </div>
+      
+      <div class="team-control">
+        <h3>ทีม B</h3>
+        <div class="score-display" id="team2ScoreDisplay">0</div>
+        <div class="button-group">
+          <button class="btn btn-score-subtract" onclick="sendCommand('subtractScore', 2)">-1 คะแนน</button>
+          <button class="btn btn-score-add" onclick="sendCommand('addScore', 2)">+1 คะแนน</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="control-section">
+    <h2>ควบคุมฟาวล์</h2>
+    <div class="team-controls">
+      <div class="team-control">
+        <div class="score-display" id="team1FoulsDisplay">0</div>
+        <div class="button-group">
+          <button class="btn btn-foul-subtract" onclick="sendCommand('subtractFoul', 1)">-1 ฟาวล์</button>
+          <button class="btn btn-foul-add" onclick="sendCommand('addFoul', 1)">+1 ฟาวล์</button>
+        </div>
+      </div>
+      
+      <div class="team-control">
+        <div class="score-display" id="team2FoulsDisplay">0</div>
+        <div class="button-group">
+          <button class="btn btn-foul-subtract" onclick="sendCommand('subtractFoul', 2)">-1 ฟาวล์</button>
+          <button class="btn btn-foul-add" onclick="sendCommand('addFoul', 2)">+1 ฟาวล์</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="control-section">
+    <h2>ควบคุมเวลา</h2>
+    <div class="timer-controls">
+      <button class="btn btn-score-add" onclick="sendCommand('toggleTimer')">เริ่ม/หยุด</button>
+      <button class="btn btn-foul-add" onclick="sendCommand('resetTimer')">รีเซ็ตเวลา</button>
+      <button class="btn btn-score-subtract" onclick="sendCommand('resetScore')">รีเซ็ตทั้งหมด</button>
+    </div>
+  </div>
+
+  <div class="control-section">
+    <h2>การตั้งค่า</h2>
+    <div class="input-group">
+      <label for="team1NameInput">ชื่อทีม A:</label>
+      <input type="text" id="team1NameInput" placeholder="ทีม A" oninput="updateTeamNames()">
+    </div>
+    <div class="input-group">
+      <label for="team2NameInput">ชื่อทีม B:</label>
+      <input type="text" id="team2NameInput" placeholder="ทีม B" oninput="updateTeamNames()">
+    </div>
+    <div class="input-group">
+      <label for="competitionNameInput">ชื่อรายการ:</label>
+      <input type="text" id="competitionNameInput" placeholder="ฟุตซอล สกอร์บอร์ด" oninput="updateCompetitionName()">
+    </div>
+  </div>
+
+  <div class="info-panel">
+    <h3>วิธีการใช้งาน</h3>
+    <p>1. เปิดไฟล์ futsal.html ในคอมพิวเตอร์เดียวกัน</p>
+    <p>2. ใช้ไฟล์นี้ควบคุมสกอร์บอร์ดจากมือถือหรือแท็บเล็ต</p>
+    <p>3. การเชื่อมต่อจะทำงานอัตโนมัติเมื่อทั้งสองไฟล์เปิดอยู่ในเครือข่ายเดียวกัน</p>
+    <p>4. สามารถใช้งานได้ในอุปกรณ์ที่ต่างกันในเครือข่ายเดียวกัน</p>
+  </div>
+</div>
+
+<script>
+let scoreboardWindow = null;
+let connectionStatus = false;
+
+// Check connection status
+function checkConnection() {
+  try {
+    if (scoreboardWindow && !scoreboardWindow.closed) {
+      connectionStatus = true;
+      document.getElementById('statusIndicator').classList.add('connected');
+      document.getElementById('connectionStatus').textContent = 'เชื่อมต่อแล้ว';
+    } else {
+      connectionStatus = false;
+      document.getElementById('statusIndicator').classList.remove('connected');
+      document.getElementById('connectionStatus').textContent = 'ไม่ได้เชื่อมต่อ';
+    }
+  } catch (e) {
+    connectionStatus = false;
+    document.getElementById('statusIndicator').classList.remove('connected');
+    document.getElementById('connectionStatus').textContent = 'ไม่ได้เชื่อมต่อ';
+  }
+}
+
+// Send command to scoreboard
+function sendCommand(command, team = null) {
+  if (!connectionStatus) {
+    openScoreboard();
+    setTimeout(() => {
+      if (scoreboardWindow && !scoreboardWindow.closed) {
+        if (team) {
+          scoreboardWindow.postMessage({ command: command, team: team }, '*');
+        } else {
+          scoreboardWindow.postMessage({ command: command }, '*');
+        }
+      }
+    }, 1000);
+  } else {
+    if (scoreboardWindow && !scoreboardWindow.closed) {
+      if (team) {
+        scoreboardWindow.postMessage({ command: command, team: team }, '*');
+      } else {
+        scoreboardWindow.postMessage({ command: command }, '*');
+      }
+    }
+  }
+}
+
+// Open scoreboard window
+function openScoreboard() {
+  scoreboardWindow = window.open('futsal.html', 'futsalScoreboard', 'width=1200,height=800');
+  connectionStatus = true;
+  document.getElementById('statusIndicator').classList.add('connected');
+  document.getElementById('connectionStatus').textContent = 'เชื่อมต่อแล้ว';
+}
+
+// Update team names
+function updateTeamNames() {
+  const team1Name = document.getElementById('team1NameInput').value;
+  const team2Name = document.getElementById('team2NameInput').value;
+  
+  if (team1Name) {
+    localStorage.setItem('controlTeam1Name', team1Name);
+  }
+  if (team2Name) {
+    localStorage.setItem('controlTeam2Name', team2Name);
+  }
+  
+  if (connectionStatus) {
+    sendCommand('updateTeamName', 1);
+    sendCommand('updateTeamName', 2);
+  }
+}
+
+// Update competition name
+function updateCompetitionName() {
+  const competitionName = document.getElementById('competitionNameInput').value;
+  
+  if (competitionName) {
+    localStorage.setItem('controlCompetitionName', competitionName);
+  }
+  
+  if (connectionStatus) {
+    sendCommand('updateCompetitionName');
+  }
+}
+
+// Listen for messages from scoreboard
+window.addEventListener('message', function(event) {
+  if (event.data.type === 'scoreUpdate') {
+    document.getElementById('team1ScoreDisplay').textContent = event.data.team1Score;
+    document.getElementById('team2ScoreDisplay').textContent = event.data.team2Score;
+    document.getElementById('team1FoulsDisplay').textContent = event.data.team1Fouls;
+    document.getElementById('team2FoulsDisplay').textContent = event.data.team2Fouls;
+  }
+});
+
+// Load saved values
+window.addEventListener('load', function() {
+  const savedTeam1Name = localStorage.getItem('controlTeam1Name');
+  const savedTeam2Name = localStorage.getItem('controlTeam2Name');
+  const savedCompetitionName = localStorage.getItem('controlCompetitionName');
+  
+  if (savedTeam1Name) document.getElementById('team1NameInput').value = savedTeam1Name;
+  if (savedTeam2Name) document.getElementById('team2NameInput').value = savedTeam2Name;
+  if (savedCompetitionName) document.getElementById('competitionNameInput').value = savedCompetitionName;
+  
+  // Check connection status periodically
+  setInterval(checkConnection, 1000);
+  
+  // Try to open scoreboard if not exists
+  if (!scoreboardWindow || scoreboardWindow.closed) {
+    openScoreboard();
+  }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT') return;
+  
+  switch(e.key) {
+    case '1':
+      sendCommand('addScore', 1);
+      break;
+    case '2':
+      sendCommand('addScore', 2);
+      break;
+    case 'q':
+    case 'Q':
+      sendCommand('addFoul', 1);
+      break;
+    case 'w':
+    case 'W':
+      sendCommand('addFoul', 2);
+      break;
+    case 'a':
+    case 'A':
+      sendCommand('subtractScore', 1);
+      break;
+    case 's':
+    case 'S':
+      sendCommand('subtractScore', 2);
+      break;
+    case ' ':
+      e.preventDefault();
+      sendCommand('toggleTimer');
+      break;
+    case 'r':
+    case 'R':
+      sendCommand('resetScore');
+      break;
+    case 'o':
+    case 'O':
+      openScoreboard();
+      break;
+  }
+});
+</script>
+
+</body>
+</html>

@@ -707,6 +707,7 @@ function addScore(team) {
     gameState.team2.score++;
     document.getElementById('team2Score').textContent = gameState.team2.score;
   }
+  sendScoreUpdate();
 }
 
 function subtractScore(team) {
@@ -717,6 +718,7 @@ function subtractScore(team) {
     gameState.team2.score--;
     document.getElementById('team2Score').textContent = gameState.team2.score;
   }
+  sendScoreUpdate();
 }
 
 function addFoul(team) {
@@ -729,6 +731,7 @@ function addFoul(team) {
     document.getElementById('team2Fouls').textContent = gameState.team2.fouls;
     updateFoulVisual('team2FoulsVisual', gameState.team2.fouls);
   }
+  sendScoreUpdate();
 }
 
 function subtractFoul(team) {
@@ -741,6 +744,7 @@ function subtractFoul(team) {
     document.getElementById('team2Fouls').textContent = gameState.team2.fouls;
     updateFoulVisual('team2FoulsVisual', gameState.team2.fouls);
   }
+  sendScoreUpdate();
 }
 
 function updateFoulVisual(elementId, foulCount) {
@@ -993,7 +997,75 @@ window.addEventListener('load', function() {
   }
   
   setupColorPickers();
+  setupMessageListener();
 });
+
+// Listen for messages from control panel
+function setupMessageListener() {
+  window.addEventListener('message', function(event) {
+    const { command, team } = event.data;
+    
+    switch(command) {
+      case 'addScore':
+        addScore(team);
+        break;
+      case 'subtractScore':
+        subtractScore(team);
+        break;
+      case 'addFoul':
+        addFoul(team);
+        break;
+      case 'subtractFoul':
+        subtractFoul(team);
+        break;
+      case 'toggleTimer':
+        toggleTimer();
+        break;
+      case 'resetTimer':
+        resetTimer();
+        break;
+      case 'resetScore':
+        resetScore();
+        break;
+      case 'updateTeamName':
+        // Update from control panel
+        const controlTeam1Name = localStorage.getItem('controlTeam1Name');
+        const controlTeam2Name = localStorage.getItem('controlTeam2Name');
+        if (controlTeam1Name && team === 1) {
+          document.getElementById('team1Name').querySelector('span').textContent = controlTeam1Name;
+          localStorage.setItem('team1Name', controlTeam1Name);
+        }
+        if (controlTeam2Name && team === 2) {
+          document.getElementById('team2Name').querySelector('span').textContent = controlTeam2Name;
+          localStorage.setItem('team2Name', controlTeam2Name);
+        }
+        break;
+      case 'updateCompetitionName':
+        const controlCompetitionName = localStorage.getItem('controlCompetitionName');
+        if (controlCompetitionName) {
+          document.getElementById('competitionName').textContent = controlCompetitionName;
+          localStorage.setItem('competitionName', controlCompetitionName);
+        }
+        break;
+    }
+    
+    // Send score update back to control panel
+    sendScoreUpdate();
+  });
+}
+
+// Send score update to control panel
+function sendScoreUpdate() {
+  if (window.opener) {
+    window.opener.postMessage({
+      type: 'scoreUpdate',
+      team1Score: gameState.team1.score,
+      team2Score: gameState.team2.score,
+      team1Fouls: gameState.team1.fouls,
+      team2Fouls: gameState.team2.fouls
+    }, '*');
+  }
+}
 </script>
 
 </body>
