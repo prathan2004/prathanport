@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>สกอร์บอร์ดฟุตซอล | Futsal Scoreboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Prompt', sans-serif;
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
+      color: white;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+    }
+    
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    .match-info {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 10px;
+      font-size: 1.2rem;
+    }
+    
+    .main-scoreboard {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .score-container {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .team-section {
+      text-align: center;
+      padding: 30px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      min-width: 350px;
+      transition: all 0.3s ease;
+    }
+    
+    .team-section:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .team-name {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .score {
+      font-size: 6rem;
+      font-weight: 900;
+      line-height: 1;
+      margin: 20px 0;
+      text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    .fouls {
+      background: rgba(255, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 15px;
+      margin-top: 15px;
+      border: 2px solid rgba(255, 0, 0, 0.5);
+    }
+    
+    .fouls-label {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .fouls-count {
+      font-size: 3rem;
+      font-weight: 900;
+      color: #ff6b6b;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    .vs-section {
+      text-align: center;
+      font-size: 3rem;
+      font-weight: 900;
+      color: #ffd700;
+      text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+      animation: glow 2s infinite;
+    }
+    
+    @keyframes glow {
+      0%, 100% { text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.5); }
+      50% { text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.8); }
+    }
+    
+    .timer-section {
+      text-align: center;
+      padding: 30px;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      margin: 20px auto;
+      max-width: 600px;
+      border-radius: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .timer-label {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+    
+    .timer-display {
+      font-size: 4rem;
+      font-weight: 900;
+      color: #ffd700;
+      text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+      font-variant-numeric: tabular-nums;
+    }
+    
+    .timer-display.warning {
+      color: #ff6b6b;
+      animation: blink 1s infinite;
+    }
+    
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0.5; }
+    }
+    
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      flex-wrap: wrap;
+    }
+    
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .control-label {
+      font-size: 1rem;
+      font-weight: 600;
+      opacity: 0.8;
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6, #1e40af);
+      color: white;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+    }
+    
+    .btn-warning {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+    
+    .btn-warning:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+    }
+    
+    .period-display {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 20px;
+      color: #ffd700;
+    }
+    
+    /* Fullscreen mode styles */
+    .fullscreen-mode .controls {
+      display: none;
+    }
+    
+    .fullscreen-mode .header {
+      padding: 10px;
+    }
+    
+    .fullscreen-mode .header h1 {
+      font-size: 1.8rem;
+    }
+    
+    .fullscreen-mode .timer-section {
+      margin: 10px auto;
+      padding: 20px;
+    }
+    
+    .fullscreen-mode .timer-display {
+      font-size: 3rem;
+    }
+    
+    .fullscreen-mode .team-section {
+      min-width: 300px;
+      padding: 20px;
+    }
+    
+    .fullscreen-mode .score {
+      font-size: 5rem;
+    }
+    
+    .fullscreen-mode .fouls-count {
+      font-size: 2.5rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>ฟุตซอล สกอร์บอร์ด</h1>
+  <div class="match-info">
+    <span id="matchDate">วันที่: <span id="dateDisplay"></span></span>
+    <span id="matchTime">เวลา: <span id="timeDisplay"></span></span>
+  </div>
+</div>
+
+<div class="main-scoreboard">
+  <div class="score-container">
+    <div class="team-section">
+      <div class="team-name" id="team1Name">ทีม A</div>
+      <div class="score" id="team1Score">0</div>
+      <div class="fouls">
+        <div class="fouls-label">ฟาวล์</div>
+        <div class="fouls-count" id="team1Fouls">0</div>
+      </div>
+    </div>
+    
+    <div class="vs-section">VS</div>
+    
+    <div class="team-section">
+      <div class="team-name" id="team2Name">ทีม B</div>
+      <div class="score" id="team2Score">0</div>
+      <div class="fouls">
+        <div class="fouls-label">ฟาวล์</div>
+        <div class="fouls-count" id="team2Fouls">0</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="timer-section">
+    <div class="timer-label">คาบที่ <span id="period">1</span> / 2</div>
+    <div class="timer-display" id="timerDisplay">20:00</div>
+    <div class="period-display" id="periodStatus">กำลังแข่งขัน</div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="control-group">
+    <div class="control-label">ทีม A</div>
+    <button class="btn btn-success" onclick="addScore(1)">+1 คะแนน</button>
+    <button class="btn btn-danger" onclick="addFoul(1)">+1 ฟาวล์</button>
+  </div>
+  
+  <div class="control-group">
+    <div class="control-label">ทีม B</div>
+    <button class="btn btn-success" onclick="addScore(2)">+1 คะแนน</button>
+    <button class="btn btn-danger" onclick="addFoul(2)">+1 ฟาวล์</button>
+  </div>
+  
+  <div class="control-group">
+    <div class="control-label">เวลา</div>
+    <button class="btn btn-primary" onclick="toggleTimer()">เริ่ม/หยุด</button>
+    <button class="btn btn-warning" onclick="resetTimer()">รีเซ็ตเวลา</button>
+  </div>
+  
+  <div class="control-group">
+    <div class="control-label">ควบคุม</div>
+    <button class="btn btn-warning" onclick="resetScore()">รีเซ็ตคะแนน</button>
+    <button class="btn btn-primary" onclick="toggleFullscreen()">เต็มจอ</button>
+  </div>
+</div>
+
+<script>
+// Game state
+let gameState = {
+  team1: { score: 0, fouls: 0 },
+  team2: { score: 0, fouls: 0 },
+  timeLeft: 20 * 60, // 20 minutes in seconds
+  period: 1,
+  isRunning: false,
+  timerInterval: null
+};
+
+// Initialize date and time
+function updateDateTime() {
+  const now = new Date();
+  document.getElementById('dateDisplay').textContent = now.toLocaleDateString('th-TH');
+  document.getElementById('timeDisplay').textContent = now.toLocaleTimeString('th-TH');
+}
+
+updateDateTime();
+setInterval(updateDateTime, 1000);
+
+// Timer functions
+function updateTimerDisplay() {
+  const minutes = Math.floor(gameState.timeLeft / 60);
+  const seconds = gameState.timeLeft % 60;
+  const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  document.getElementById('timerDisplay').textContent = display;
+  
+  // Add warning class when less than 1 minute
+  const timerElement = document.getElementById('timerDisplay');
+  if (gameState.timeLeft < 60 && gameState.timeLeft > 0) {
+    timerElement.classList.add('warning');
+  } else {
+    timerElement.classList.remove('warning');
+  }
+  
+  // Check for end of period
+  if (gameState.timeLeft === 0) {
+    endPeriod();
+  }
+}
+
+function toggleTimer() {
+  if (gameState.isRunning) {
+    pauseTimer();
+  } else {
+    startTimer();
+  }
+}
+
+function startTimer() {
+  if (!gameState.isRunning) {
+    gameState.isRunning = true;
+    gameState.timerInterval = setInterval(() => {
+      if (gameState.timeLeft > 0) {
+        gameState.timeLeft--;
+        updateTimerDisplay();
+      }
+    }, 1000);
+    document.getElementById('periodStatus').textContent = 'กำลังแข่งขัน';
+  }
+}
+
+function pauseTimer() {
+  gameState.isRunning = false;
+  clearInterval(gameState.timerInterval);
+  document.getElementById('periodStatus').textContent = 'หยุดชั่วคราว';
+}
+
+function resetTimer() {
+  pauseTimer();
+  gameState.timeLeft = 20 * 60;
+  updateTimerDisplay();
+  document.getElementById('periodStatus').textContent = 'เริ่มใหม่';
+}
+
+function endPeriod() {
+  pauseTimer();
+  if (gameState.period === 1) {
+    gameState.period = 2;
+    document.getElementById('period').textContent = gameState.period;
+    document.getElementById('periodStatus').textContent = 'พักครึ่งเวลา';
+    setTimeout(() => {
+      resetTimer();
+      document.getElementById('periodStatus').textContent = 'คาบที่ 2 เริ่มแล้ว';
+    }, 5000);
+  } else {
+    document.getElementById('periodStatus').textContent = 'จบการแข่งขัน!';
+    showWinner();
+  }
+}
+
+// Score functions
+function addScore(team) {
+  if (team === 1) {
+    gameState.team1.score++;
+    document.getElementById('team1Score').textContent = gameState.team1.score;
+  } else {
+    gameState.team2.score++;
+    document.getElementById('team2Score').textContent = gameState.team2.score;
+  }
+}
+
+function addFoul(team) {
+  if (team === 1) {
+    gameState.team1.fouls++;
+    document.getElementById('team1Fouls').textContent = gameState.team1.fouls;
+  } else {
+    gameState.team2.fouls++;
+    document.getElementById('team2Fouls').textContent = gameState.team2.fouls;
+  }
+}
+
+function resetScore() {
+  gameState.team1.score = 0;
+  gameState.team1.fouls = 0;
+  gameState.team2.score = 0;
+  gameState.team2.fouls = 0;
+  
+  document.getElementById('team1Score').textContent = '0';
+  document.getElementById('team1Fouls').textContent = '0';
+  document.getElementById('team2Score').textContent = '0';
+  document.getElementById('team2Fouls').textContent = '0';
+  
+  resetTimer();
+  gameState.period = 1;
+  document.getElementById('period').textContent = '1';
+  document.getElementById('periodStatus').textContent = 'เริ่มใหม่';
+}
+
+function showWinner() {
+  let message = '';
+  if (gameState.team1.score > gameState.team2.score) {
+    message = '🏆 ทีม A ชนะ!';
+  } else if (gameState.team2.score > gameState.team1.score) {
+    message = '🏆 ทีม B ชนะ!';
+  } else {
+    message = '🤝 เสมอ!';
+  }
+  document.getElementById('periodStatus').innerHTML = message;
+}
+
+// Fullscreen function
+function toggleFullscreen() {
+  document.body.classList.toggle('fullscreen-mode');
+  
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  switch(e.key) {
+    case '1':
+      addScore(1);
+      break;
+    case '2':
+      addScore(2);
+      break;
+    case 'q':
+    case 'Q':
+      addFoul(1);
+      break;
+    case 'w':
+    case 'W':
+      addFoul(2);
+      break;
+    case ' ':
+      e.preventDefault();
+      toggleTimer();
+      break;
+    case 'r':
+    case 'R':
+      resetScore();
+      break;
+    case 'f':
+    case 'F':
+      toggleFullscreen();
+      break;
+  }
+});
+
+// Initialize timer display
+updateTimerDisplay();
+
+// Allow team name editing
+document.getElementById('team1Name').contentEditable = true;
+document.getElementById('team2Name').contentEditable = true;
+
+document.getElementById('team1Name').addEventListener('blur', function() {
+  localStorage.setItem('team1Name', this.textContent);
+});
+
+document.getElementById('team2Name').addEventListener('blur', function() {
+  localStorage.setItem('team2Name', this.textContent);
+});
+
+// Load saved team names
+window.addEventListener('load', function() {
+  const savedTeam1 = localStorage.getItem('team1Name');
+  const savedTeam2 = localStorage.getItem('team2Name');
+  
+  if (savedTeam1) document.getElementById('team1Name').textContent = savedTeam1;
+  if (savedTeam2) document.getElementById('team2Name').textContent = savedTeam2;
+});
+</script>
+
+</body>
+</html>
