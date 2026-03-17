@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ระบบตรวจสอบการชำระเงินค่าเทอม | KaiApp</title>
+  <title>ระบบตรวจสอบเงินออม | KaiApp</title>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
@@ -315,7 +315,7 @@
 
 <div class="container">
   <div class="header">
-    <h1>📊 ระบบตรวจสอบการชำระเงินค่าเทอม</h1>
+    <h1>� ระบบตรวจสอบเงินออม</h1>
     <p>วิทยาลัยราชภัฏเชียงใหม่ - คณะวิทยาศาสตร์และเทคโนโลยี</p>
   </div>
 
@@ -340,12 +340,12 @@
 
   <div class="table-container">
     <div class="table-header">
-      <h2>📋 รายชื่อนักเรียนและสถานะการชำระเงิน</h2>
+      <h2>📋 รายชื่อนักเรียนและสถานะการชำระเงินออม</h2>
     </div>
     
     <div class="table-controls">
       <div class="search-box">
-        <input type="text" id="searchInput" placeholder="ค้นหาชื่อ รหัสนักศึกษา หรือชั้นเรียน...">
+        <input type="text" id="searchInput" placeholder="ค้นหาชื่อ รหัสนักศึกษา หรือชั้นเรียนออม...">
       </div>
       <div class="filter-buttons">
         <button class="btn btn-primary" onclick="filterData('all')">ทั้งหมด</button>
@@ -362,7 +362,7 @@
 </div>
 
 <button class="refresh-btn" onclick="loadData()" title="รีเฟรชข้อมูล">
-  🔄
+  �
 </button>
 
 <script>
@@ -504,7 +504,7 @@ function showError(error) {
         </tr>
         <tr>
           <td style="border: 1px solid #ddd; padding: 8px;">A</td>
-          <td style="border: 1px solid #ddd; padding: 8px;">รหัสนักศึกษา</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">รหัสนักศึกษาออม</td>
           <td style="border: 1px solid #ddd; padding: 8px;">6401234567</td>
         </tr>
         <tr>
@@ -514,12 +514,12 @@ function showError(error) {
         </tr>
         <tr>
           <td style="border: 1px solid #ddd; padding: 8px;">C</td>
-          <td style="border: 1px solid #ddd; padding: 8px;">ชั้นเรียน</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">ชั้นเรียนออม</td>
           <td style="border: 1px solid #ddd; padding: 8px;">คอมพิวเตอร์ 1</td>
         </tr>
         <tr>
           <td style="border: 1px solid #ddd; padding: 8px;">D</td>
-          <td style="border: 1px solid #ddd; padding: 8px;">จำนวนเงิน (บาท)</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">จำนวนเงินออม (บาท)</td>
           <td style="border: 1px solid #ddd; padding: 8px;">5000</td>
         </tr>
         <tr>
@@ -529,7 +529,7 @@ function showError(error) {
         </tr>
         <tr>
           <td style="border: 1px solid #ddd; padding: 8px;">F</td>
-          <td style="border: 1px solid #ddd; padding: 8px;">สถานะการชำระเงิน</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">สถานะการชำระเงินออม</td>
           <td style="border: 1px solid #ddd; padding: 8px;">ชำระแล้ว</td>
         </tr>
       </table>
@@ -556,9 +556,9 @@ function updateStats() {
   
   // Calculate total amount (assuming there's an amount column)
   const totalAmount = filteredData.reduce((sum, student) => {
-    const amount = parseFloat(student['จำนวนเงิน']) || 0;
-    return sum + amount;
-  }, 0);
+      const amount = parseFloat(student['จำนวนเงินออม']) || 0;
+      return sum + amount;
+    }, 0);
   
   document.getElementById('totalStudents').textContent = totalStudents;
   document.getElementById('paidStudents').textContent = paidStudents;
@@ -582,7 +582,7 @@ function renderTable() {
           <th>ลำดับ</th>
           <th>รหัสนักศึกษา</th>
           <th>ชื่อ-นามสกุล</th>
-          <th>ชั้นเรียน</th>
+          <th>ชั้นเรียนออม</th>
           <th>จำนวนเงิน (บาท)</th>
           <th>วันที่ชำระ</th>
           <th>สถานะการชำระเงิน</th>
@@ -606,8 +606,8 @@ function renderTable() {
         <td>${index + 1}</td>
         <td>${student['รหัสนักศึกษา'] || '-'}</td>
         <td>${student['ชื่อ-นามสกุล'] || '-'}</td>
-        <td>${student['ชั้นเรียน'] || '-'}</td>
-        <td>${student['จำนวนเงิน'] ? parseFloat(student['จำนวนเงิน']).toLocaleString('th-TH') : '-'}</td>
+        <td>${student['ชั้นเรียนออม'] || '-'}</td>
+        <td>${student['จำนวนเงินออม'] ? parseFloat(student['จำนวนเงินออม']).toLocaleString('th-TH') : '-'}</td>
         <td>${student['วันที่ชำระ'] || '-'}</td>
         <td><span class="${statusClass}">${status}</span></td>
       </tr>
@@ -626,7 +626,7 @@ function filterData(status) {
     const matchesSearch = 
       (student['รหัสนักศึกษา'] && student['รหัสนักศึกษา'].toLowerCase().includes(searchTerm)) ||
       (student['ชื่อ-นามสกุล'] && student['ชื่อ-นามสกุล'].toLowerCase().includes(searchTerm)) ||
-      (student['ชั้นเรียน'] && student['ชั้นเรียน'].toLowerCase().includes(searchTerm));
+      (student['ชั้นเรียนออม'] && student['ชั้นเรียนออม'].toLowerCase().includes(searchTerm));
     
     if (status === 'all') return matchesSearch;
     
