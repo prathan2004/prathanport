@@ -245,3 +245,79 @@ footer {
   transform: translateY(-1px) scale(1.02);
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
+
+/* Teaching cards styles */
+.teaching-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-align: center;
+}
+
+.course-code {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: inline-block;
+  margin-bottom: 15px;
+  align-self: center;
+}
+
+.teaching-card h3 {
+  color: #1f2937;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 15px 0;
+  line-height: 1.4;
+}
+
+.course-description p {
+  color: #6b7280;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+  flex-grow: 1;
+}
+
+.course-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: auto;
+}
+
+.tag {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.tag:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+/* Responsive adjustments for teaching cards */
+@media (max-width: 768px) {
+  .teaching-card h3 {
+    font-size: 1.1rem;
+  }
+  
+  .course-description p {
+    font-size: 0.9rem;
+  }
+  
+  .tag {
+    font-size: 0.75rem;
+    padding: 5px 10px;
+  }
+}
