@@ -5,256 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ผศ.ประธาน คำจินะ | Asst.Prof.Prathan Comejina</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background: #ffffff;
-      color: #1f2937;
-    }
-    header {
-      padding: 100px 20px;
-      text-align: center;
-      background: linear-gradient(135deg, #3b82f6, #1e40af);
-      color: white;
-      position: relative;
-      overflow: hidden;
-    }
-    header::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.15"/><circle cx="20" cy="60" r="0.5" fill="white" opacity="0.15"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
-      opacity: 0.3;
-    }
-    header img {
-      width: 280px;
-      height: 280px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 5px solid white;
-      margin-bottom: 25px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-      transition: transform 0.3s ease;
-    }
-    header img:hover {
-      transform: scale(1.05);
-    }
-    nav {
-      position: sticky;
-      top: 0;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      padding: 20px;
-      z-index: 10;
-    }
-    nav a {
-      color: #374151;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 16px;
-      padding: 10px 20px;
-      border-radius: 25px;
-      transition: all 0.3s ease;
-      position: relative;
-    }
-    nav a:hover { 
-      color: #3b82f6;
-      background: rgba(59, 130, 246, 0.1);
-      transform: translateY(-2px);
-    }
-
-    section {
-      max-width: 1200px;
-      margin: auto;
-      padding: 80px 20px;
-    }
-    h2 {
-      margin-bottom: 40px;
-      color: #1f2937;
-      font-size: 2.5rem;
-      font-weight: 700;
-      text-align: center;
-      position: relative;
-    }
-    h2::after {
-      content: '';
-      position: absolute;
-      bottom: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60px;
-      height: 4px;
-      background: linear-gradient(90deg, #3b82f6, #1e40af);
-      border-radius: 2px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-    }
-    .card {
-      background: white;
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      transition: all 0.3s ease;
-      border: 1px solid rgba(0,0,0,0.05);
-      position: relative;
-      overflow: hidden;
-    }
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #3b82f6, #1e40af);
-    }
-    .card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-    }
-    form {
-      max-width: 500px;
-      margin: auto;
-      display: grid;
-      gap: 15px;
-    }
-    input, textarea {
-      padding: 15px;
-      border-radius: 12px;
-      border: 2px solid #e2e8f0;
-      font-family: inherit;
-      background: white;
-      transition: all 0.3s ease;
-      font-size: 16px;
-    }
-    input:focus, textarea:focus {
-      outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    button {
-      padding: 15px 30px;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #3b82f6, #1e40af);
-      color: white;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 16px;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-    }
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-    }
-    footer {
-      text-align: center;
-      padding: 40px;
-      background: #f8fafc;
-      color: #64748b;
-      border-top: 1px solid #e2e8f0;
-    }
-    
-    /* Modern styles for about section */
-    #about h3 {
-      color: #374151;
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin: 30px 0 15px 0;
-      border-left: 4px solid #3b82f6;
-      padding-left: 15px;
-    }
-    
-    #about ul {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 25px 0;
-    }
-    
-    #about ul li {
-      padding: 12px 0;
-      border-bottom: 1px solid #f1f5f9;
-      position: relative;
-      padding-left: 25px;
-    }
-    
-    #about ul li:before {
-      content: '▸';
-      position: absolute;
-      left: 0;
-      color: #3b82f6;
-      font-weight: bold;
-    }
-    
-    #about ul li:last-child {
-      border-bottom: none;
-    }
-    
-    #about p {
-      line-height: 1.8;
-      font-size: 1.1rem;
-      color: #4b5563;
-      margin-bottom: 20px;
-    }
-    
-    /* Button styles */
-    .btn-primary {
-      display: inline-block;
-      padding: 14px 32px;
-      background: linear-gradient(135deg, #3b82f6, #1e40af);
-      color: white;
-      text-decoration: none;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 16px;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
-    }
-    
-    .btn-primary::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-      transition: left 0.5s ease;
-    }
-    
-    .btn-primary:hover::before {
-      left: 100%;
-    }
-    
-    .btn-primary:hover {
-      transform: translateY(-3px) scale(1.05);
-      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-      color: white;
-      background: linear-gradient(135deg, #2563eb, #1e3a8a);
-    }
-    
-    .btn-primary:active {
-      transform: translateY(-1px) scale(1.02);
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-    }
-  </style>
 </head>
 <body>
 
@@ -267,10 +19,10 @@
 </header>
 
 <nav>
-  <a href="#about">About</a>
-  <a href="#research">Research</a>
-  <a href="#teaching">Teaching</a>
-  <!--<a href="#contact">Contact</a>-->
+  <a href="#about">เกี่ยวกับ</a>
+  <a href="#research">งานวิจัย</a>
+  <a href="#teaching">การสอน</a>
+  <!--<a href="#contact">ติดต่อ</a>-->
 </nav>
 
 <section id="about">
@@ -304,16 +56,16 @@
    <h2>วารสารวิชาการ</h2>
   <div class="grid">
     <div class="card">
-      <p>รอข้อมูล</p>
-      <a class="btn btn-primary" href="" role="button" target="_blank">อ่านต่อ</a>
+      <p><strong>2018</strong> การพัฒนาเครื่องตรวจวัดความชื้นและอุณหภูมิเมล็ดกาแฟด้วยเทคโนโลยีอินเทอร์เน็ตทุกสรรพสิ่ง</p>
+      <a class="btn btn-primary" href="https://drive.google.com/file/d/1W-SGTVWwlSZxPReyhSQo0-g83IbvpFXc/view?usp=drive_link" role="button" target="_blank">อ่านต่อ</a>
     </div>
     <div class="card">
-      <p>รอข้อมูล</p>
-      <a class="btn btn-primary" href="" role="button" target="_blank">อ่านต่อ</a>
+      <p><strong>2016</strong> Development of an ESP32 Microcontroller-based Colorimeter</p>
+      <a class="btn btn-primary" href="https://drive.google.com/file/d/180i3XpfNpR6OEzUdRPTsl6mS_pTAKPu4/view?usp=drive_link" role="button" target="_blank">อ่านต่อ</a>
     </div>
     <div class="card">
-      <p>รอข้อมูล</p>
-      <a class="btn btn-primary" href="" role="button" target="_blank">อ่านต่อ</a>
+      <p><strong>2014</strong> การพัฒนาแอปพลิเคชันเทคโนโลยีภาพเสมือนจริงเพื่อส่งเสริมการท่องเที่ยวชุมชน ในพื้นที่เทศบาลเมือง เมืองแกนพัฒนา อำเภอแม่แตง จังหวัดเชียงใหม่</p>
+      <a class="btn btn-primary" href="https://drive.google.com/file/d/1AqGbplsczyrUVzPWVvldk04nis-jGoiJ/view?usp=drive_link" role="button" target="_blank">อ่านต่อ</a>
     </div>
   </div>
   <h2>การประชุมวิชาการ</h2>
