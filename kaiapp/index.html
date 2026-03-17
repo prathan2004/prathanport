@@ -360,13 +360,14 @@
   </div>
 </div>
 
-<button class="refresh-btn" onclick="loadData()" title="รีเฟรชข้อมูล">
-  �
+<div class="refresh-btn" onclick="loadData()" title="รีเฟรชข้อมูล">
+  💰
 </button>
 
 <script>
 let allData = [];
 let filteredData = [];
+let isLoading = false;
 
 // Google Sheets API configuration
 const SPREADSHEET_ID = '1xh2DVr7YwvN-2tGrZixf1b_oYPa5FvlAHNSaLXFNZJw';
@@ -375,6 +376,12 @@ const RANGE = 'Sheet1!A:G';
 
 // Load data from Google Sheets API
 async function loadData() {
+  if (isLoading) return; // Prevent multiple simultaneous loads
+  
+  isLoading = true;
+  const tableContent = document.getElementById('tableContent');
+  tableContent.innerHTML = '<div class="loading">กำลังโหลดข้อมูล...</div>';
+  
   try {
     console.log('Loading data from:', `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`);
     
@@ -415,13 +422,15 @@ async function loadData() {
       renderTable();
     } else {
       console.log('No data found');
-      document.getElementById('tableContent').innerHTML = '<div class="error">ไม่พบข้อมูลใน Google Sheets หรือยังไม่มีข้อมูล</div>';
+      tableContent.innerHTML = '<div class="error">ไม่พบข้อมูลใน Google Sheets หรือยังไม่มีข้อมูล</div>';
     }
   } catch (error) {
     console.error('Error loading data:', error);
     
     // Try alternative method using CSV export
     tryAlternativeMethod();
+  } finally {
+    isLoading = false;
   }
 }
 
@@ -619,6 +628,8 @@ function renderTable() {
 
 // Filter data
 function filterData(status) {
+  if (isLoading) return; // Prevent filtering during load
+  
   const searchTerm = document.getElementById('searchInput').value.toLowerCase();
   
   filteredData = allData.filter(student => {
