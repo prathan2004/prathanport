@@ -100,6 +100,10 @@
       padding: 5px 10px;
       border-radius: 5px;
       transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
     }
     
     .team-name:hover {
@@ -111,8 +115,90 @@
       background: rgba(255, 255, 255, 0.2);
     }
     
+    .team-color {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 3px solid white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .team-color:hover {
+      transform: scale(1.1);
+    }
+    
+    .color-picker {
+      position: absolute;
+      top: 50px;
+      right: 0;
+      background: rgba(0, 0, 0, 0.9);
+      padding: 15px;
+      border-radius: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      display: none;
+      z-index: 1000;
+      max-width: 320px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(16, 1fr);
+      gap: 2px;
+    }
+    
+    .color-option {
+      width: 18px;
+      height: 18px;
+      border-radius: 2px;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    .color-option:hover {
+      transform: scale(1.3);
+      border-color: white;
+      z-index: 10;
+    }
+    
+    .color-preset-section {
+      margin-bottom: 15px;
+    }
+    
+    .preset-title {
+      font-size: 0.9rem;
+      color: #ffd700;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    
+    .preset-colors {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    
+    .preset-color {
+      width: 25px;
+      height: 25px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 2px solid white;
+      transition: all 0.3s ease;
+    }
+    
+    .preset-color:hover {
+      transform: scale(1.2);
+    }
+    
     .score {
-      font-size: 6rem;
+      font-size: 8rem;
       font-weight: 900;
       line-height: 1;
       margin: 20px 0;
@@ -223,6 +309,19 @@
       font-size: 1.5rem;
       margin-bottom: 15px;
       font-weight: 600;
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+    }
+    
+    .timer-label:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .timer-label:focus {
+      outline: 2px solid #ffd700;
+      background: rgba(255, 255, 255, 0.2);
     }
     
     .timer-display {
@@ -358,7 +457,7 @@
     }
     
     .fullscreen-mode .score {
-      font-size: 5rem;
+      font-size: 6rem;
     }
     
     .fullscreen-mode .fouls-count {
@@ -379,7 +478,29 @@
 <div class="main-scoreboard">
   <div class="score-container">
     <div class="team-section">
-      <div class="team-name" id="team1Name">ทีม A</div>
+      <div class="team-name" id="team1Name">
+        <span contenteditable="true">ทีม A</span>
+        <div class="team-color" id="team1Color" style="background: #ff0000;"></div>
+        <div class="color-picker" id="team1ColorPicker">
+          <div class="color-preset-section">
+            <div class="preset-title">สียอดนิยม</div>
+            <div class="preset-colors">
+              <div class="preset-color" style="background: #ff0000;" data-color="#ff0000;"></div>
+              <div class="preset-color" style="background: #0000ff;" data-color="#0000ff;"></div>
+              <div class="preset-color" style="background: #00ff00;" data-color="#00ff00;"></div>
+              <div class="preset-color" style="background: #ffff00;" data-color="#ffff00;"></div>
+              <div class="preset-color" style="background: #ff00ff;" data-color="#ff00ff;"></div>
+              <div class="preset-color" style="background: #00ffff;" data-color="#00ffff;"></div>
+              <div class="preset-color" style="background: #ff8800;" data-color="#ff8800;"></div>
+              <div class="preset-color" style="background: #8800ff;" data-color="#8800ff;"></div>
+            </div>
+          </div>
+          <div class="color-preset-section">
+            <div class="preset-title">256 สีทั้งหมด</div>
+            <div class="color-grid" id="colorGrid1"></div>
+          </div>
+        </div>
+      </div>
       <div class="score" id="team1Score">0</div>
       <div class="fouls">
         <div class="fouls-label">ฟาวล์</div>
@@ -391,7 +512,29 @@
     <div class="vs-section">VS</div>
     
     <div class="team-section">
-      <div class="team-name" id="team2Name">ทีม B</div>
+      <div class="team-name" id="team2Name">
+        <span contenteditable="true">ทีม B</span>
+        <div class="team-color" id="team2Color" style="background: #0000ff;"></div>
+        <div class="color-picker" id="team2ColorPicker">
+          <div class="color-preset-section">
+            <div class="preset-title">สียอดนิยม</div>
+            <div class="preset-colors">
+              <div class="preset-color" style="background: #ff0000;" data-color="#ff0000;"></div>
+              <div class="preset-color" style="background: #0000ff;" data-color="#0000ff;"></div>
+              <div class="preset-color" style="background: #00ff00;" data-color="#00ff00;"></div>
+              <div class="preset-color" style="background: #ffff00;" data-color="#ffff00;"></div>
+              <div class="preset-color" style="background: #ff00ff;" data-color="#ff00ff;"></div>
+              <div class="preset-color" style="background: #00ffff;" data-color="#00ffff;"></div>
+              <div class="preset-color" style="background: #ff8800;" data-color="#ff8800;"></div>
+              <div class="preset-color" style="background: #8800ff;" data-color="#8800ff;"></div>
+            </div>
+          </div>
+          <div class="color-preset-section">
+            <div class="preset-title">256 สีทั้งหมด</div>
+            <div class="color-grid" id="colorGrid2"></div>
+          </div>
+        </div>
+      </div>
       <div class="score" id="team2Score">0</div>
       <div class="fouls">
         <div class="fouls-label">ฟาวล์</div>
@@ -402,7 +545,7 @@
   </div>
   
   <div class="timer-section">
-    <div class="timer-label">คาบที่ <span id="period">1</span> / 2</div>
+    <div class="timer-label" id="periodText" contenteditable="true">คาบที่ <span id="period">1</span> / 2</div>
     <div class="timer-display" id="timerDisplay">20:00</div>
     <div class="period-display" id="periodStatus">กำลังแข่งขัน</div>
   </div>
@@ -411,14 +554,18 @@
 <div class="controls">
   <div class="control-group">
     <div class="control-label">ทีม A</div>
+    <button class="btn btn-danger" onclick="subtractScore(1)">-1 คะแนน</button>
     <button class="btn btn-success" onclick="addScore(1)">+1 คะแนน</button>
     <button class="btn btn-danger" onclick="addFoul(1)">+1 ฟาวล์</button>
+    <button class="btn btn-warning" onclick="subtractFoul(1)">-1 ฟาวล์</button>
   </div>
   
   <div class="control-group">
     <div class="control-label">ทีม B</div>
+    <button class="btn btn-danger" onclick="subtractScore(2)">-1 คะแนน</button>
     <button class="btn btn-success" onclick="addScore(2)">+1 คะแนน</button>
     <button class="btn btn-danger" onclick="addFoul(2)">+1 ฟาวล์</button>
+    <button class="btn btn-warning" onclick="subtractFoul(2)">-1 ฟาวล์</button>
   </div>
   
   <div class="control-group">
@@ -537,6 +684,16 @@ function addScore(team) {
   }
 }
 
+function subtractScore(team) {
+  if (team === 1 && gameState.team1.score > 0) {
+    gameState.team1.score--;
+    document.getElementById('team1Score').textContent = gameState.team1.score;
+  } else if (team === 2 && gameState.team2.score > 0) {
+    gameState.team2.score--;
+    document.getElementById('team2Score').textContent = gameState.team2.score;
+  }
+}
+
 function addFoul(team) {
   if (team === 1) {
     gameState.team1.fouls++;
@@ -544,6 +701,18 @@ function addFoul(team) {
     updateFoulVisual('team1FoulsVisual', gameState.team1.fouls);
   } else {
     gameState.team2.fouls++;
+    document.getElementById('team2Fouls').textContent = gameState.team2.fouls;
+    updateFoulVisual('team2FoulsVisual', gameState.team2.fouls);
+  }
+}
+
+function subtractFoul(team) {
+  if (team === 1 && gameState.team1.fouls > 0) {
+    gameState.team1.fouls--;
+    document.getElementById('team1Fouls').textContent = gameState.team1.fouls;
+    updateFoulVisual('team1FoulsVisual', gameState.team1.fouls);
+  } else if (team === 2 && gameState.team2.fouls > 0) {
+    gameState.team2.fouls--;
     document.getElementById('team2Fouls').textContent = gameState.team2.fouls;
     updateFoulVisual('team2FoulsVisual', gameState.team2.fouls);
   }
@@ -639,15 +808,90 @@ document.addEventListener('keydown', (e) => {
 // Initialize timer display
 updateTimerDisplay();
 
-// Allow team name and competition name editing
-document.getElementById('team1Name').contentEditable = true;
-document.getElementById('team2Name').contentEditable = true;
+// Generate 256 color palette
+function generateColorPalette() {
+  const colors = [];
+  
+  // Generate 256 colors (16x16 grid)
+  for (let i = 0; i < 256; i++) {
+    const r = Math.floor(i / 16) * 16;
+    const g = (i % 16) * 16;
+    const b = ((Math.floor(i / 16) + (i % 16)) % 16) * 16;
+    const color = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    colors.push(color);
+  }
+  
+  return colors;
+}
 
-document.getElementById('team1Name').addEventListener('blur', function() {
+// Color picker functions
+function setupColorPickers() {
+  const team1Color = document.getElementById('team1Color');
+  const team1Picker = document.getElementById('team1ColorPicker');
+  const team2Color = document.getElementById('team2Color');
+  const team2Picker = document.getElementById('team2ColorPicker');
+  
+  // Generate color grids
+  const colors = generateColorPalette();
+  const grid1 = document.getElementById('colorGrid1');
+  const grid2 = document.getElementById('colorGrid2');
+  
+  colors.forEach(color => {
+    const option1 = document.createElement('div');
+    option1.className = 'color-option';
+    option1.style.background = color;
+    option1.setAttribute('data-color', color);
+    grid1.appendChild(option1);
+    
+    const option2 = document.createElement('div');
+    option2.className = 'color-option';
+    option2.style.background = color;
+    option2.setAttribute('data-color', color);
+    grid2.appendChild(option2);
+  });
+  
+  team1Color.addEventListener('click', function(e) {
+    e.stopPropagation();
+    team1Picker.style.display = team1Picker.style.display === 'block' ? 'none' : 'block';
+    team2Picker.style.display = 'none';
+  });
+  
+  team2Color.addEventListener('click', function(e) {
+    e.stopPropagation();
+    team2Picker.style.display = team2Picker.style.display === 'block' ? 'none' : 'block';
+    team1Picker.style.display = 'none';
+  });
+  
+  // Color options for both teams
+  document.querySelectorAll('.color-option, .preset-color').forEach(option => {
+    option.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const color = this.getAttribute('data-color');
+      const picker = this.closest('.color-picker');
+      const teamColor = picker.previousElementSibling;
+      
+      teamColor.style.background = color;
+      picker.style.display = 'none';
+      
+      // Save to localStorage
+      const teamId = picker.id.includes('1') ? 'team1' : 'team2';
+      localStorage.setItem(teamId + 'Color', color);
+    });
+  });
+  
+  // Close pickers when clicking outside
+  document.addEventListener('click', function() {
+    team1Picker.style.display = 'none';
+    team2Picker.style.display = 'none';
+  });
+}
+
+// Allow team name and competition name editing
+document.getElementById('team1Name').querySelector('span').addEventListener('blur', function() {
   localStorage.setItem('team1Name', this.textContent);
 });
 
-document.getElementById('team2Name').addEventListener('blur', function() {
+document.getElementById('team2Name').querySelector('span').addEventListener('blur', function() {
   localStorage.setItem('team2Name', this.textContent);
 });
 
@@ -655,15 +899,27 @@ document.getElementById('competitionName').addEventListener('blur', function() {
   localStorage.setItem('competitionName', this.textContent);
 });
 
-// Load saved names
+document.getElementById('periodText').addEventListener('blur', function() {
+  localStorage.setItem('periodText', this.textContent);
+});
+
+// Load saved names and colors
 window.addEventListener('load', function() {
   const savedTeam1 = localStorage.getItem('team1Name');
   const savedTeam2 = localStorage.getItem('team2Name');
   const savedCompetition = localStorage.getItem('competitionName');
+  const savedPeriodText = localStorage.getItem('periodText');
+  const savedTeam1Color = localStorage.getItem('team1Color');
+  const savedTeam2Color = localStorage.getItem('team2Color');
   
-  if (savedTeam1) document.getElementById('team1Name').textContent = savedTeam1;
-  if (savedTeam2) document.getElementById('team2Name').textContent = savedTeam2;
+  if (savedTeam1) document.getElementById('team1Name').querySelector('span').textContent = savedTeam1;
+  if (savedTeam2) document.getElementById('team2Name').querySelector('span').textContent = savedTeam2;
   if (savedCompetition) document.getElementById('competitionName').textContent = savedCompetition;
+  if (savedPeriodText) document.getElementById('periodText').textContent = savedPeriodText;
+  if (savedTeam1Color) document.getElementById('team1Color').style.background = savedTeam1Color;
+  if (savedTeam2Color) document.getElementById('team2Color').style.background = savedTeam2Color;
+  
+  setupColorPickers();
 });
 </script>
 
