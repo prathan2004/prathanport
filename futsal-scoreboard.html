@@ -14,7 +14,7 @@
     
     body {
       font-family: 'Prompt', sans-serif;
-      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
+      background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2d2d2d 100%);
       color: white;
       height: 100vh;
       overflow: hidden;
@@ -35,6 +35,19 @@
       text-transform: uppercase;
       letter-spacing: 2px;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+    }
+    
+    .header h1:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .header h1:focus {
+      outline: 2px solid #ffd700;
+      background: rgba(255, 255, 255, 0.2);
     }
     
     .match-info {
@@ -83,6 +96,19 @@
       margin-bottom: 20px;
       text-transform: uppercase;
       letter-spacing: 1px;
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+    }
+    
+    .team-name:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .team-name:focus {
+      outline: 2px solid #ffd700;
+      background: rgba(255, 255, 255, 0.2);
     }
     
     .score {
@@ -118,6 +144,54 @@
       font-weight: 900;
       color: #ff6b6b;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      margin-bottom: 10px;
+    }
+    
+    .fouls-visual {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 10px;
+      min-height: 40px;
+    }
+    
+    .foul-ball {
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, #ffffff, #e0e0e0);
+      border-radius: 50%;
+      position: relative;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      animation: bounceIn 0.5s ease;
+    }
+    
+    .foul-ball::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #333;
+      transform: translateY(-50%);
+    }
+    
+    .foul-ball::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 2px;
+      background: #333;
+      transform: translateX(-50%);
+    }
+    
+    @keyframes bounceIn {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); opacity: 1; }
     }
     
     .vs-section {
@@ -295,7 +369,7 @@
 <body>
 
 <div class="header">
-  <h1>ฟุตซอล สกอร์บอร์ด</h1>
+  <h1 id="competitionName" contenteditable="true">ฟุตซอล สกอร์บอร์ด</h1>
   <div class="match-info">
     <span id="matchDate">วันที่: <span id="dateDisplay"></span></span>
     <span id="matchTime">เวลา: <span id="timeDisplay"></span></span>
@@ -310,6 +384,7 @@
       <div class="fouls">
         <div class="fouls-label">ฟาวล์</div>
         <div class="fouls-count" id="team1Fouls">0</div>
+        <div class="fouls-visual" id="team1FoulsVisual"></div>
       </div>
     </div>
     
@@ -321,6 +396,7 @@
       <div class="fouls">
         <div class="fouls-label">ฟาวล์</div>
         <div class="fouls-count" id="team2Fouls">0</div>
+        <div class="fouls-visual" id="team2FoulsVisual"></div>
       </div>
     </div>
   </div>
@@ -465,9 +541,22 @@ function addFoul(team) {
   if (team === 1) {
     gameState.team1.fouls++;
     document.getElementById('team1Fouls').textContent = gameState.team1.fouls;
+    updateFoulVisual('team1FoulsVisual', gameState.team1.fouls);
   } else {
     gameState.team2.fouls++;
     document.getElementById('team2Fouls').textContent = gameState.team2.fouls;
+    updateFoulVisual('team2FoulsVisual', gameState.team2.fouls);
+  }
+}
+
+function updateFoulVisual(elementId, foulCount) {
+  const container = document.getElementById(elementId);
+  container.innerHTML = '';
+  
+  for (let i = 0; i < foulCount; i++) {
+    const ball = document.createElement('div');
+    ball.className = 'foul-ball';
+    container.appendChild(ball);
   }
 }
 
@@ -481,6 +570,10 @@ function resetScore() {
   document.getElementById('team1Fouls').textContent = '0';
   document.getElementById('team2Score').textContent = '0';
   document.getElementById('team2Fouls').textContent = '0';
+  
+  // Clear foul visuals
+  document.getElementById('team1FoulsVisual').innerHTML = '';
+  document.getElementById('team2FoulsVisual').innerHTML = '';
   
   resetTimer();
   gameState.period = 1;
@@ -546,7 +639,7 @@ document.addEventListener('keydown', (e) => {
 // Initialize timer display
 updateTimerDisplay();
 
-// Allow team name editing
+// Allow team name and competition name editing
 document.getElementById('team1Name').contentEditable = true;
 document.getElementById('team2Name').contentEditable = true;
 
@@ -558,13 +651,19 @@ document.getElementById('team2Name').addEventListener('blur', function() {
   localStorage.setItem('team2Name', this.textContent);
 });
 
-// Load saved team names
+document.getElementById('competitionName').addEventListener('blur', function() {
+  localStorage.setItem('competitionName', this.textContent);
+});
+
+// Load saved names
 window.addEventListener('load', function() {
   const savedTeam1 = localStorage.getItem('team1Name');
   const savedTeam2 = localStorage.getItem('team2Name');
+  const savedCompetition = localStorage.getItem('competitionName');
   
   if (savedTeam1) document.getElementById('team1Name').textContent = savedTeam1;
   if (savedTeam2) document.getElementById('team2Name').textContent = savedTeam2;
+  if (savedCompetition) document.getElementById('competitionName').textContent = savedCompetition;
 });
 </script>
 
