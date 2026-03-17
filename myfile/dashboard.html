@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แดชบอร์ดการวิ่ง</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+        .stat-card { transition: transform 0.3s ease; }
+        .stat-card:hover { transform: translateY(-5px); }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">🏃‍♂️ แดชบอร์ดการวิ่ง</h1>
+            <p class="text-gray-600">ติดตามยอดรวมระยะทางการออกกำลังกายของคุณ</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="stat-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">ระยะทางรวม</p>
+                        <p class="text-3xl font-bold text-blue-600" id="totalDistance">0</p>
+                        <p class="text-gray-600 text-sm">กิโลเมตร</p>
+                    </div>
+                    <div class="text-4xl">📏</div>
+                </div>
+            </div>
+
+            <div class="stat-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">ครั้งที่วิ่ง</p>
+                        <p class="text-3xl font-bold text-green-600" id="totalRuns">0</p>
+                        <p class="text-gray-600 text-sm">ครั้ง</p>
+                    </div>
+                    <div class="text-4xl">🏃</div>
+                </div>
+            </div>
+
+            <div class="stat-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">เฉลี่ย/ครั้ง</p>
+                        <p class="text-3xl font-bold text-purple-600" id="avgDistance">0</p>
+                        <p class="text-gray-600 text-sm">กิโลเมตร</p>
+                    </div>
+                    <div class="text-4xl">📊</div>
+                </div>
+            </div>
+
+            <div class="stat-card bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">เป้าหมายเดือนนี้</p>
+                        <p class="text-3xl font-bold text-orange-600" id="monthlyGoal">100</p>
+                        <p class="text-gray-600 text-sm">กิโลเมตร</p>
+                    </div>
+                    <div class="text-4xl">🎯</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">➕ เพิ่มระยะทางวิ่ง</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่</label>
+                        <input type="date" id="runDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ระยะทาง (กิโลเมตร)</label>
+                        <input type="number" id="runDistance" step="0.1" min="0" placeholder="5.5" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ (ไม่จำเป็น)</label>
+                        <input type="text" id="runNote" placeholder="วิ่งในสวนสาธารณะ" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <button onclick="addRun()" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                        เพิ่มข้อมูลการวิ่ง
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">📈 กราฟระยะทางรวมรายสัปดาห์</h2>
+                <canvas id="weeklyChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">📝 ประวัติการวิ่ง</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="py-2 px-4 text-gray-600">วันที่</th>
+                            <th class="py-2 px-4 text-gray-600">ระยะทาง (กม.)</th>
+                            <th class="py-2 px-4 text-gray-600">หมายเหตุ</th>
+                            <th class="py-2 px-4 text-gray-600">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="runsTableBody">
+                    </tbody>
+                </table>
+                <div id="noDataMessage" class="text-center py-8 text-gray-500">
+                    ยังไม่มีข้อมูลการวิ่ง กรุณาเพิ่มข้อมูลเพื่อเริ่มต้น
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let runs = JSON.parse(localStorage.getItem('runs')) || [];
+        let weeklyChart = null;
+
+        function initChart() {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            weeklyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'ระยะทาง (กม.)',
+                        data: [],
+                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            const weeklyData = getWeeklyData();
+            weeklyChart.data.labels = weeklyData.labels;
+            weeklyChart.data.datasets[0].data = weeklyData.data;
+            weeklyChart.update();
+        }
+
+        function getWeeklyData() {
+            const today = new Date();
+            const weekData = [];
+            const labels = [];
+            
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                const dayName = date.toLocaleDateString('th-TH', { weekday: 'short' });
+                
+                const dayRuns = runs.filter(run => run.date === dateStr);
+                const totalDistance = dayRuns.reduce((sum, run) => sum + parseFloat(run.distance), 0);
+                
+                labels.push(dayName);
+                weekData.push(totalDistance);
+            }
+            
+            return { labels, data: weekData };
+        }
+
+        function updateStats() {
+            const totalDistance = runs.reduce((sum, run) => sum + parseFloat(run.distance), 0);
+            const totalRuns = runs.length;
+            const avgDistance = totalRuns > 0 ? (totalDistance / totalRuns).toFixed(1) : 0;
+            
+            document.getElementById('totalDistance').textContent = totalDistance.toFixed(1);
+            document.getElementById('totalRuns').textContent = totalRuns;
+            document.getElementById('avgDistance').textContent = avgDistance;
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('runsTableBody');
+            const noDataMsg = document.getElementById('noDataMessage');
+            
+            if (runs.length === 0) {
+                tbody.innerHTML = '';
+                noDataMsg.style.display = 'block';
+                return;
+            }
+            
+            noDataMsg.style.display = 'none';
+            tbody.innerHTML = runs.sort((a, b) => new Date(b.date) - new Date(a.date))
+                .map((run, index) => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-2 px-4">${new Date(run.date).toLocaleDateString('th-TH')}</td>
+                        <td class="py-2 px-4">${run.distance}</td>
+                        <td class="py-2 px-4">${run.note || '-'}</td>
+                        <td class="py-2 px-4">
+                            <button onclick="deleteRun(${runs.indexOf(run)})" class="text-red-600 hover:text-red-800">
+                                ลบ
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+        }
+
+        function addRun() {
+            const date = document.getElementById('runDate').value;
+            const distance = document.getElementById('runDistance').value;
+            const note = document.getElementById('runNote').value;
+            
+            if (!date || !distance) {
+                alert('กรุณากรอกวันที่และระยะทาง');
+                return;
+            }
+            
+            runs.push({ date, distance, note });
+            localStorage.setItem('runs', JSON.stringify(runs));
+            
+            document.getElementById('runDate').value = '';
+            document.getElementById('runDistance').value = '';
+            document.getElementById('runNote').value = '';
+            
+            updateStats();
+            updateTable();
+            updateChart();
+        }
+
+        function deleteRun(index) {
+            if (confirm('ต้องการลบข้อมูลการวิ่งนี้ใช่หรือไม่?')) {
+                runs.splice(index, 1);
+                localStorage.setItem('runs', JSON.stringify(runs));
+                updateStats();
+                updateTable();
+                updateChart();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('runDate').valueAsDate = new Date();
+            
+            initChart();
+            updateStats();
+            updateTable();
+            updateChart();
+        });
+    </script>
+</body>
+</html>
