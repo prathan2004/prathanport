@@ -377,11 +377,29 @@ const RANGE = 'Sheet1!A:G';
 // Load data from Google Sheets API
 async function loadData() {
   try {
+    console.log('Loading data from:', `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`);
+    
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
     const response = await fetch(url);
+    
+    console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const data = await response.json();
+    console.log('API Response:', data);
+    
+    if (data.error) {
+      throw new Error(`API Error: ${data.error.message}`);
+    }
     
     if (data.values && data.values.length > 0) {
+      console.log('Raw data rows:', data.values.length);
+      console.log('Headers:', data.values[0]);
+      
       // Convert to array of objects
       const headers = data.values[0];
       allData = data.values.slice(1).map(row => {
@@ -392,16 +410,136 @@ async function loadData() {
         return obj;
       });
       
+      console.log('Processed data:', allData);
       filteredData = [...allData];
       updateStats();
       renderTable();
     } else {
-      document.getElementById('tableContent').innerHTML = '<div class="error">ไม่พบข้อมูลใน Google Sheets</div>';
+      console.log('No data found');
+      document.getElementById('tableContent').innerHTML = '<div class="error">ไม่พบข้อมูลใน Google Sheets หรือยังไม่มีข้อมูล</div>';
     }
   } catch (error) {
     console.error('Error loading data:', error);
-    document.getElementById('tableContent').innerHTML = '<div class="error">เกิดข้อผิดพลาดในการโหลดข้อมูล กรุณาลองใหม่</div>';
+    
+    // Try alternative method using CSV export
+    tryAlternativeMethod();
   }
+}
+
+// Alternative method using CSV export
+async function tryAlternativeMethod() {
+  try {
+    console.log('Trying alternative method...');
+    
+    // Use the published CSV export URL
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=0`;
+    const response = await fetch(csvUrl);
+    
+    if (!response.ok) {
+      throw new Error(`CSV export failed: ${response.status}`);
+    }
+    
+    const csvText = await response.text();
+    console.log('CSV data loaded');
+    
+    // Parse CSV
+    const lines = csvText.split('\n').filter(line => line.trim());
+    if (lines.length < 2) {
+      throw new Error('CSV has no data');
+    }
+    
+    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+    allData = lines.slice(1).map(line => {
+      const values = line.split(',').map(v => v.replace(/"/g, '').trim());
+      const obj = {};
+      headers.forEach((header, index) => {
+        obj[header] = values[index] || '';
+      });
+      return obj;
+    });
+    
+    console.log('Alternative method data:', allData);
+    filteredData = [...allData];
+    updateStats();
+    renderTable();
+    
+  } catch (error) {
+    console.error('Alternative method failed:', error);
+    showError(error);
+  }
+}
+
+// Show detailed error
+function showError(error) {
+  document.getElementById('tableContent').innerHTML = `
+    <div class="error">
+      <h3>🚨 เกิดข้อผิดพลาดในการโหลดข้อมูล</h3>
+      <p><strong>ข้อความผิดพลาด:</strong> ${error.message}</p>
+      
+      <h4>🔧 วิธีแก้ไข:</h4>
+      <ol style="text-align: left; margin-top: 10px; padding-left: 20px;">
+        <li><strong>ตรวจสอบการแชร์ Google Sheets:</strong><br>
+        - เปิด Google Sheets แล้วคลิก "แชร์"<br>
+        - เลือก "ทุกคนที่มีลิงก์สามารถดูได้"<br>
+        - คัดลอกลิงก์แล้วตรวจสอบว่ามี Spreadsheet ID ถูกต้องหรือไม่</li>
+        
+        <li><strong>ตรวจสอบชื่อชีต:</strong><br>
+        - ต้องมีข้อมูลใน "Sheet1" หรือชีตแรก<br>
+        - คอลัมน์ A-G ต้องมีข้อมูล</li>
+        
+        <li><strong>ตรวจสอบ API Key:</strong><br>
+        - API Key อาจหมดอายุหรือถูกจำกัด</li>
+        
+        <li><strong>ทดสอบการเชื่อมต่อ:</strong><br>
+        - เปิด Developer Console (F12)<br>
+        - ดูในแท็บ Console ว่ามีข้อความผิดพลาดอะไร</li>
+      </ol>
+      
+      <h4>📋 โครงสร้างตารางที่แนะนำ:</h4>
+      <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.9rem;">
+        <tr style="background: #f0f0f0;">
+          <th style="border: 1px solid #ddd; padding: 8px;">คอลัมน์</th>
+          <th style="border: 1px solid #ddd; padding: 8px;">หัวข้อ</th>
+          <th style="border: 1px solid #ddd; padding: 8px;">ตัวอย่าง</th>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px;">A</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">รหัสนักศึกษา</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">6401234567</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px;">B</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">ชื่อ-นามสกุล</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">สมชาติ ใจดี</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px;">C</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">ชั้นเรียน</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">คอมพิวเตอร์ 1</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px;">D</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">จำนวนเงิน (บาท)</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">5000</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px;">E</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">วันที่ชำระ</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">15/03/2026</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px;">F</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">สถานะการชำระเงิน</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">ชำระแล้ว</td>
+        </tr>
+      </table>
+      
+      <div style="margin-top: 20px;">
+        <button class="btn btn-primary" onclick="loadData()" style="margin-right: 10px;">🔄 ลองใหม่</button>
+        <button class="btn btn-success" onclick="tryAlternativeMethod()">📥 ลองวิธี CSV</button>
+      </div>
+    </div>
+  `;
 }
 
 // Update statistics
