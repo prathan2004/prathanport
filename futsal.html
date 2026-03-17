@@ -654,6 +654,7 @@ function toggleTimer() {
   } else {
     startTimer();
   }
+  sendScoreUpdate();
 }
 
 function startTimer() {
@@ -680,6 +681,7 @@ function resetTimer() {
   gameState.timeLeft = 20 * 60;
   updateTimerDisplay();
   document.getElementById('periodStatus').textContent = 'เริ่มใหม่';
+  sendScoreUpdate();
 }
 
 function endPeriod() {
