@@ -564,7 +564,10 @@ function updateStats() {
   
   // Calculate total amount (assuming there's an amount column)
   const totalAmount = filteredData.reduce((sum, student) => {
-      const amount = parseFloat(student['จำนวนเงินออม']) || 0;
+      const amountText = student['จำนวนเงินออม'] || '0';
+      // Remove any non-numeric characters and convert to number
+      const cleanAmount = amountText.replace(/[^0-9.-]/g, '');
+      const amount = parseFloat(cleanAmount) || 0;
       return sum + amount;
     }, 0);
   
@@ -615,7 +618,7 @@ function renderTable() {
         <td>${student['รหัสนักศึกษา'] || '-'}</td>
         <td>${student['ชื่อ-นามสกุล'] || '-'}</td>
         <td>${student['ชั้นเรียนออม'] || '-'}</td>
-        <td>${student['จำนวนเงินออม'] ? parseFloat(student['จำนวนเงินออม']).toLocaleString('th-TH') : '-'}</td>
+        <td>${student['จำนวนเงินออม'] ? parseFloat(student['จำนวนเงินออม'].replace(/[^0-9.-]/g, '')).toLocaleString('th-TH') : '-'}</td>
         <td>${student['วันที่ชำระ'] || '-'}</td>
         <td><span class="${statusClass}">${status}</span></td>
       </tr>
