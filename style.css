@@ -321,3 +321,63 @@ footer {
     padding: 5px 10px;
   }
 }
+
+/* Research cards styles */
+.research-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-align: center;
+}
+
+.year-badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: inline-block;
+  margin-bottom: 15px;
+  align-self: center;
+}
+
+.research-card h3 {
+  color: #1f2937;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 15px 0;
+  line-height: 1.4;
+}
+
+.research-description p {
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+  flex-grow: 1;
+}
+
+.research-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* Responsive adjustments for research cards */
+@media (max-width: 768px) {
+  .research-card h3 {
+    font-size: 1.05rem;
+  }
+  
+  .research-description p {
+    font-size: 0.85rem;
+  }
+  
+  .year-badge {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
+}
