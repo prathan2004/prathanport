@@ -8,12 +8,14 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 
+const API_BASE = `${window.location.pathname.replace(/\/[^/]*$/, "/")}api`;
+
 async function api(path, options = {}) {
   const headers = { ...(options.headers || {}) };
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
   if (options.body && !(options.body instanceof FormData)) headers["Content-Type"] = "application/json";
 
-  const response = await fetch(path, { ...options, headers });
+  const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || "เกิดข้อผิดพลาด");
   return data;
@@ -78,7 +80,7 @@ function renderLeaderboard(targetId) {
 
 async function refreshPublic() {
   try {
-    const data = await api("/api/leaderboard");
+    const data = await api("/leaderboard");
     state.leaderboard = data.leaderboard || [];
     renderLeaderboard("publicLeaderboard");
     if ($("leaderboard")) renderLeaderboard("leaderboard");
@@ -94,7 +96,7 @@ async function refreshDashboard() {
   }
 
   try {
-    const data = await api("/api/dashboard");
+    const data = await api("/dashboard");
     state.user = data.user;
     state.runs = data.runs || [];
     state.leaderboard = data.leaderboard || [];
@@ -161,7 +163,7 @@ $("signupForm").addEventListener("submit", async (event) => {
   const nickname = clean($("signupNickname").value);
 
   try {
-    await api("/api/signup", {
+    await api("/signup", {
       method: "POST",
       body: JSON.stringify({ username, password, nickname }),
     });
@@ -180,7 +182,7 @@ $("loginForm").addEventListener("submit", async (event) => {
   const password = $("loginPassword").value;
 
   try {
-    const data = await api("/api/login", {
+    const data = await api("/login", {
       method: "POST",
       body: JSON.stringify({ username, password }),
     });
@@ -196,7 +198,7 @@ $("loginForm").addEventListener("submit", async (event) => {
 
 $("logoutButton").addEventListener("click", async () => {
   try {
-    if (state.token) await api("/api/logout", { method: "POST" });
+    if (state.token) await api("/logout", { method: "POST" });
   } catch {
     // Logging out locally is enough if the online session already expired.
   }
@@ -216,9 +218,9 @@ $("runForm").addEventListener("submit", async (event) => {
 
   try {
     if (state.editingRunId) {
-      await api(`/api/runs/${encodeURIComponent(state.editingRunId)}`, { method: "PUT", body: payload });
+      await api(`/runs/${encodeURIComponent(state.editingRunId)}`, { method: "PUT", body: payload });
     } else {
-      await api("/api/runs", { method: "POST", body: payload });
+      await api("/runs", { method: "POST", body: payload });
     }
     resetRunForm();
     setMessage("runMessage", "บันทึกแล้ว", true);
@@ -247,7 +249,7 @@ $("historyList").addEventListener("click", async (event) => {
 
   if (deleteId && confirm("ลบรายการวิ่งนี้หรือไม่?")) {
     try {
-      await api(`/api/runs/${encodeURIComponent(deleteId)}`, { method: "DELETE" });
+      await api(`/runs/${encodeURIComponent(deleteId)}`, { method: "DELETE" });
       resetRunForm();
       await refreshDashboard();
     } catch (error) {
@@ -260,7 +262,7 @@ $("cancelEditButton").addEventListener("click", resetRunForm);
 
 $("exportButton").addEventListener("click", async () => {
   try {
-    const data = await api("/api/export");
+    const data = await api("/export");
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -278,7 +280,7 @@ $("importInput").addEventListener("change", async (event) => {
   if (!file) return;
   try {
     const imported = JSON.parse(await file.text());
-    await api("/api/import", { method: "POST", body: JSON.stringify(imported) });
+    await api("/import", { method: "POST", body: JSON.stringify(imported) });
     await refreshDashboard();
   } catch (error) {
     alert(error.message || "ไฟล์ไม่ถูกต้อง");
