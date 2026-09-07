@@ -288,7 +288,7 @@ async function createRun(request, body) {
   run.seasonId = season.id;
   run.createdAt = new Date().toISOString();
   await saveRun(run);
-  return json({ ok: true, run });
+  return json({ ok: true, run: await decorateRun(run) });
 }
 
 async function updateRun(request, path, body) {
@@ -300,7 +300,7 @@ async function updateRun(request, path, body) {
   const season = (current.seasonId ? (await allSeasons()).find((item) => item.id === current.seasonId) : null) || await activeSeason();
   const next = { ...current, ...validateRun(body, season), seasonId: season.id, updatedAt: new Date().toISOString() };
   await saveRun(next);
-  return json({ ok: true, run: next });
+  return json({ ok: true, run: await decorateRun(next) });
 }
 
 async function deleteRun(request, path) {
@@ -322,7 +322,17 @@ async function adminUpdateRun(request, path, body) {
   const season = seasons.find((item) => item.id === current.seasonId) || await activeSeason();
   const next = { ...current, ...validateRun(body, season), seasonId: season.id, updatedAt: new Date().toISOString() };
   await saveRun(next);
-  return json({ ok: true, run: next });
+  return json({ ok: true, run: await decorateRun(next) });
+}
+
+async function decorateRun(run) {
+  const [user, seasons] = await Promise.all([getUserById(run.userId), allSeasons()]);
+  const season = seasons.find((item) => item.id === run.seasonId) || await activeSeason();
+  return {
+    ...run,
+    nickname: user?.nickname || "ไม่พบชื่อ",
+    seasonName: season?.name || "ไม่ระบุ Season",
+  };
 }
 
 async function adminDeleteRun(request, path) {

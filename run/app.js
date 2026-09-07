@@ -73,22 +73,6 @@ function escapeHtml(value) {
   })[char]);
 }
 
-function renderLeaderboard(targetId) {
-  const rows = state.leaderboard;
-  $(targetId).innerHTML = rows.length
-    ? rows.map((row, index) => `
-      <article class="leader-row">
-        <span class="rank">#${index + 1}</span>
-        <div>
-          <strong>${escapeHtml(row.nickname)}</strong>
-          <span>${row.runCount} ครั้ง</span>
-        </div>
-        <span class="distance">${formatDistance(row.totalKm)}</span>
-      </article>
-    `).join("")
-    : '<div class="empty">ยังไม่มีข้อมูลการวิ่งใน Season ปัจจุบัน</div>';
-}
-
 async function refreshPublic() {
   try {
     const data = await api("/leaderboard");
@@ -110,19 +94,29 @@ async function refreshDashboard() {
 
   try {
     const data = await api("/dashboard");
-    state.user = data.user;
-    state.runs = data.runs || [];
-    state.allRuns = data.allRuns || [];
-    state.members = data.members || [];
-    state.seasons = data.seasons || [];
-    state.currentSeason = data.currentSeason || null;
-    state.leaderboard = data.leaderboard || [];
+    applyDashboardData(data);
     renderDashboard();
   } catch {
     state.token = null;
     localStorage.removeItem("mhahaoRunToken");
     showSignedOut();
   }
+}
+
+async function refreshAfterChange(messageId, message) {
+  await refreshDashboard();
+  await refreshPublic();
+  if (messageId && message) setMessage(messageId, message, true);
+}
+
+function applyDashboardData(data) {
+  state.user = data.user;
+  state.runs = data.runs || [];
+  state.allRuns = data.allRuns || [];
+  state.members = data.members || [];
+  state.seasons = data.seasons || [];
+  state.currentSeason = data.currentSeason || null;
+  state.leaderboard = data.leaderboard || [];
 }
 
 function showSignedOut() {
@@ -155,6 +149,22 @@ function renderDashboard() {
     renderMembers();
     renderAdminRuns();
   }
+}
+
+function renderLeaderboard(targetId) {
+  const rows = state.leaderboard;
+  $(targetId).innerHTML = rows.length
+    ? rows.map((row, index) => `
+      <article class="leader-row">
+        <span class="rank">#${index + 1}</span>
+        <div>
+          <strong>${escapeHtml(row.nickname)}</strong>
+          <span>${row.runCount} ครั้ง</span>
+        </div>
+        <span class="distance">${formatDistance(row.totalKm)}</span>
+      </article>
+    `).join("")
+    : '<div class="empty">ยังไม่มีข้อมูลการวิ่งใน Season ปัจจุบัน</div>';
 }
 
 function renderRunRow(run) {
@@ -226,13 +236,6 @@ function renderMembers() {
     : '<div class="empty">ยังไม่มีสมาชิก</div>';
 }
 
-function resetMemberForm() {
-  state.editingMemberId = null;
-  $("memberForm").classList.add("hidden");
-  $("memberForm").reset();
-  setMessage("memberMessage", "");
-}
-
 function resetRunForm() {
   state.editingRunId = null;
   state.editingAdminRunId = null;
@@ -242,6 +245,70 @@ function resetRunForm() {
   $("runForm").reset();
   $("runDate").value = today();
   setMessage("runMessage", "");
+}
+
+function resetMemberForm() {
+  state.editingMemberId = null;
+  $("memberForm").classList.add("hidden");
+  $("memberForm").reset();
+  setMessage("memberMessage", "");
+}
+
+function applyRunResult(run) {
+  const normalized = {
+    ...run,
+    nickname: run.nickname || state.user?.nickname,
+    seasonName: run.seasonName || state.currentSeason?.name,
+  };
+  state.allRuns = upsertById(state.allRuns, normalized);
+  state.runs = upsertById(state.runs, normalized).filter(isCurrentSeasonRun).filter((item) => item.userId === state.user.id);
+  rebuildLocalLeaderboard();
+  updateMySummary();
+}
+
+function removeRunResult(id) {
+  state.allRuns = state.allRuns.filter((run) => run.id !== id);
+  state.runs = state.runs.filter((run) => run.id !== id);
+  rebuildLocalLeaderboard();
+  updateMySummary();
+}
+
+function upsertById(rows, row) {
+  return [row, ...rows.filter((item) => item.id !== row.id)]
+    .sort((a, b) => `${b.date} ${b.createdAt || ""}`.localeCompare(`${a.date} ${a.createdAt || ""}`));
+}
+
+function isCurrentSeasonRun(run) {
+  if (!state.currentSeason) return false;
+  if (run.seasonId) return run.seasonId === state.currentSeason.id;
+  return run.date >= state.currentSeason.startDate && (!state.currentSeason.endDate || run.date <= state.currentSeason.endDate);
+}
+
+function rebuildLocalLeaderboard() {
+  const currentRuns = state.allRuns.filter(isCurrentSeasonRun);
+  state.members = state.members.map((member) => {
+    const memberRuns = currentRuns.filter((run) => run.userId === member.id);
+    return {
+      ...member,
+      totalKm: memberRuns.reduce((sum, run) => sum + Number(run.distanceKm), 0),
+      runCount: memberRuns.length,
+    };
+  });
+  state.leaderboard = state.members
+    .map((member) => ({
+      id: member.id,
+      nickname: member.nickname,
+      totalKm: member.totalKm,
+      runCount: member.runCount,
+    }))
+    .filter((row) => row.totalKm > 0)
+    .sort((a, b) => b.totalKm - a.totalKm || a.nickname.localeCompare(b.nickname, "th"));
+}
+
+function updateMySummary() {
+  const myRuns = state.allRuns.filter((run) => run.userId === state.user.id).filter(isCurrentSeasonRun);
+  state.runs = myRuns.sort((a, b) => `${b.date} ${b.createdAt || ""}`.localeCompare(`${a.date} ${a.createdAt || ""}`));
+  state.user.totalKm = myRuns.reduce((sum, run) => sum + Number(run.distanceKm), 0);
 }
 
 $("showLogin").addEventListener("click", () => showAuthMode("login"));
@@ -309,24 +376,28 @@ $("runForm").addEventListener("submit", async (event) => {
   });
 
   try {
+    let result;
     if (state.editingRunId) {
-      await api(`/runs/${encodeURIComponent(state.editingRunId)}`, { method: "PUT", body: payload });
+      result = await api(`/runs/${encodeURIComponent(state.editingRunId)}`, { method: "PUT", body: payload });
     } else if (state.editingAdminRunId) {
-      await api(`/admin/runs/${encodeURIComponent(state.editingAdminRunId)}`, { method: "PUT", body: payload });
+      result = await api(`/admin/runs/${encodeURIComponent(state.editingAdminRunId)}`, { method: "PUT", body: payload });
     } else {
-      await api("/runs", { method: "POST", body: payload });
+      result = await api("/runs", { method: "POST", body: payload });
     }
+    if (result.run) applyRunResult(result.run);
     resetRunForm();
-    setMessage("runMessage", "บันทึกแล้ว", true);
-    await refreshDashboard();
+    renderDashboard();
+    await refreshAfterChange("runMessage", "บันทึกแล้ว");
   } catch (error) {
     setMessage("runMessage", error.message);
   }
 });
 
 $("historyList").addEventListener("click", async (event) => {
-  const editId = event.target.dataset.edit;
-  const deleteId = event.target.dataset.delete;
+  const button = event.target.closest("button");
+  if (!button) return;
+  const editId = button.dataset.edit;
+  const deleteId = button.dataset.delete;
 
   if (editId) {
     const run = state.runs.find((item) => item.id === editId);
@@ -345,8 +416,10 @@ $("historyList").addEventListener("click", async (event) => {
   if (deleteId && confirm("ลบรายการวิ่งนี้หรือไม่?")) {
     try {
       await api(`/runs/${encodeURIComponent(deleteId)}`, { method: "DELETE" });
+      removeRunResult(deleteId);
       resetRunForm();
-      await refreshDashboard();
+      renderDashboard();
+      await refreshAfterChange("runMessage", "ลบรายการแล้ว");
     } catch (error) {
       setMessage("runMessage", error.message);
     }
@@ -354,8 +427,10 @@ $("historyList").addEventListener("click", async (event) => {
 });
 
 $("adminRunsList").addEventListener("click", async (event) => {
-  const editId = event.target.dataset.adminEdit;
-  const deleteId = event.target.dataset.adminDelete;
+  const button = event.target.closest("button");
+  if (!button) return;
+  const editId = button.dataset.adminEdit;
+  const deleteId = button.dataset.adminDelete;
 
   if (editId) {
     const run = state.allRuns.find((item) => item.id === editId);
@@ -375,8 +450,10 @@ $("adminRunsList").addEventListener("click", async (event) => {
   if (deleteId && confirm("admin ต้องการลบรายการวิ่งนี้หรือไม่?")) {
     try {
       await api(`/admin/runs/${encodeURIComponent(deleteId)}`, { method: "DELETE" });
+      removeRunResult(deleteId);
       resetRunForm();
-      await refreshDashboard();
+      renderDashboard();
+      await refreshAfterChange("runMessage", "ลบรายการแล้ว");
     } catch (error) {
       setMessage("runMessage", error.message);
     }
@@ -395,8 +472,7 @@ $("seasonForm").addEventListener("submit", async (event) => {
       }),
     });
     $("seasonForm").reset();
-    setMessage("seasonMessage", "เพิ่ม Season แล้ว", true);
-    await refreshDashboard();
+    await refreshAfterChange("seasonMessage", "เพิ่ม Season แล้ว");
   } catch (error) {
     setMessage("seasonMessage", error.message);
   }
@@ -405,15 +481,13 @@ $("seasonForm").addEventListener("submit", async (event) => {
 $("seasonList").addEventListener("click", async (event) => {
   const button = event.target.closest("button");
   if (!button || button.disabled) return;
-
   const seasonId = button.dataset.seasonCurrent;
   const deleteId = button.dataset.seasonDelete;
 
   if (seasonId) {
     try {
       await api(`/admin/seasons/${encodeURIComponent(seasonId)}/current`, { method: "POST" });
-      setMessage("seasonMessage", "ตั้ง Season ปัจจุบันแล้ว", true);
-      await refreshDashboard();
+      await refreshAfterChange("seasonMessage", "ตั้ง Season ปัจจุบันแล้ว");
     } catch (error) {
       setMessage("seasonMessage", error.message);
     }
@@ -422,8 +496,7 @@ $("seasonList").addEventListener("click", async (event) => {
   if (deleteId && confirm("ลบ Season นี้หรือไม่?")) {
     try {
       await api(`/admin/seasons/${encodeURIComponent(deleteId)}`, { method: "DELETE" });
-      setMessage("seasonMessage", "ลบ Season แล้ว", true);
-      await refreshDashboard();
+      await refreshAfterChange("seasonMessage", "ลบ Season แล้ว");
     } catch (error) {
       setMessage("seasonMessage", error.message);
     }
@@ -433,7 +506,6 @@ $("seasonList").addEventListener("click", async (event) => {
 $("memberList").addEventListener("click", async (event) => {
   const button = event.target.closest("button");
   if (!button || button.disabled) return;
-
   const editId = button.dataset.memberEdit;
   const deleteId = button.dataset.memberDelete;
 
@@ -452,7 +524,7 @@ $("memberList").addEventListener("click", async (event) => {
     try {
       await api(`/admin/users/${encodeURIComponent(deleteId)}`, { method: "DELETE" });
       resetMemberForm();
-      await refreshDashboard();
+      await refreshAfterChange("memberMessage", "ลบสมาชิกแล้ว");
     } catch (error) {
       setMessage("memberMessage", error.message);
     }
@@ -473,15 +545,13 @@ $("memberForm").addEventListener("submit", async (event) => {
       }),
     });
     resetMemberForm();
-    setMessage("memberMessage", "บันทึกสมาชิกแล้ว", true);
-    await refreshDashboard();
+    await refreshAfterChange("memberMessage", "บันทึกสมาชิกแล้ว");
   } catch (error) {
     setMessage("memberMessage", error.message);
   }
 });
 
 $("cancelMemberEditButton").addEventListener("click", resetMemberForm);
-
 $("cancelEditButton").addEventListener("click", resetRunForm);
 
 $("runDate").value = today();
