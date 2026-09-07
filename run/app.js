@@ -3,11 +3,13 @@ const state = {
   user: null,
   runs: [],
   allRuns: [],
+  members: [],
   seasons: [],
   currentSeason: null,
   leaderboard: [],
   editingRunId: null,
   editingAdminRunId: null,
+  editingMemberId: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -111,6 +113,7 @@ async function refreshDashboard() {
     state.user = data.user;
     state.runs = data.runs || [];
     state.allRuns = data.allRuns || [];
+    state.members = data.members || [];
     state.seasons = data.seasons || [];
     state.currentSeason = data.currentSeason || null;
     state.leaderboard = data.leaderboard || [];
@@ -145,9 +148,11 @@ function renderDashboard() {
 
   renderLeaderboard("leaderboard");
   $("adminPanel").classList.toggle("hidden", !isAdmin);
+  $("adminUsersPanel").classList.toggle("hidden", !isAdmin);
   $("adminRunsPanel").classList.toggle("hidden", !isAdmin);
   if (isAdmin) {
     renderSeasons();
+    renderMembers();
     renderAdminRuns();
   }
 }
@@ -201,6 +206,31 @@ function renderAdminRuns() {
       </article>
     `).join("")
     : '<div class="empty">ยังไม่มีรายการวิ่งจากสมาชิก</div>';
+}
+
+function renderMembers() {
+  $("memberCount").textContent = `${state.members.length} คน`;
+  $("memberList").innerHTML = state.members.length
+    ? state.members.map((member) => `
+      <article class="run-item">
+        <div>
+          <strong>${escapeHtml(member.nickname)}${member.isAdmin ? '<span class="badge">admin</span>' : ""}</strong>
+          <span>${escapeHtml(member.username)} · ${formatDistance(member.totalKm)} · ${member.runCount} ครั้ง</span>
+        </div>
+        <div class="run-actions">
+          <button class="icon-button" type="button" data-member-edit="${member.id}">แก้ไข</button>
+          <button class="icon-button danger" type="button" data-member-delete="${member.id}" ${member.id === state.user.id ? "disabled" : ""}>ลบ</button>
+        </div>
+      </article>
+    `).join("")
+    : '<div class="empty">ยังไม่มีสมาชิก</div>';
+}
+
+function resetMemberForm() {
+  state.editingMemberId = null;
+  $("memberForm").classList.add("hidden");
+  $("memberForm").reset();
+  setMessage("memberMessage", "");
 }
 
 function resetRunForm() {
@@ -399,6 +429,58 @@ $("seasonList").addEventListener("click", async (event) => {
     }
   }
 });
+
+$("memberList").addEventListener("click", async (event) => {
+  const button = event.target.closest("button");
+  if (!button || button.disabled) return;
+
+  const editId = button.dataset.memberEdit;
+  const deleteId = button.dataset.memberDelete;
+
+  if (editId) {
+    const member = state.members.find((item) => item.id === editId);
+    if (!member) return;
+    state.editingMemberId = member.id;
+    $("memberUsername").value = member.username;
+    $("memberNickname").value = member.nickname;
+    $("memberPassword").value = "";
+    $("memberForm").classList.remove("hidden");
+    setMessage("memberMessage", "");
+  }
+
+  if (deleteId && confirm("ลบสมาชิกนี้หรือไม่? รายการวิ่งของสมาชิกคนนี้จะถูกลบด้วย")) {
+    try {
+      await api(`/admin/users/${encodeURIComponent(deleteId)}`, { method: "DELETE" });
+      resetMemberForm();
+      await refreshDashboard();
+    } catch (error) {
+      setMessage("memberMessage", error.message);
+    }
+  }
+});
+
+$("memberForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!state.editingMemberId) return;
+
+  try {
+    await api(`/admin/users/${encodeURIComponent(state.editingMemberId)}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        username: clean($("memberUsername").value).toLowerCase(),
+        nickname: clean($("memberNickname").value),
+        password: $("memberPassword").value,
+      }),
+    });
+    resetMemberForm();
+    setMessage("memberMessage", "บันทึกสมาชิกแล้ว", true);
+    await refreshDashboard();
+  } catch (error) {
+    setMessage("memberMessage", error.message);
+  }
+});
+
+$("cancelMemberEditButton").addEventListener("click", resetMemberForm);
 
 $("cancelEditButton").addEventListener("click", resetRunForm);
 

@@ -144,6 +144,28 @@
           <div class="history-list" id="seasonList"></div>
         </section>
 
+        <section class="panel hidden" id="adminUsersPanel">
+          <div class="section-title">
+            <h2>จัดการสมาชิก</h2>
+            <span id="memberCount">0 คน</span>
+          </div>
+          <form class="form member-form hidden" id="memberForm">
+            <label>Username
+              <input id="memberUsername" required />
+            </label>
+            <label>ชื่อที่แสดง
+              <input id="memberNickname" required />
+            </label>
+            <label>Password ใหม่
+              <input id="memberPassword" type="password" placeholder="เว้นว่างถ้าไม่เปลี่ยน" />
+            </label>
+            <button class="primary" type="submit">บันทึกสมาชิก</button>
+            <button class="icon-button" id="cancelMemberEditButton" type="button">ยกเลิก</button>
+            <p class="message" id="memberMessage" aria-live="polite"></p>
+          </form>
+          <div class="history-list" id="memberList"></div>
+        </section>
+
         <section class="panel hidden" id="adminRunsPanel">
           <div class="section-title">
             <h2>จัดการผลการวิ่งทั้งหมด</h2>
@@ -153,6 +175,6 @@
         </section>
       </section>
     </main>
-    <script src="app.js?v=20260907-season-actions-fix"></script>
+    <script src="app.js?v=20260907-admin-members"></script>
   </body>
 </html>

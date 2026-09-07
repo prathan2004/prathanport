@@ -21,11 +21,14 @@ export default async function handler(request) {
     if (method === "POST" && path === "/admin/seasons") return createSeason(request, body);
     if (path.startsWith("/admin/seasons/") && path.endsWith("/current") && method === "POST") return setCurrentSeason(request, path);
     if (path.startsWith("/admin/seasons/") && method === "DELETE") return deleteSeason(request, path);
+    if (path.startsWith("/admin/users/") && method === "PUT") return adminUpdateUser(request, path, body);
+    if (path.startsWith("/admin/users/") && method === "DELETE") return adminDeleteUser(request, path);
     if (path.startsWith("/admin/runs/") && method === "PUT") return adminUpdateRun(request, path, body);
     if (path.startsWith("/admin/runs/") && method === "DELETE") return adminDeleteRun(request, path);
 
     return json({ error: "ไม่พบ API นี้" }, 404);
   } catch (error) {
+    console.error(error);
     return json({ error: error.message || "เกิดข้อผิดพลาด" }, error.status || 500);
   }
 }
@@ -65,7 +68,17 @@ async function allSeasons() {
 }
 
 async function saveUser(user) {
-  await store().setJSON(`users/${user.id}.json`, user);
+  await Promise.all([
+    store().setJSON(`users/${user.id}.json`, user),
+    store().setJSON(`usernames/${user.username.toLowerCase()}.json`, user),
+  ]);
+}
+
+async function deleteUserRecord(user) {
+  await Promise.all([
+    store().delete(`users/${user.id}.json`),
+    store().delete(`usernames/${user.username.toLowerCase()}.json`),
+  ]);
 }
 
 async function saveRun(run) {
@@ -81,8 +94,13 @@ async function getUserById(id) {
 }
 
 async function getUserByUsername(username) {
+  const directUser = await store().get(`usernames/${username.toLowerCase()}.json`, { type: "json" });
+  if (directUser) return directUser;
+
   const users = await allUsers();
-  return users.find((user) => user.username.toLowerCase() === username.toLowerCase()) || null;
+  const user = users.find((user) => user.username.toLowerCase() === username.toLowerCase()) || null;
+  if (user) await saveUser(user);
+  return user;
 }
 
 async function getRunById(id) {
@@ -205,11 +223,24 @@ async function dashboard(request) {
       seasonName: seasonMap.get(run.seasonId)?.name || (inSeason(run, currentSeason) ? currentSeason.name : "ไม่ระบุ Season"),
     })).sort(sortRuns)
     : [];
+  const members = user.isAdmin
+    ? users
+      .map((member) => {
+        const memberRuns = currentRuns.filter((run) => run.userId === member.id);
+        return {
+          ...publicUser(member),
+          totalKm: totalDistance(memberRuns),
+          runCount: memberRuns.length,
+        };
+      })
+      .sort((a, b) => a.nickname.localeCompare(b.nickname, "th"))
+    : [];
 
   return json({
     user: { ...publicUser(user), totalKm: totalDistance(userRuns) },
     runs: userRuns,
     allRuns: allUserRuns,
+    members,
     seasons: seasons.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || ""))),
     currentSeason,
     leaderboard: await leaderboard(currentSeason),
@@ -300,6 +331,51 @@ async function adminDeleteRun(request, path) {
   const current = await getRunById(id);
   if (!current) return json({ error: "ไม่พบรายการวิ่งนี้" }, 404);
   await store().delete(`runs/${id}.json`);
+  return json({ ok: true });
+}
+
+async function adminUpdateUser(request, path, body) {
+  const admin = await requireAdmin(request);
+  const id = decodeURIComponent(path.replace("/admin/users/", ""));
+  const user = await getUserById(id);
+  if (!user) return json({ error: "ไม่พบสมาชิกนี้" }, 404);
+
+  const username = clean(body.username).toLowerCase();
+  const nickname = clean(body.nickname);
+  const password = String(body.password || "");
+  if (!username || !nickname) return json({ error: "กรุณากรอก username และชื่อที่แสดง" }, 400);
+  if (password && password.length < 4) return json({ error: "Password ใหม่ต้องมีอย่างน้อย 4 ตัวอักษร" }, 400);
+
+  const existing = await getUserByUsername(username);
+  if (existing && existing.id !== id) return json({ error: "Username นี้ถูกใช้แล้ว" }, 409);
+
+  const next = { ...user, username, nickname, updatedAt: new Date().toISOString() };
+  if (password) {
+    next.salt = crypto.randomUUID();
+    next.passwordHash = await hashPassword(password, next.salt);
+  }
+
+  if (user.username.toLowerCase() !== username) await store().delete(`usernames/${user.username.toLowerCase()}.json`);
+  await saveUser(next);
+
+  return json({ ok: true, user: publicUser(next), admin: admin.username });
+}
+
+async function adminDeleteUser(request, path) {
+  const admin = await requireAdmin(request);
+  const id = decodeURIComponent(path.replace("/admin/users/", ""));
+  if (id === admin.id) return json({ error: "ลบบัญชี admin ที่กำลังใช้งานไม่ได้" }, 400);
+
+  const user = await getUserById(id);
+  if (!user) return json({ error: "ไม่พบสมาชิกนี้" }, 404);
+
+  const [runs, sessions] = await Promise.all([allRuns(), listJson("sessions/")]);
+  await Promise.all([
+    ...runs.filter((run) => run.userId === id).map((run) => store().delete(`runs/${run.id}.json`)),
+    ...sessions.filter((session) => session.userId === id).map((session) => store().delete(`sessions/${session.token}.json`)),
+    deleteUserRecord(user),
+  ]);
+
   return json({ ok: true });
 }
 

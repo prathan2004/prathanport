@@ -329,7 +329,14 @@ input:focus {
   margin-top: 16px;
 }
 
-.season-form .message {
+.member-form {
+  grid-template-columns: repeat(3, 1fr) auto auto;
+  align-items: end;
+  margin-top: 16px;
+}
+
+.season-form .message,
+.member-form .message {
   grid-column: 1 / -1;
 }
 
@@ -350,6 +357,10 @@ input:focus {
 
 @media (max-width: 980px) {
   .season-form {
+    grid-template-columns: 1fr;
+  }
+
+  .member-form {
     grid-template-columns: 1fr;
   }
 }
