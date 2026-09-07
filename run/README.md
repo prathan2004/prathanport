@@ -14,9 +14,9 @@
 
 ข้อดีคือไม่ต้องใช้ Database และไม่ต้องทำ migration แต่ผู้ใช้หลายคนจะเห็น leaderboard และข้อมูลระยะทางร่วมกันผ่าน API เดียวกัน
 
-## วิธี deploy บน Netlify
+## วิธี deploy บน Netlify สำหรับใช้งานที่ `/run/`
 
-1. ตั้งค่า Base directory เป็น `run` ถ้า deploy จาก repo หลัก `prathanport`
+1. ตั้งค่า Base directory เป็นค่าว่าง เพราะต้อง deploy จาก root ของ `prathanport`
 2. Build command ใช้ `npm run build`
 3. Publish directory ใช้ `.`
 4. Netlify จะติดตั้ง dependency `@netlify/blobs` จาก `package.json`
