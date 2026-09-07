@@ -20,6 +20,7 @@ export default async function handler(request) {
     if (path.startsWith("/runs/") && method === "DELETE") return deleteRun(request, path);
     if (method === "POST" && path === "/admin/seasons") return createSeason(request, body);
     if (path.startsWith("/admin/seasons/") && path.endsWith("/current") && method === "POST") return setCurrentSeason(request, path);
+    if (path.startsWith("/admin/seasons/") && method === "DELETE") return deleteSeason(request, path);
     if (path.startsWith("/admin/runs/") && method === "PUT") return adminUpdateRun(request, path, body);
     if (path.startsWith("/admin/runs/") && method === "DELETE") return adminDeleteRun(request, path);
 
@@ -329,6 +330,23 @@ async function setCurrentSeason(request, path) {
   const seasons = await allSeasons();
   if (!seasons.some((season) => season.id === id)) return json({ error: "ไม่พบ Season นี้" }, 404);
   await Promise.all(seasons.map((season) => saveSeason({ ...season, isCurrent: season.id === id })));
+  return json({ ok: true });
+}
+
+async function deleteSeason(request, path) {
+  await requireAdmin(request);
+  const id = decodeURIComponent(path.replace("/admin/seasons/", ""));
+  const seasons = await allSeasons();
+  const season = seasons.find((item) => item.id === id);
+  if (!season) return json({ error: "ไม่พบ Season นี้" }, 404);
+  if (season.isCurrent) return json({ error: "ลบ Season ปัจจุบันไม่ได้" }, 400);
+
+  const runs = await allRuns();
+  if (runs.some((run) => run.seasonId === id)) {
+    return json({ error: "ลบ Season ที่มีรายการวิ่งอยู่ไม่ได้" }, 400);
+  }
+
+  await store().delete(`seasons/${id}.json`);
   return json({ ok: true });
 }
 

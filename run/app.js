@@ -178,6 +178,7 @@ function renderSeasons() {
         </div>
         <div class="run-actions">
           <button class="icon-button" type="button" data-season-current="${season.id}" ${season.isCurrent ? "disabled" : ""}>ตั้งปัจจุบัน</button>
+          <button class="icon-button danger" type="button" data-season-delete="${season.id}" ${season.isCurrent ? "disabled" : ""}>ลบ</button>
         </div>
       </article>
     `).join("")
@@ -373,13 +374,26 @@ $("seasonForm").addEventListener("submit", async (event) => {
 
 $("seasonList").addEventListener("click", async (event) => {
   const seasonId = event.target.dataset.seasonCurrent;
-  if (!seasonId) return;
-  try {
-    await api(`/admin/seasons/${encodeURIComponent(seasonId)}/current`, { method: "POST" });
-    setMessage("seasonMessage", "ตั้ง Season ปัจจุบันแล้ว", true);
-    await refreshDashboard();
-  } catch (error) {
-    setMessage("seasonMessage", error.message);
+  const deleteId = event.target.dataset.seasonDelete;
+
+  if (seasonId) {
+    try {
+      await api(`/admin/seasons/${encodeURIComponent(seasonId)}/current`, { method: "POST" });
+      setMessage("seasonMessage", "ตั้ง Season ปัจจุบันแล้ว", true);
+      await refreshDashboard();
+    } catch (error) {
+      setMessage("seasonMessage", error.message);
+    }
+  }
+
+  if (deleteId && confirm("ลบ Season นี้หรือไม่?")) {
+    try {
+      await api(`/admin/seasons/${encodeURIComponent(deleteId)}`, { method: "DELETE" });
+      setMessage("seasonMessage", "ลบ Season แล้ว", true);
+      await refreshDashboard();
+    } catch (error) {
+      setMessage("seasonMessage", error.message);
+    }
   }
 });
 
