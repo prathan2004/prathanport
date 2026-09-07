@@ -3,28 +3,33 @@ import { getStore } from "@netlify/blobs";
 const SESSION_DAYS = 30;
 const STORE_NAME = "mhahao-run";
 
-export async function handler(event) {
+export default async function handler(request) {
   try {
-    const path = normalizePath(event.path);
-    const method = event.httpMethod.toUpperCase();
-    const body = event.body ? JSON.parse(event.body) : {};
+    const url = new URL(request.url);
+    const path = normalizePath(url.pathname);
+    const method = request.method.toUpperCase();
+    const body = method === "GET" || method === "DELETE" ? {} : await request.json().catch(() => ({}));
 
     if (method === "GET" && path === "/leaderboard") return json({ leaderboard: await leaderboard() });
     if (method === "POST" && path === "/signup") return signup(body);
     if (method === "POST" && path === "/login") return login(body);
-    if (method === "POST" && path === "/logout") return logout(event);
-    if (method === "GET" && path === "/dashboard") return dashboard(event);
-    if (method === "GET" && path === "/export") return exportData(event);
-    if (method === "POST" && path === "/import") return importData(event, body);
-    if (method === "POST" && path === "/runs") return createRun(event, body);
-    if (path.startsWith("/runs/") && method === "PUT") return updateRun(event, path, body);
-    if (path.startsWith("/runs/") && method === "DELETE") return deleteRun(event, path);
+    if (method === "POST" && path === "/logout") return logout(request);
+    if (method === "GET" && path === "/dashboard") return dashboard(request);
+    if (method === "GET" && path === "/export") return exportData(request);
+    if (method === "POST" && path === "/import") return importData(request, body);
+    if (method === "POST" && path === "/runs") return createRun(request, body);
+    if (path.startsWith("/runs/") && method === "PUT") return updateRun(request, path, body);
+    if (path.startsWith("/runs/") && method === "DELETE") return deleteRun(request, path);
 
     return json({ error: "ไม่พบ API นี้" }, 404);
   } catch (error) {
     return json({ error: error.message || "เกิดข้อผิดพลาด" }, error.status || 500);
   }
 }
+
+export const config = {
+  path: ["/api/*", "/run/api/*"],
+};
 
 function normalizePath(path) {
   return path
@@ -116,14 +121,14 @@ async function login(body) {
   return json({ token, user: publicUser(user) });
 }
 
-async function logout(event) {
-  const token = bearerToken(event);
+async function logout(request) {
+  const token = bearerToken(request);
   if (token) await store().delete(`sessions/${token}.json`);
   return json({ ok: true });
 }
 
-async function requireUser(event) {
-  const token = bearerToken(event);
+async function requireUser(request) {
+  const token = bearerToken(request);
   if (!token) throw Object.assign(new Error("กรุณาเข้าสู่ระบบ"), { status: 401 });
 
   const session = await store().get(`sessions/${token}.json`, { type: "json" });
@@ -136,8 +141,8 @@ async function requireUser(event) {
   return user;
 }
 
-async function dashboard(event) {
-  const user = await requireUser(event);
+async function dashboard(request) {
+  const user = await requireUser(request);
   const runs = (await allRuns())
     .filter((run) => run.userId === user.id)
     .sort((a, b) => `${b.date} ${b.createdAt}`.localeCompare(`${a.date} ${a.createdAt}`));
@@ -167,8 +172,8 @@ async function leaderboard() {
     .sort((a, b) => b.totalKm - a.totalKm || a.nickname.localeCompare(b.nickname, "th"));
 }
 
-async function createRun(event, body) {
-  const user = await requireUser(event);
+async function createRun(request, body) {
+  const user = await requireUser(request);
   const run = validateRun(body);
   run.id = crypto.randomUUID();
   run.userId = user.id;
@@ -177,8 +182,8 @@ async function createRun(event, body) {
   return json({ ok: true, run });
 }
 
-async function updateRun(event, path, body) {
-  const user = await requireUser(event);
+async function updateRun(request, path, body) {
+  const user = await requireUser(request);
   const id = decodeURIComponent(path.replace("/runs/", ""));
   const current = await store().get(`runs/${id}.json`, { type: "json" });
   if (!current || current.userId !== user.id) return json({ error: "ไม่พบรายการวิ่งนี้" }, 404);
@@ -188,8 +193,8 @@ async function updateRun(event, path, body) {
   return json({ ok: true, run: next });
 }
 
-async function deleteRun(event, path) {
-  const user = await requireUser(event);
+async function deleteRun(request, path) {
+  const user = await requireUser(request);
   const id = decodeURIComponent(path.replace("/runs/", ""));
   const current = await store().get(`runs/${id}.json`, { type: "json" });
   if (!current || current.userId !== user.id) return json({ error: "ไม่พบรายการวิ่งนี้" }, 404);
@@ -197,13 +202,13 @@ async function deleteRun(event, path) {
   return json({ ok: true });
 }
 
-async function exportData(event) {
-  await requireUser(event);
+async function exportData(request) {
+  await requireUser(request);
   return json({ users: (await allUsers()).map(publicUser), runs: await allRuns() });
 }
 
-async function importData(event, body) {
-  await requireUser(event);
+async function importData(request, body) {
+  await requireUser(request);
   if (!Array.isArray(body.runs)) return json({ error: "ไฟล์ไม่ถูกต้อง" }, 400);
 
   await Promise.all(body.runs.map((run) => {
@@ -238,8 +243,8 @@ async function hashPassword(password, salt) {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-function bearerToken(event) {
-  const header = event.headers.authorization || event.headers.Authorization || "";
+function bearerToken(request) {
+  const header = request.headers.get("authorization") || "";
   return header.startsWith("Bearer ") ? header.slice(7) : "";
 }
 
@@ -247,10 +252,9 @@ function clean(value, max = 80) {
   return String(value || "").trim().slice(0, max);
 }
 
-function json(data, statusCode = 200) {
-  return {
-    statusCode,
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
     headers: { "content-type": "application/json; charset=utf-8" },
-    body: JSON.stringify(data),
-  };
+  });
 }
