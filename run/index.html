@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Run Club Tracker</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="auth-view" id="authView">
+        <div class="intro">
+          <div class="brand-lockup">
+            <span class="brand-mark">RC</span>
+            <div>
+              <p class="eyebrow">Run Club Tracker</p>
+              <h1>บันทึกระยะวิ่งของทีม</h1>
+            </div>
+          </div>
+          <p class="lead">สมัครสมาชิก เข้าสู่ระบบ แล้วบันทึกระยะวิ่งรายวันได้ทันที พร้อมสรุปอันดับสะสมโดยไม่ต้องมีระบบอัปโหลดรูปภาพ</p>
+          <section class="public-board">
+            <div class="section-title">
+              <h2>อันดับรวม</h2>
+              <span id="publicSeasonLabel">Season ปัจจุบัน</span>
+            </div>
+            <div class="leaderboard" id="publicLeaderboard"></div>
+          </section>
+        </div>
+
+        <section class="auth-card" aria-label="เข้าสู่ระบบหรือสมัครบัญชี">
+          <div class="tabs" role="tablist">
+            <button class="tab active" id="showLogin" type="button">เข้าสู่ระบบ</button>
+            <button class="tab" id="showSignup" type="button">สมัครบัญชี</button>
+          </div>
+
+          <form class="form" id="loginForm">
+            <label>Username
+              <input id="loginUsername" autocomplete="username" required />
+            </label>
+            <label>Password
+              <input id="loginPassword" type="password" autocomplete="current-password" required />
+            </label>
+            <button class="primary" type="submit">เข้าสู่ระบบ</button>
+          </form>
+
+          <form class="form hidden" id="signupForm">
+            <label>Username
+              <input id="signupUsername" autocomplete="username" required />
+            </label>
+            <label>Password
+              <input id="signupPassword" type="password" autocomplete="new-password" minlength="4" required />
+            </label>
+            <label>ชื่อที่แสดงในอันดับ
+              <input id="signupNickname" required />
+            </label>
+            <button class="primary" type="submit">สร้างบัญชี</button>
+          </form>
+          <p class="message" id="authMessage" aria-live="polite"></p>
+        </section>
+      </section>
+
+      <section class="dashboard hidden" id="dashboard">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">สวัสดี</p>
+            <h1 id="welcomeName">นักวิ่ง</h1>
+          </div>
+          <div class="top-actions">
+            <button class="ghost" id="exportButton" type="button">Export</button>
+            <label class="ghost import-label">Import
+              <input id="importInput" type="file" accept="application/json" />
+            </label>
+            <button class="ghost danger" id="logoutButton" type="button">ออกจากระบบ</button>
+          </div>
+        </header>
+
+        <section class="summary-grid" aria-label="สรุปการวิ่ง">
+          <article>
+            <span>ระยะสะสม</span>
+            <strong id="myTotal">0.00 กม.</strong>
+          </article>
+          <article>
+            <span>จำนวนครั้ง</span>
+            <strong id="myRuns">0 ครั้ง</strong>
+          </article>
+          <article>
+            <span>อันดับของคุณ</span>
+            <strong id="myRank">-</strong>
+          </article>
+        </section>
+
+        <div class="workspace">
+          <section class="panel">
+            <div class="section-title">
+              <h2 id="formTitle">บันทึกการวิ่ง</h2>
+              <button class="icon-button hidden" id="cancelEditButton" type="button">ยกเลิก</button>
+            </div>
+            <form class="form" id="runForm">
+              <label>วันที่วิ่ง
+                <input id="runDate" type="date" required />
+              </label>
+              <label>ระยะทาง (กม.)
+                <input id="runDistance" type="number" min="0.01" step="0.01" placeholder="เช่น 5.25" required />
+              </label>
+              <label>หมายเหตุ
+                <input id="runNote" maxlength="80" placeholder="เช่น easy run, tempo, long run" />
+              </label>
+              <button class="primary" type="submit" id="saveRunButton">บันทึก</button>
+              <p class="message" id="runMessage" aria-live="polite"></p>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="section-title">
+              <h2>ประวัติของคุณ</h2>
+              <span id="historyCount">0 รายการ</span>
+            </div>
+            <div class="history-list" id="historyList"></div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="section-title">
+            <h2>Leaderboard</h2>
+            <span>เรียงตามระยะสะสม</span>
+          </div>
+          <div class="leaderboard" id="leaderboard"></div>
+        </section>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
