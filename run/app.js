@@ -1,63 +1,22 @@
-const STORAGE_KEY = "runClubTrackerData";
-const SESSION_KEY = "runClubTrackerSession";
-
 const state = {
-  currentUserId: localStorage.getItem(SESSION_KEY),
+  token: localStorage.getItem("mhahaoRunToken"),
+  user: null,
+  runs: [],
+  leaderboard: [],
   editingRunId: null,
 };
 
 const $ = (id) => document.getElementById(id);
 
-function loadData() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      return {
-        users: Array.isArray(parsed.users) ? parsed.users : [],
-        runs: Array.isArray(parsed.runs) ? parsed.runs : [],
-      };
-    } catch {
-      return seedData();
-    }
-  }
-  return seedData();
-}
+async function api(path, options = {}) {
+  const headers = { ...(options.headers || {}) };
+  if (state.token) headers.Authorization = `Bearer ${state.token}`;
+  if (options.body && !(options.body instanceof FormData)) headers["Content-Type"] = "application/json";
 
-function seedData() {
-  const now = new Date().toISOString();
-  const data = {
-    users: [
-      {
-        id: crypto.randomUUID(),
-        username: "admin",
-        passwordHash: "",
-        salt: "",
-        nickname: "Admin",
-        isAdmin: true,
-        createdAt: now,
-      },
-    ],
-    runs: [],
-  };
-  saveData(data);
+  const response = await fetch(path, { ...options, headers });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "เกิดข้อผิดพลาด");
   return data;
-}
-
-function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-let data = loadData();
-
-async function sha256(text) {
-  const bytes = new TextEncoder().encode(text);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-async function hashPassword(password, salt) {
-  return sha256(`${salt}:${password}`);
 }
 
 function clean(value, max = 80) {
@@ -83,34 +42,8 @@ function showAuthMode(mode) {
   setMessage("authMessage", "");
 }
 
-function currentUser() {
-  return data.users.find((user) => user.id === state.currentUserId) || null;
-}
-
-function userRuns(userId) {
-  return data.runs
-    .filter((run) => run.userId === userId)
-    .sort((a, b) => `${b.date} ${b.createdAt}`.localeCompare(`${a.date} ${a.createdAt}`));
-}
-
-function totalFor(userId) {
-  return userRuns(userId).reduce((sum, run) => sum + Number(run.distanceKm), 0);
-}
-
-function leaderboardRows() {
-  return data.users
-    .map((user) => ({
-      id: user.id,
-      nickname: user.nickname,
-      totalKm: totalFor(user.id),
-      runCount: userRuns(user.id).length,
-    }))
-    .filter((row) => row.totalKm > 0)
-    .sort((a, b) => b.totalKm - a.totalKm || a.nickname.localeCompare(b.nickname, "th"));
-}
-
 function formatDistance(km) {
-  return `${Number(km).toFixed(2)} กม.`;
+  return `${Number(km || 0).toFixed(2)} กม.`;
 }
 
 function formatDate(dateText) {
@@ -128,7 +61,7 @@ function escapeHtml(value) {
 }
 
 function renderLeaderboard(targetId) {
-  const rows = leaderboardRows();
+  const rows = state.leaderboard;
   $(targetId).innerHTML = rows.length
     ? rows.map((row, index) => `
       <article class="leader-row">
@@ -143,29 +76,50 @@ function renderLeaderboard(targetId) {
     : '<div class="empty">ยังไม่มีข้อมูลการวิ่ง</div>';
 }
 
-function renderPublic() {
-  renderLeaderboard("publicLeaderboard");
+async function refreshPublic() {
+  try {
+    const data = await api("/api/leaderboard");
+    state.leaderboard = data.leaderboard || [];
+    renderLeaderboard("publicLeaderboard");
+    if ($("leaderboard")) renderLeaderboard("leaderboard");
+  } catch {
+    $("publicLeaderboard").innerHTML = '<div class="empty">ยังโหลดอันดับไม่ได้</div>';
+  }
 }
 
-function renderDashboard() {
-  const user = currentUser();
-  if (!user) {
-    state.currentUserId = null;
-    localStorage.removeItem(SESSION_KEY);
-    $("authView").classList.remove("hidden");
-    $("dashboard").classList.add("hidden");
-    renderPublic();
+async function refreshDashboard() {
+  if (!state.token) {
+    showSignedOut();
     return;
   }
 
-  const runs = userRuns(user.id);
-  const rows = leaderboardRows();
-  const rank = rows.findIndex((row) => row.id === user.id);
+  try {
+    const data = await api("/api/dashboard");
+    state.user = data.user;
+    state.runs = data.runs || [];
+    state.leaderboard = data.leaderboard || [];
+    renderDashboard();
+  } catch {
+    state.token = null;
+    localStorage.removeItem("mhahaoRunToken");
+    showSignedOut();
+  }
+}
+
+function showSignedOut() {
+  $("authView").classList.remove("hidden");
+  $("dashboard").classList.add("hidden");
+  refreshPublic();
+}
+
+function renderDashboard() {
+  const runs = state.runs;
+  const rank = state.leaderboard.findIndex((row) => row.id === state.user.id);
 
   $("authView").classList.add("hidden");
   $("dashboard").classList.remove("hidden");
-  $("welcomeName").textContent = user.nickname;
-  $("myTotal").textContent = formatDistance(totalFor(user.id));
+  $("welcomeName").textContent = state.user.nickname;
+  $("myTotal").textContent = formatDistance(state.user.totalKm);
   $("myRuns").textContent = `${runs.length} ครั้ง`;
   $("myRank").textContent = rank >= 0 ? `#${rank + 1}` : "-";
   $("historyCount").textContent = `${runs.length} รายการ`;
@@ -206,107 +160,80 @@ $("signupForm").addEventListener("submit", async (event) => {
   const password = $("signupPassword").value;
   const nickname = clean($("signupNickname").value);
 
-  if (!username || !nickname || password.length < 4) {
-    setMessage("authMessage", "กรุณากรอกข้อมูลให้ครบ และ Password อย่างน้อย 4 ตัวอักษร");
-    return;
+  try {
+    await api("/api/signup", {
+      method: "POST",
+      body: JSON.stringify({ username, password, nickname }),
+    });
+    $("signupForm").reset();
+    showAuthMode("login");
+    setMessage("authMessage", "สมัครบัญชีสำเร็จ เข้าสู่ระบบได้เลย", true);
+    await refreshPublic();
+  } catch (error) {
+    setMessage("authMessage", error.message);
   }
-  if (data.users.some((user) => user.username.toLowerCase() === username)) {
-    setMessage("authMessage", "Username นี้ถูกใช้แล้ว");
-    return;
-  }
-
-  const salt = crypto.randomUUID();
-  data.users.push({
-    id: crypto.randomUUID(),
-    username,
-    passwordHash: await hashPassword(password, salt),
-    salt,
-    nickname,
-    isAdmin: data.users.length === 0,
-    createdAt: new Date().toISOString(),
-  });
-  saveData(data);
-  $("signupForm").reset();
-  showAuthMode("login");
-  setMessage("authMessage", "สมัครบัญชีสำเร็จ เข้าสู่ระบบได้เลย", true);
-  renderPublic();
 });
 
 $("loginForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   const username = clean($("loginUsername").value).toLowerCase();
   const password = $("loginPassword").value;
-  const user = data.users.find((item) => item.username.toLowerCase() === username);
-  const valid = user && (!user.passwordHash || user.passwordHash === await hashPassword(password, user.salt));
 
-  if (!valid) {
-    setMessage("authMessage", "Username หรือ Password ไม่ถูกต้อง");
-    return;
+  try {
+    const data = await api("/api/login", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    });
+    state.token = data.token;
+    localStorage.setItem("mhahaoRunToken", data.token);
+    $("loginForm").reset();
+    resetRunForm();
+    await refreshDashboard();
+  } catch (error) {
+    setMessage("authMessage", error.message);
   }
-
-  state.currentUserId = user.id;
-  localStorage.setItem(SESSION_KEY, user.id);
-  $("loginForm").reset();
-  resetRunForm();
-  renderDashboard();
 });
 
-$("logoutButton").addEventListener("click", () => {
-  state.currentUserId = null;
-  localStorage.removeItem(SESSION_KEY);
+$("logoutButton").addEventListener("click", async () => {
+  try {
+    if (state.token) await api("/api/logout", { method: "POST" });
+  } catch {
+    // Logging out locally is enough if the online session already expired.
+  }
+  state.token = null;
+  state.user = null;
+  localStorage.removeItem("mhahaoRunToken");
   resetRunForm();
-  $("authView").classList.remove("hidden");
-  $("dashboard").classList.add("hidden");
-  renderPublic();
+  showSignedOut();
 });
 
-$("runForm").addEventListener("submit", (event) => {
+$("runForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const user = currentUser();
-  if (!user) return;
-
   const date = $("runDate").value;
   const distanceKm = Number($("runDistance").value);
   const note = clean($("runNote").value);
+  const payload = JSON.stringify({ date, distanceKm, note });
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(distanceKm) || distanceKm <= 0) {
-    setMessage("runMessage", "กรุณากรอกวันที่และระยะทางให้ถูกต้อง");
-    return;
-  }
-
-  if (state.editingRunId) {
-    const run = data.runs.find((item) => item.id === state.editingRunId && item.userId === user.id);
-    if (run) {
-      run.date = date;
-      run.distanceKm = distanceKm;
-      run.note = note;
-      run.updatedAt = new Date().toISOString();
+  try {
+    if (state.editingRunId) {
+      await api(`/api/runs/${encodeURIComponent(state.editingRunId)}`, { method: "PUT", body: payload });
+    } else {
+      await api("/api/runs", { method: "POST", body: payload });
     }
-  } else {
-    data.runs.push({
-      id: crypto.randomUUID(),
-      userId: user.id,
-      date,
-      distanceKm,
-      note,
-      createdAt: new Date().toISOString(),
-    });
+    resetRunForm();
+    setMessage("runMessage", "บันทึกแล้ว", true);
+    await refreshDashboard();
+  } catch (error) {
+    setMessage("runMessage", error.message);
   }
-
-  saveData(data);
-  resetRunForm();
-  setMessage("runMessage", "บันทึกแล้ว", true);
-  renderDashboard();
 });
 
-$("historyList").addEventListener("click", (event) => {
+$("historyList").addEventListener("click", async (event) => {
   const editId = event.target.dataset.edit;
   const deleteId = event.target.dataset.delete;
-  const user = currentUser();
-  if (!user) return;
 
   if (editId) {
-    const run = data.runs.find((item) => item.id === editId && item.userId === user.id);
+    const run = state.runs.find((item) => item.id === editId);
     if (!run) return;
     state.editingRunId = run.id;
     $("formTitle").textContent = "แก้ไขการวิ่ง";
@@ -319,23 +246,31 @@ $("historyList").addEventListener("click", (event) => {
   }
 
   if (deleteId && confirm("ลบรายการวิ่งนี้หรือไม่?")) {
-    data.runs = data.runs.filter((item) => !(item.id === deleteId && item.userId === user.id));
-    saveData(data);
-    resetRunForm();
-    renderDashboard();
+    try {
+      await api(`/api/runs/${encodeURIComponent(deleteId)}`, { method: "DELETE" });
+      resetRunForm();
+      await refreshDashboard();
+    } catch (error) {
+      setMessage("runMessage", error.message);
+    }
   }
 });
 
 $("cancelEditButton").addEventListener("click", resetRunForm);
 
-$("exportButton").addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `run-club-tracker-${today()}.json`;
-  link.click();
-  URL.revokeObjectURL(url);
+$("exportButton").addEventListener("click", async () => {
+  try {
+    const data = await api("/api/export");
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `mhahao-run-${today()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    alert(error.message);
+  }
 });
 
 $("importInput").addEventListener("change", async (event) => {
@@ -343,17 +278,15 @@ $("importInput").addEventListener("change", async (event) => {
   if (!file) return;
   try {
     const imported = JSON.parse(await file.text());
-    if (!Array.isArray(imported.users) || !Array.isArray(imported.runs)) throw new Error("Invalid file");
-    data = imported;
-    saveData(data);
-    renderDashboard();
-  } catch {
-    alert("ไฟล์ไม่ถูกต้อง");
+    await api("/api/import", { method: "POST", body: JSON.stringify(imported) });
+    await refreshDashboard();
+  } catch (error) {
+    alert(error.message || "ไฟล์ไม่ถูกต้อง");
   } finally {
     event.target.value = "";
   }
 });
 
-if (!$("runDate").value) $("runDate").value = today();
-renderPublic();
-renderDashboard();
+$("runDate").value = today();
+refreshPublic();
+refreshDashboard();

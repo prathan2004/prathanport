@@ -1,26 +1,28 @@
-# Run Club Tracker
+# Mhahao run
 
-เว็บนี้เป็น static site สำหรับ Netlify มีระบบสมัครบัญชี, login, บันทึกการวิ่ง, แก้ไข/ลบรายการ, leaderboard และ export/import ข้อมูล JSON โดยไม่มีระบบอัปโหลดรูปภาพ
+เว็บบันทึกระยะวิ่งพร้อมระบบสมัครบัญชี, login, บันทึก/แก้ไข/ลบระยะวิ่ง, leaderboard และ export/import JSON โดยไม่มีระบบอัปโหลดรูปภาพ
 
-## วิธีเก็บข้อมูลในเวอร์ชันนี้
+## การเก็บข้อมูลออนไลน์
 
-ไฟล์ `app.js` เก็บข้อมูลไว้ใน `localStorage` ของเบราว์เซอร์ผู้ใช้ จึงไม่ต้องใช้ Database และ deploy บน Netlify แบบ static ได้ทันที
+เวอร์ชันนี้เก็บข้อมูลออนไลน์บน Netlify ด้วย:
 
-ข้อจำกัดคือข้อมูลจะอยู่เฉพาะเครื่องและเบราว์เซอร์นั้น ๆ ผู้ใช้คนอื่นจะไม่เห็นข้อมูลเดียวกัน เว้นแต่จะ export/import ไฟล์ JSON เอง
+- Netlify Functions: รับ API ที่ `/api/...`
+- Netlify Blobs: เก็บข้อมูลแบบ key/value ใน store ชื่อ `mhahao-run`
+- Users: เก็บที่ `users/{userId}.json`
+- Sessions: เก็บที่ `sessions/{token}.json`
+- Runs: เก็บที่ `runs/{runId}.json`
 
-บัญชีเริ่มต้นสำหรับทดสอบ:
+ข้อดีคือไม่ต้องใช้ Database และไม่ต้องทำ migration แต่ผู้ใช้หลายคนจะเห็น leaderboard และข้อมูลระยะทางร่วมกันผ่าน API เดียวกัน
 
-- Username: `admin`
-- Password: เว้นว่าง
+## วิธี deploy บน Netlify
 
-## ถ้าต้องการข้อมูลกลางบน Netlify โดยไม่ใช้ Database
+1. ตั้งค่า Base directory เป็น `run` ถ้า deploy จาก repo หลัก `prathanport`
+2. Build command ใช้ `npm run build`
+3. Publish directory ใช้ `.`
+4. Netlify จะติดตั้ง dependency `@netlify/blobs` จาก `package.json`
 
-ตัวเลือกที่เหมาะสุดคือ Netlify Functions + Netlify Blobs
+หลัง deploy แล้วระบบจะเริ่มจากข้อมูลว่าง ให้สมัครบัญชีใหม่ได้เลย
 
-- Netlify Functions ทำหน้าที่เป็น API สำหรับ signup, login, บันทึก, แก้ไข และลบการวิ่ง
-- Netlify Blobs เก็บข้อมูลเป็น key/value หรือไฟล์ JSON เช่น `users.json`, `runs.json`, `sessions.json`
-- ไม่ต้อง provision database, ไม่มี migrations และอยู่ในระบบของ Netlify
+## หมายเหตุ
 
-ข้อควรระวัง: Netlify Blobs เหมาะกับงานอ่านบ่อย เขียนไม่ถี่มาก และการเขียน key เดียวกันพร้อมกันจะเป็นแบบ last write wins ถ้าคนใช้เยอะควรแยก key ต่อรายการ เช่น `runs/{runId}.json` เพื่อลดปัญหาข้อมูลชนกัน
-
-Netlify Forms เหมาะกับการรับ submission แบบฟอร์มและดูในแผง Netlify แต่ไม่เหมาะกับ login/dashboard ที่ต้องอ่านข้อมูลกลับมาแบบ realtime ให้ผู้ใช้ทั่วไป
+Netlify Blobs เหมาะกับข้อมูลที่อ่านบ่อยและเขียนไม่หนักมาก แต่ไม่ใช่ relational database หากในอนาคตมีผู้ใช้จำนวนมากหรือมีเงื่อนไขค้นหาซับซ้อน ควรพิจารณา database จริง เช่น Neon, Supabase หรือ Turso
