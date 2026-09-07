@@ -1,6 +1,6 @@
 # Mhahao run
 
-เว็บบันทึกระยะวิ่งพร้อมระบบสมัครบัญชี, login, บันทึก/แก้ไข/ลบระยะวิ่ง, leaderboard และ export/import JSON โดยไม่มีระบบอัปโหลดรูปภาพ
+เว็บบันทึกระยะวิ่งพร้อมระบบสมัครบัญชี, login, บันทึก/แก้ไข/ลบระยะวิ่ง, leaderboard และระบบจัดการ Season สำหรับ admin โดยไม่มีระบบอัปโหลดรูปภาพ
 
 ## การเก็บข้อมูลออนไลน์
 
@@ -11,8 +11,9 @@
 - Users: เก็บที่ `users/{userId}.json`
 - Sessions: เก็บที่ `sessions/{token}.json`
 - Runs: เก็บที่ `runs/{runId}.json`
+- Seasons: เก็บที่ `seasons/{seasonId}.json`
 
-ข้อดีคือไม่ต้องใช้ Database และไม่ต้องทำ migration แต่ผู้ใช้หลายคนจะเห็น leaderboard และข้อมูลระยะทางร่วมกันผ่าน API เดียวกัน
+ผลการจัดอันดับและระยะสะสมจะนับเฉพาะ Season ปัจจุบันเท่านั้น admin สามารถเพิ่ม Season และตั้งว่า Season ใดเป็น Season ปัจจุบันได้
 
 ## วิธี deploy บน Netlify สำหรับใช้งานที่ `/run/`
 

@@ -66,10 +66,6 @@
             <h1 id="welcomeName">นักวิ่ง</h1>
           </div>
           <div class="top-actions">
-            <button class="ghost" id="exportButton" type="button">Export</button>
-            <label class="ghost import-label">Import
-              <input id="importInput" type="file" accept="application/json" />
-            </label>
             <button class="ghost danger" id="logoutButton" type="button">ออกจากระบบ</button>
           </div>
         </header>
@@ -129,6 +125,27 @@
 
         <section class="panel hidden" id="adminPanel">
           <div class="section-title">
+            <h2>จัดการ Season</h2>
+            <span id="currentSeasonLabel">ยังไม่มี Season</span>
+          </div>
+          <form class="form season-form" id="seasonForm">
+            <label>ชื่อ Season
+              <input id="seasonName" placeholder="เช่น Season 1" required />
+            </label>
+            <label>วันเริ่ม
+              <input id="seasonStart" type="date" required />
+            </label>
+            <label>วันสิ้นสุด
+              <input id="seasonEnd" type="date" />
+            </label>
+            <button class="primary" type="submit">เพิ่ม Season</button>
+            <p class="message" id="seasonMessage" aria-live="polite"></p>
+          </form>
+          <div class="history-list" id="seasonList"></div>
+        </section>
+
+        <section class="panel hidden" id="adminRunsPanel">
+          <div class="section-title">
             <h2>จัดการผลการวิ่งทั้งหมด</h2>
             <span id="adminCount">0 รายการ</span>
           </div>
@@ -136,6 +153,6 @@
         </section>
       </section>
     </main>
-    <script src="app.js?v=20260907-admin-signup-fix"></script>
+    <script src="app.js?v=20260907-season-admin"></script>
   </body>
 </html>

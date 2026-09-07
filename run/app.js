@@ -3,19 +3,20 @@ const state = {
   user: null,
   runs: [],
   allRuns: [],
+  seasons: [],
+  currentSeason: null,
   leaderboard: [],
   editingRunId: null,
   editingAdminRunId: null,
 };
 
 const $ = (id) => document.getElementById(id);
-
 const API_BASE = window.location.pathname.startsWith("/run") ? "/run/api" : "/api";
 
 async function api(path, options = {}) {
   const headers = { ...(options.headers || {}) };
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
-  if (options.body && !(options.body instanceof FormData)) headers["Content-Type"] = "application/json";
+  if (options.body) headers["Content-Type"] = "application/json";
 
   const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
   const data = await response.json().catch(() => ({}));
@@ -54,6 +55,12 @@ function formatDate(dateText) {
   return new Date(`${dateText}T00:00:00`).toLocaleDateString("th-TH", { dateStyle: "medium" });
 }
 
+function formatSeason(season) {
+  if (!season) return "ยังไม่มี Season";
+  const end = season.endDate ? formatDate(season.endDate) : "ไม่กำหนดวันสิ้นสุด";
+  return `${season.name} · ${formatDate(season.startDate)} - ${end}`;
+}
+
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
@@ -77,13 +84,15 @@ function renderLeaderboard(targetId) {
         <span class="distance">${formatDistance(row.totalKm)}</span>
       </article>
     `).join("")
-    : '<div class="empty">ยังไม่มีข้อมูลการวิ่ง</div>';
+    : '<div class="empty">ยังไม่มีข้อมูลการวิ่งใน Season ปัจจุบัน</div>';
 }
 
 async function refreshPublic() {
   try {
     const data = await api("/leaderboard");
     state.leaderboard = data.leaderboard || [];
+    state.currentSeason = data.currentSeason || null;
+    $("publicSeasonLabel").textContent = formatSeason(state.currentSeason);
     renderLeaderboard("publicLeaderboard");
     if ($("leaderboard")) renderLeaderboard("leaderboard");
   } catch {
@@ -102,6 +111,8 @@ async function refreshDashboard() {
     state.user = data.user;
     state.runs = data.runs || [];
     state.allRuns = data.allRuns || [];
+    state.seasons = data.seasons || [];
+    state.currentSeason = data.currentSeason || null;
     state.leaderboard = data.leaderboard || [];
     renderDashboard();
   } catch {
@@ -118,7 +129,6 @@ function showSignedOut() {
 }
 
 function renderDashboard() {
-  const runs = state.runs;
   const rank = state.leaderboard.findIndex((row) => row.id === state.user.id);
   const isAdmin = Boolean(state.user.isAdmin);
 
@@ -126,38 +136,62 @@ function renderDashboard() {
   $("dashboard").classList.remove("hidden");
   $("welcomeName").textContent = state.user.nickname;
   $("myTotal").textContent = formatDistance(state.user.totalKm);
-  $("myRuns").textContent = `${runs.length} ครั้ง`;
+  $("myRuns").textContent = `${state.runs.length} ครั้ง`;
   $("myRank").textContent = rank >= 0 ? `#${rank + 1}` : "-";
-  $("historyCount").textContent = `${runs.length} รายการ`;
-  $("historyList").innerHTML = runs.length
-    ? runs.map((run) => `
-      <article class="run-item">
-        <div>
-          <strong>${formatDate(run.date)} · ${formatDistance(run.distanceKm)}</strong>
-          <span>${escapeHtml(run.note || "ไม่มีหมายเหตุ")}</span>
-        </div>
-        <div class="run-actions">
-          <button class="icon-button" type="button" data-edit="${run.id}">แก้ไข</button>
-          <button class="icon-button danger" type="button" data-delete="${run.id}">ลบ</button>
-        </div>
-      </article>
-    `).join("")
-    : '<div class="empty">ยังไม่มีรายการวิ่งของคุณ</div>';
+  $("historyCount").textContent = `${state.runs.length} รายการ`;
+  $("historyList").innerHTML = state.runs.length
+    ? state.runs.map(renderRunRow).join("")
+    : '<div class="empty">ยังไม่มีรายการวิ่งใน Season ปัจจุบัน</div>';
 
   renderLeaderboard("leaderboard");
   $("adminPanel").classList.toggle("hidden", !isAdmin);
-  if (isAdmin) renderAdminRuns();
+  $("adminRunsPanel").classList.toggle("hidden", !isAdmin);
+  if (isAdmin) {
+    renderSeasons();
+    renderAdminRuns();
+  }
+}
+
+function renderRunRow(run) {
+  return `
+    <article class="run-item">
+      <div>
+        <strong>${formatDate(run.date)} · ${formatDistance(run.distanceKm)}</strong>
+        <span>${escapeHtml(run.note || "ไม่มีหมายเหตุ")}</span>
+      </div>
+      <div class="run-actions">
+        <button class="icon-button" type="button" data-edit="${run.id}">แก้ไข</button>
+        <button class="icon-button danger" type="button" data-delete="${run.id}">ลบ</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderSeasons() {
+  $("currentSeasonLabel").textContent = formatSeason(state.currentSeason);
+  $("seasonList").innerHTML = state.seasons.length
+    ? state.seasons.map((season) => `
+      <article class="run-item season-row">
+        <div>
+          <strong>${escapeHtml(season.name)}${season.isCurrent ? '<span class="badge">ปัจจุบัน</span>' : ""}</strong>
+          <span>${formatDate(season.startDate)} - ${season.endDate ? formatDate(season.endDate) : "ไม่กำหนดวันสิ้นสุด"}</span>
+        </div>
+        <div class="run-actions">
+          <button class="icon-button" type="button" data-season-current="${season.id}" ${season.isCurrent ? "disabled" : ""}>ตั้งปัจจุบัน</button>
+        </div>
+      </article>
+    `).join("")
+    : '<div class="empty">ยังไม่มี Season</div>';
 }
 
 function renderAdminRuns() {
-  const rows = state.allRuns;
-  $("adminCount").textContent = `${rows.length} รายการ`;
-  $("adminRunsList").innerHTML = rows.length
-    ? rows.map((run) => `
+  $("adminCount").textContent = `${state.allRuns.length} รายการ`;
+  $("adminRunsList").innerHTML = state.allRuns.length
+    ? state.allRuns.map((run) => `
       <article class="run-item">
         <div>
           <strong>${escapeHtml(run.nickname)} · ${formatDate(run.date)} · ${formatDistance(run.distanceKm)}</strong>
-          <span>${escapeHtml(run.note || "ไม่มีหมายเหตุ")}</span>
+          <span>${escapeHtml(run.seasonName || "ไม่ระบุ Season")} · ${escapeHtml(run.note || "ไม่มีหมายเหตุ")}</span>
         </div>
         <div class="run-actions">
           <button class="icon-button" type="button" data-admin-edit="${run.id}">แก้ไข</button>
@@ -184,14 +218,14 @@ $("showSignup").addEventListener("click", () => showAuthMode("signup"));
 
 $("signupForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const username = clean($("signupUsername").value).toLowerCase();
-  const password = $("signupPassword").value;
-  const nickname = clean($("signupNickname").value);
-
   try {
     await api("/signup", {
       method: "POST",
-      body: JSON.stringify({ username, password, nickname }),
+      body: JSON.stringify({
+        username: clean($("signupUsername").value).toLowerCase(),
+        password: $("signupPassword").value,
+        nickname: clean($("signupNickname").value),
+      }),
     });
     $("signupForm").reset();
     showAuthMode("login");
@@ -204,13 +238,13 @@ $("signupForm").addEventListener("submit", async (event) => {
 
 $("loginForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const username = clean($("loginUsername").value).toLowerCase();
-  const password = $("loginPassword").value;
-
   try {
     const data = await api("/login", {
       method: "POST",
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({
+        username: clean($("loginUsername").value).toLowerCase(),
+        password: $("loginPassword").value,
+      }),
     });
     state.token = data.token;
     localStorage.setItem("mhahaoRunToken", data.token);
@@ -226,7 +260,7 @@ $("logoutButton").addEventListener("click", async () => {
   try {
     if (state.token) await api("/logout", { method: "POST" });
   } catch {
-    // Logging out locally is enough if the online session already expired.
+    // Ignore expired sessions during logout.
   }
   state.token = null;
   state.user = null;
@@ -237,10 +271,11 @@ $("logoutButton").addEventListener("click", async () => {
 
 $("runForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const date = $("runDate").value;
-  const distanceKm = Number($("runDistance").value);
-  const note = clean($("runNote").value);
-  const payload = JSON.stringify({ date, distanceKm, note });
+  const payload = JSON.stringify({
+    date: $("runDate").value,
+    distanceKm: Number($("runDistance").value),
+    note: clean($("runNote").value),
+  });
 
   try {
     if (state.editingRunId) {
@@ -266,6 +301,7 @@ $("historyList").addEventListener("click", async (event) => {
     const run = state.runs.find((item) => item.id === editId);
     if (!run) return;
     state.editingRunId = run.id;
+    state.editingAdminRunId = null;
     $("formTitle").textContent = "แก้ไขการวิ่ง";
     $("saveRunButton").textContent = "บันทึกการแก้ไข";
     $("cancelEditButton").classList.remove("hidden");
@@ -316,36 +352,38 @@ $("adminRunsList").addEventListener("click", async (event) => {
   }
 });
 
-$("cancelEditButton").addEventListener("click", resetRunForm);
-
-$("exportButton").addEventListener("click", async () => {
+$("seasonForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
   try {
-    const data = await api("/export");
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `mhahao-run-${today()}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  } catch (error) {
-    alert(error.message);
-  }
-});
-
-$("importInput").addEventListener("change", async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-  try {
-    const imported = JSON.parse(await file.text());
-    await api("/import", { method: "POST", body: JSON.stringify(imported) });
+    await api("/admin/seasons", {
+      method: "POST",
+      body: JSON.stringify({
+        name: clean($("seasonName").value),
+        startDate: $("seasonStart").value,
+        endDate: $("seasonEnd").value,
+      }),
+    });
+    $("seasonForm").reset();
+    setMessage("seasonMessage", "เพิ่ม Season แล้ว", true);
     await refreshDashboard();
   } catch (error) {
-    alert(error.message || "ไฟล์ไม่ถูกต้อง");
-  } finally {
-    event.target.value = "";
+    setMessage("seasonMessage", error.message);
   }
 });
+
+$("seasonList").addEventListener("click", async (event) => {
+  const seasonId = event.target.dataset.seasonCurrent;
+  if (!seasonId) return;
+  try {
+    await api(`/admin/seasons/${encodeURIComponent(seasonId)}/current`, { method: "POST" });
+    setMessage("seasonMessage", "ตั้ง Season ปัจจุบันแล้ว", true);
+    await refreshDashboard();
+  } catch (error) {
+    setMessage("seasonMessage", error.message);
+  }
+});
+
+$("cancelEditButton").addEventListener("click", resetRunForm);
 
 $("runDate").value = today();
 refreshPublic();
