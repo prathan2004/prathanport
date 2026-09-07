@@ -18,6 +18,8 @@ export default async function handler(request) {
     if (method === "GET" && path === "/export") return exportData(request);
     if (method === "POST" && path === "/import") return importData(request, body);
     if (method === "POST" && path === "/runs") return createRun(request, body);
+    if (path.startsWith("/admin/runs/") && method === "PUT") return adminUpdateRun(request, path, body);
+    if (path.startsWith("/admin/runs/") && method === "DELETE") return adminDeleteRun(request, path);
     if (path.startsWith("/runs/") && method === "PUT") return updateRun(request, path, body);
     if (path.startsWith("/runs/") && method === "DELETE") return deleteRun(request, path);
 
@@ -88,6 +90,7 @@ async function signup(body) {
   const existing = await getUserByUsername(username);
   if (existing) return json({ error: "Username นี้ถูกใช้แล้ว" }, 409);
 
+  const users = await allUsers();
   const salt = crypto.randomUUID();
   const user = {
     id: crypto.randomUUID(),
@@ -95,6 +98,7 @@ async function signup(body) {
     passwordHash: await hashPassword(password, salt),
     salt,
     nickname,
+    isAdmin: users.length === 0,
     createdAt: new Date().toISOString(),
   };
 
@@ -138,20 +142,28 @@ async function requireUser(request) {
 
   const user = await getUserById(session.userId);
   if (!user) throw Object.assign(new Error("ไม่พบผู้ใช้"), { status: 401 });
-  return user;
+  return ensureAdminFlag(user);
 }
 
 async function dashboard(request) {
   const user = await requireUser(request);
-  const runs = (await allRuns())
+  const [runs, users] = await Promise.all([allRuns(), allUsers()]);
+  const userRuns = runs
     .filter((run) => run.userId === user.id)
     .sort((a, b) => `${b.date} ${b.createdAt}`.localeCompare(`${a.date} ${a.createdAt}`));
   const rows = await leaderboard();
-  const totalKm = runs.reduce((sum, run) => sum + Number(run.distanceKm), 0);
+  const totalKm = userRuns.reduce((sum, run) => sum + Number(run.distanceKm), 0);
+  const userMap = new Map(users.map((item) => [item.id, item]));
+  const allUserRuns = user.isAdmin
+    ? runs
+      .map((run) => ({ ...run, nickname: userMap.get(run.userId)?.nickname || "ไม่พบชื่อ" }))
+      .sort((a, b) => `${b.date} ${b.createdAt}`.localeCompare(`${a.date} ${a.createdAt}`))
+    : [];
 
   return json({
     user: { ...publicUser(user), totalKm },
-    runs,
+    runs: userRuns,
+    allRuns: allUserRuns,
     leaderboard: rows,
   });
 }
@@ -170,6 +182,16 @@ async function leaderboard() {
     })
     .filter((row) => row.totalKm > 0)
     .sort((a, b) => b.totalKm - a.totalKm || a.nickname.localeCompare(b.nickname, "th"));
+}
+
+async function ensureAdminFlag(user) {
+  if (typeof user.isAdmin === "boolean") return user;
+  const users = await allUsers();
+  const sorted = users.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+  const shouldBeAdmin = sorted[0]?.id === user.id;
+  const updated = { ...user, isAdmin: shouldBeAdmin };
+  await saveUser(updated);
+  return updated;
 }
 
 async function createRun(request, body) {
@@ -198,6 +220,32 @@ async function deleteRun(request, path) {
   const id = decodeURIComponent(path.replace("/runs/", ""));
   const current = await store().get(`runs/${id}.json`, { type: "json" });
   if (!current || current.userId !== user.id) return json({ error: "ไม่พบรายการวิ่งนี้" }, 404);
+  await store().delete(`runs/${id}.json`);
+  return json({ ok: true });
+}
+
+async function requireAdmin(request) {
+  const user = await requireUser(request);
+  if (!user.isAdmin) throw Object.assign(new Error("เฉพาะ admin เท่านั้น"), { status: 403 });
+  return user;
+}
+
+async function adminUpdateRun(request, path, body) {
+  await requireAdmin(request);
+  const id = decodeURIComponent(path.replace("/admin/runs/", ""));
+  const current = await store().get(`runs/${id}.json`, { type: "json" });
+  if (!current) return json({ error: "ไม่พบรายการวิ่งนี้" }, 404);
+
+  const next = { ...current, ...validateRun(body), updatedAt: new Date().toISOString() };
+  await saveRun(next);
+  return json({ ok: true, run: next });
+}
+
+async function adminDeleteRun(request, path) {
+  await requireAdmin(request);
+  const id = decodeURIComponent(path.replace("/admin/runs/", ""));
+  const current = await store().get(`runs/${id}.json`, { type: "json" });
+  if (!current) return json({ error: "ไม่พบรายการวิ่งนี้" }, 404);
   await store().delete(`runs/${id}.json`);
   return json({ ok: true });
 }
@@ -234,7 +282,7 @@ function validateRun(body) {
 }
 
 function publicUser(user) {
-  return { id: user.id, username: user.username, nickname: user.nickname };
+  return { id: user.id, username: user.username, nickname: user.nickname, isAdmin: Boolean(user.isAdmin) };
 }
 
 async function hashPassword(password, salt) {

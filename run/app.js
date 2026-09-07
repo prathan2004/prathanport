@@ -2,8 +2,10 @@ const state = {
   token: localStorage.getItem("mhahaoRunToken"),
   user: null,
   runs: [],
+  allRuns: [],
   leaderboard: [],
   editingRunId: null,
+  editingAdminRunId: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -99,6 +101,7 @@ async function refreshDashboard() {
     const data = await api("/dashboard");
     state.user = data.user;
     state.runs = data.runs || [];
+    state.allRuns = data.allRuns || [];
     state.leaderboard = data.leaderboard || [];
     renderDashboard();
   } catch {
@@ -117,6 +120,7 @@ function showSignedOut() {
 function renderDashboard() {
   const runs = state.runs;
   const rank = state.leaderboard.findIndex((row) => row.id === state.user.id);
+  const isAdmin = Boolean(state.user.isAdmin);
 
   $("authView").classList.add("hidden");
   $("dashboard").classList.remove("hidden");
@@ -141,10 +145,32 @@ function renderDashboard() {
     : '<div class="empty">ยังไม่มีรายการวิ่งของคุณ</div>';
 
   renderLeaderboard("leaderboard");
+  $("adminPanel").classList.toggle("hidden", !isAdmin);
+  if (isAdmin) renderAdminRuns();
+}
+
+function renderAdminRuns() {
+  const rows = state.allRuns;
+  $("adminCount").textContent = `${rows.length} รายการ`;
+  $("adminRunsList").innerHTML = rows.length
+    ? rows.map((run) => `
+      <article class="run-item">
+        <div>
+          <strong>${escapeHtml(run.nickname)} · ${formatDate(run.date)} · ${formatDistance(run.distanceKm)}</strong>
+          <span>${escapeHtml(run.note || "ไม่มีหมายเหตุ")}</span>
+        </div>
+        <div class="run-actions">
+          <button class="icon-button" type="button" data-admin-edit="${run.id}">แก้ไข</button>
+          <button class="icon-button danger" type="button" data-admin-delete="${run.id}">ลบ</button>
+        </div>
+      </article>
+    `).join("")
+    : '<div class="empty">ยังไม่มีรายการวิ่งจากสมาชิก</div>';
 }
 
 function resetRunForm() {
   state.editingRunId = null;
+  state.editingAdminRunId = null;
   $("formTitle").textContent = "บันทึกการวิ่ง";
   $("saveRunButton").textContent = "บันทึก";
   $("cancelEditButton").classList.add("hidden");
@@ -219,6 +245,8 @@ $("runForm").addEventListener("submit", async (event) => {
   try {
     if (state.editingRunId) {
       await api(`/runs/${encodeURIComponent(state.editingRunId)}`, { method: "PUT", body: payload });
+    } else if (state.editingAdminRunId) {
+      await api(`/admin/runs/${encodeURIComponent(state.editingAdminRunId)}`, { method: "PUT", body: payload });
     } else {
       await api("/runs", { method: "POST", body: payload });
     }
@@ -250,6 +278,36 @@ $("historyList").addEventListener("click", async (event) => {
   if (deleteId && confirm("ลบรายการวิ่งนี้หรือไม่?")) {
     try {
       await api(`/runs/${encodeURIComponent(deleteId)}`, { method: "DELETE" });
+      resetRunForm();
+      await refreshDashboard();
+    } catch (error) {
+      setMessage("runMessage", error.message);
+    }
+  }
+});
+
+$("adminRunsList").addEventListener("click", async (event) => {
+  const editId = event.target.dataset.adminEdit;
+  const deleteId = event.target.dataset.adminDelete;
+
+  if (editId) {
+    const run = state.allRuns.find((item) => item.id === editId);
+    if (!run) return;
+    state.editingRunId = null;
+    state.editingAdminRunId = run.id;
+    $("formTitle").textContent = `แก้ไขผลของ ${run.nickname}`;
+    $("saveRunButton").textContent = "บันทึกการแก้ไข";
+    $("cancelEditButton").classList.remove("hidden");
+    $("runDate").value = run.date;
+    $("runDistance").value = run.distanceKm;
+    $("runNote").value = run.note || "";
+    setMessage("runMessage", "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  if (deleteId && confirm("admin ต้องการลบรายการวิ่งนี้หรือไม่?")) {
+    try {
+      await api(`/admin/runs/${encodeURIComponent(deleteId)}`, { method: "DELETE" });
       resetRunForm();
       await refreshDashboard();
     } catch (error) {
