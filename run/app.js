@@ -373,8 +373,11 @@ $("seasonForm").addEventListener("submit", async (event) => {
 });
 
 $("seasonList").addEventListener("click", async (event) => {
-  const seasonId = event.target.dataset.seasonCurrent;
-  const deleteId = event.target.dataset.seasonDelete;
+  const button = event.target.closest("button");
+  if (!button || button.disabled) return;
+
+  const seasonId = button.dataset.seasonCurrent;
+  const deleteId = button.dataset.seasonDelete;
 
   if (seasonId) {
     try {
