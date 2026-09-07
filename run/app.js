@@ -10,7 +10,7 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 
-const API_BASE = `${window.location.pathname.replace(/\/[^/]*$/, "/")}api`;
+const API_BASE = window.location.pathname.startsWith("/run") ? "/run/api" : "/api";
 
 async function api(path, options = {}) {
   const headers = { ...(options.headers || {}) };
