@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PT Tools | PRATHAN</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#17212b',
+            mint: '#2fbf9b',
+            coral: '#ef6f61',
+            paper: '#f7f8f4',
+            sky: '#4fa3ff',
+            sun: '#f5b841'
+          },
+          boxShadow: {
+            soft: '0 18px 45px rgba(23, 33, 43, 0.12)'
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="min-h-screen bg-paper text-ink">
+  <main class="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-5 sm:px-6 lg:px-8">
+    <header class="border-b border-ink/10 pb-5">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-[0.18em] text-mint">PT Tools</p>
+          <h1 class="mt-1 text-3xl font-bold sm:text-4xl">PRATHAN Tools</h1>
+        </div>
+        <button id="menuToggle" class="inline-flex h-11 w-11 items-center justify-center rounded-md border border-ink/10 bg-white shadow-sm lg:hidden" aria-label="เปิดเมนู" aria-expanded="false">
+          <span class="grid gap-1.5">
+            <span class="block h-0.5 w-5 rounded-full bg-ink"></span>
+            <span class="block h-0.5 w-5 rounded-full bg-ink"></span>
+            <span class="block h-0.5 w-5 rounded-full bg-ink"></span>
+          </span>
+        </button>
+        <div class="hidden rounded-lg border border-ink/10 bg-white px-4 py-3 text-sm font-semibold shadow-sm sm:block">
+          เครื่องมือทั้งหมด: <span id="toolCount" class="text-mint">2</span>
+        </div>
+      </div>
+      <p class="mt-3 max-w-2xl text-sm leading-6 text-ink/70">
+        เว็บไซต์รวมเครื่องมือเล็ก ๆ สำหรับใช้งานส่วนตัวของ PRATHAN
+      </p>
+    </header>
+
+    <div id="mobileOverlay" class="fixed inset-0 z-30 hidden bg-ink/35 lg:hidden"></div>
+
+    <section class="grid flex-1 gap-5 py-5 lg:grid-cols-[260px_1fr]">
+      <aside id="toolMenu" class="fixed inset-y-0 left-0 z-40 w-72 -translate-x-full border-r border-ink/10 bg-white p-4 shadow-soft transition-transform lg:static lg:w-auto lg:translate-x-0 lg:rounded-lg lg:border lg:p-3 lg:shadow-sm lg:self-start">
+        <div class="mb-4 flex items-center justify-between lg:block">
+          <h2 class="px-1 text-sm font-bold">เมนูเครื่องมือ</h2>
+          <button id="closeMenu" class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-ink/10 lg:hidden" aria-label="ปิดเมนู">×</button>
+        </div>
+        <nav id="toolNav" class="grid gap-2"></nav>
+      </aside>
+
+      <section class="rounded-lg border border-ink/10 bg-white shadow-soft">
+        <div class="border-b border-ink/10 p-4">
+          <p id="activeType" class="text-xs font-semibold uppercase tracking-[0.18em] text-coral">Calculator</p>
+          <h2 id="activeTitle" class="mt-1 text-2xl font-bold">BMI Calculator</h2>
+        </div>
+
+        <div id="toolPanel" class="p-4 md:p-6"></div>
+      </section>
+    </section>
+  </main>
+
+  <template id="bmiTool">
+    <div class="grid gap-5">
+      <div class="grid gap-4 md:grid-cols-2">
+        <label class="grid gap-1 text-sm font-semibold">
+          น้ำหนัก (kg)
+          <input id="weight" type="number" min="1" step="0.1" value="70" class="field">
+        </label>
+        <label class="grid gap-1 text-sm font-semibold">
+          ส่วนสูง (cm)
+          <input id="height" type="number" min="1" step="0.1" value="170" class="field">
+        </label>
+      </div>
+
+      <button id="calculateBmiButton" class="primary">คำนวณ BMI</button>
+
+      <div class="grid gap-4 rounded-lg border border-ink/10 bg-[#fbfbf8] p-5 sm:grid-cols-[180px_1fr] sm:items-center">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-ink/50">Result</p>
+          <p id="bmiValue" class="mt-2 text-5xl font-black leading-none">24.2</p>
+        </div>
+        <div>
+          <h3 id="bmiLabel" class="text-xl font-bold">น้ำหนักปกติ</h3>
+          <p id="bmiDescription" class="mt-2 text-sm leading-6 text-ink/65">ค่านี้เป็นการประเมินเบื้องต้นจากน้ำหนักและส่วนสูง</p>
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-ink/10 bg-white p-5">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h3 class="text-lg font-bold">BMI Scale</h3>
+            <p class="text-sm text-ink/60">เทียบค่าสีตามเกณฑ์ BMI สำหรับเอเชีย</p>
+          </div>
+          <div class="rounded-md bg-mint/10 px-3 py-2 text-sm font-bold text-mint">
+            น้ำหนักปกติ: <span id="healthyWeightRange">53.5 - 66.2 kg</span>
+          </div>
+        </div>
+
+        <div class="mt-5">
+          <div class="relative h-4 overflow-hidden rounded-full bg-ink/10">
+            <div class="absolute inset-y-0 left-0 bg-sky" style="width: 46.25%;"></div>
+            <div class="absolute inset-y-0 bg-mint" style="left: 46.25%; width: 11.25%;"></div>
+            <div class="absolute inset-y-0 bg-sun" style="left: 57.5%; width: 5%;"></div>
+            <div class="absolute inset-y-0 bg-coral" style="left: 62.5%; width: 37.5%;"></div>
+            <div id="bmiMarker" class="absolute top-1/2 h-7 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-ink shadow-md" style="left: 60.5%;"></div>
+          </div>
+          <div class="mt-2 flex justify-between text-xs font-semibold text-ink/45">
+            <span>0</span>
+            <span>18.5</span>
+            <span>23</span>
+            <span>25</span>
+            <span>40+</span>
+          </div>
+        </div>
+
+        <div id="scaleList" class="mt-5 grid gap-2 md:grid-cols-2"></div>
+      </div>
+    </div>
+  </template>
+
+  <template id="pdfTool">
+    <div class="grid gap-5">
+      <div class="rounded-lg border border-dashed border-ink/20 bg-[#fbfbf8] p-5">
+        <label class="grid cursor-pointer gap-2 text-center">
+          <span class="text-lg font-bold">เลือกไฟล์ PDF ที่ต้องการรวม</span>
+          <span class="text-sm text-ink/60">เลือกได้หลายไฟล์ จากนั้นจัดลำดับก่อนกดรวมไฟล์</span>
+          <input id="pdfInput" type="file" accept="application/pdf,.pdf" multiple class="sr-only">
+          <span class="mx-auto mt-2 rounded-md bg-mint px-4 py-3 text-sm font-extrabold text-white hover:bg-[#28a987]">เลือกไฟล์ PDF</span>
+        </label>
+      </div>
+
+      <div class="rounded-lg border border-ink/10 bg-white p-4">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="font-bold">ลำดับไฟล์</h3>
+            <p id="pdfStatus" class="mt-1 text-sm text-ink/60">ยังไม่ได้เลือกไฟล์</p>
+          </div>
+          <button id="clearPdfFiles" class="secondary">ล้างรายการ</button>
+        </div>
+        <div id="pdfList" class="mt-4 grid gap-2"></div>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+        <label class="grid gap-1 text-sm font-semibold">
+          ชื่อไฟล์หลังรวม
+          <input id="outputName" class="field" value="merged-prathan-tools.pdf">
+        </label>
+        <button id="mergePdfButton" class="primary">รวมไฟล์ PDF</button>
+      </div>
+
+      <a id="downloadPdf" class="hidden rounded-md border border-mint bg-mint/10 px-4 py-3 text-center text-sm font-extrabold text-mint hover:bg-mint hover:text-white" download>
+        ดาวน์โหลดไฟล์ PDF ที่รวมแล้ว
+      </a>
+    </div>
+  </template>
+
+  <script>
+    const tools = [
+      {
+        id: 'pdf',
+        title: 'รวมไฟล์ PDF',
+        type: 'PDF Tool',
+        description: 'รวม PDF หลายไฟล์เป็นไฟล์เดียว',
+        template: 'pdfTool'
+      },
+      {
+        id: 'bmi',
+        title: 'BMI Calculator',
+        type: 'Calculator',
+        description: 'คำนวณดัชนีมวลกาย',
+        template: 'bmiTool'
+      }
+    ];
+
+    const toolNav = document.querySelector('#toolNav');
+    const toolPanel = document.querySelector('#toolPanel');
+    const activeType = document.querySelector('#activeType');
+    const activeTitle = document.querySelector('#activeTitle');
+    const toolMenu = document.querySelector('#toolMenu');
+    const menuToggle = document.querySelector('#menuToggle');
+    const closeMenu = document.querySelector('#closeMenu');
+    const mobileOverlay = document.querySelector('#mobileOverlay');
+    let activeTool = 'pdf';
+    let pdfFiles = [];
+    let mergedPdfUrl = '';
+
+    const bmiScales = [
+      { min: 0, max: 18.5, label: 'น้ำหนักต่ำกว่าเกณฑ์', range: 'น้อยกว่า 18.5', color: '#4fa3ff', description: 'น้ำหนักอาจต่ำเมื่อเทียบกับส่วนสูง' },
+      { min: 18.5, max: 23, label: 'น้ำหนักปกติ', range: '18.5 - 22.9', color: '#2fbf9b', description: 'ช่วงที่เหมาะสมตามเกณฑ์เอเชีย' },
+      { min: 23, max: 25, label: 'น้ำหนักเกิน', range: '23.0 - 24.9', color: '#f5b841', description: 'เริ่มสูงกว่าเกณฑ์ปกติ' },
+      { min: 25, max: Infinity, label: 'ควรควบคุมน้ำหนัก', range: '25.0 ขึ้นไป', color: '#ef6f61', description: 'ควรติดตามสุขภาพและพฤติกรรมร่วมด้วย' }
+    ];
+
+    function openMobileMenu() {
+      toolMenu.classList.remove('-translate-x-full');
+      mobileOverlay.classList.remove('hidden');
+      menuToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeMobileMenu() {
+      toolMenu.classList.add('-translate-x-full');
+      mobileOverlay.classList.add('hidden');
+      menuToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    function renderNav() {
+      toolNav.innerHTML = tools.map(tool => `
+        <button data-tool="${tool.id}" class="tool-button w-full rounded-lg border p-3 text-left transition ${tool.id === activeTool ? 'border-mint bg-mint/10' : 'border-ink/10 hover:border-coral hover:bg-coral/5'}">
+          <span class="block text-sm font-bold">${tool.title}</span>
+          <span class="mt-1 block text-xs text-ink/60">${tool.description}</span>
+        </button>
+      `).join('');
+
+      document.querySelectorAll('.tool-button').forEach(button => {
+        button.addEventListener('click', () => {
+          loadTool(button.dataset.tool);
+          closeMobileMenu();
+        });
+      });
+    }
+
+    function loadTool(toolId) {
+      activeTool = toolId;
+      const tool = tools.find(item => item.id === toolId);
+      activeType.textContent = tool.type;
+      activeTitle.textContent = tool.title;
+      toolPanel.innerHTML = document.querySelector(`#${tool.template}`).innerHTML;
+      renderNav();
+
+      if (toolId === 'bmi') {
+        bindBmiTool();
+      }
+
+      if (toolId === 'pdf') {
+        bindPdfTool();
+      }
+    }
+
+    function getBmiCategory(bmi) {
+      return bmiScales.find(scale => bmi >= scale.min && bmi < scale.max) || bmiScales[0];
+    }
+
+    function calculateHealthyWeightRange(heightMeters) {
+      const minWeight = 18.5 * heightMeters * heightMeters;
+      const maxWeight = 22.9 * heightMeters * heightMeters;
+      return `${minWeight.toFixed(1)} - ${maxWeight.toFixed(1)} kg`;
+    }
+
+    function bindBmiTool() {
+      const weightInput = document.querySelector('#weight');
+      const heightInput = document.querySelector('#height');
+      const bmiValue = document.querySelector('#bmiValue');
+      const bmiLabel = document.querySelector('#bmiLabel');
+      const bmiDescription = document.querySelector('#bmiDescription');
+      const bmiMarker = document.querySelector('#bmiMarker');
+      const scaleList = document.querySelector('#scaleList');
+      const healthyWeightRange = document.querySelector('#healthyWeightRange');
+
+      function renderScaleList(activeLabel) {
+        scaleList.innerHTML = bmiScales.map(scale => {
+          const isActive = scale.label === activeLabel;
+          return `
+            <div class="rounded-lg border p-3 ${isActive ? 'border-ink bg-ink text-white' : 'border-ink/10 bg-[#fbfbf8]'}">
+              <div class="flex items-center gap-2">
+                <span class="h-3 w-3 rounded-full" style="background:${scale.color}"></span>
+                <h4 class="text-sm font-bold">${scale.label}</h4>
+              </div>
+              <p class="mt-2 text-sm font-semibold ${isActive ? 'text-white/90' : 'text-ink/70'}">BMI ${scale.range}</p>
+              <p class="mt-1 text-xs leading-5 ${isActive ? 'text-white/70' : 'text-ink/55'}">${scale.description}</p>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function calculateBmi() {
+        const weight = Number(weightInput.value);
+        const heightMeters = Number(heightInput.value) / 100;
+        const bmi = weight / (heightMeters * heightMeters);
+
+        if (!Number.isFinite(bmi) || bmi <= 0) {
+          bmiValue.textContent = '0.0';
+          bmiLabel.textContent = 'กรอกข้อมูลให้ครบ';
+          bmiDescription.textContent = 'ใส่น้ำหนักและส่วนสูงเพื่อคำนวณค่า BMI';
+          bmiMarker.style.left = '0%';
+          healthyWeightRange.textContent = '-';
+          renderScaleList('');
+          return;
+        }
+
+        const category = getBmiCategory(bmi);
+        bmiValue.textContent = bmi.toFixed(1);
+        bmiLabel.textContent = category.label;
+        bmiDescription.textContent = category.description;
+        bmiMarker.style.left = `${Math.min((bmi / 40) * 100, 100)}%`;
+        healthyWeightRange.textContent = calculateHealthyWeightRange(heightMeters);
+        renderScaleList(category.label);
+      }
+
+      document.querySelector('#calculateBmiButton').addEventListener('click', calculateBmi);
+      weightInput.addEventListener('input', calculateBmi);
+      heightInput.addEventListener('input', calculateBmi);
+      calculateBmi();
+    }
+
+    function bindPdfTool() {
+      const pdfInput = document.querySelector('#pdfInput');
+      const pdfList = document.querySelector('#pdfList');
+      const pdfStatus = document.querySelector('#pdfStatus');
+      const mergePdfButton = document.querySelector('#mergePdfButton');
+      const clearPdfFiles = document.querySelector('#clearPdfFiles');
+      const downloadPdf = document.querySelector('#downloadPdf');
+      const outputName = document.querySelector('#outputName');
+
+      function resetDownload() {
+        if (mergedPdfUrl) {
+          URL.revokeObjectURL(mergedPdfUrl);
+          mergedPdfUrl = '';
+        }
+        downloadPdf.classList.add('hidden');
+        downloadPdf.removeAttribute('href');
+      }
+
+      function renderPdfList() {
+        pdfStatus.textContent = pdfFiles.length ? `เลือกแล้ว ${pdfFiles.length} ไฟล์` : 'ยังไม่ได้เลือกไฟล์';
+        pdfList.innerHTML = pdfFiles.length ? pdfFiles.map((file, index) => `
+          <div class="grid gap-2 rounded-lg border border-ink/10 bg-[#fbfbf8] p-3 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-bold">${index + 1}. ${file.name}</p>
+              <p class="mt-1 text-xs text-ink/55">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+            </div>
+            <div class="grid grid-cols-3 gap-1">
+              <button data-move-up="${index}" class="icon-button" title="เลื่อนขึ้น">↑</button>
+              <button data-move-down="${index}" class="icon-button" title="เลื่อนลง">↓</button>
+              <button data-remove-pdf="${index}" class="icon-button text-coral" title="ลบไฟล์">×</button>
+            </div>
+          </div>
+        `).join('') : '<p class="rounded-lg border border-dashed border-ink/15 p-4 text-sm text-ink/55">ยังไม่มีไฟล์ในรายการ</p>';
+
+        document.querySelectorAll('[data-move-up]').forEach(button => {
+          button.addEventListener('click', () => movePdfFile(Number(button.dataset.moveUp), -1));
+        });
+        document.querySelectorAll('[data-move-down]').forEach(button => {
+          button.addEventListener('click', () => movePdfFile(Number(button.dataset.moveDown), 1));
+        });
+        document.querySelectorAll('[data-remove-pdf]').forEach(button => {
+          button.addEventListener('click', () => {
+            pdfFiles.splice(Number(button.dataset.removePdf), 1);
+            resetDownload();
+            renderPdfList();
+          });
+        });
+      }
+
+      function movePdfFile(index, direction) {
+        const target = index + direction;
+        if (target < 0 || target >= pdfFiles.length) return;
+        const [file] = pdfFiles.splice(index, 1);
+        pdfFiles.splice(target, 0, file);
+        resetDownload();
+        renderPdfList();
+      }
+
+      async function mergePdfs() {
+        resetDownload();
+
+        if (!window.PDFLib) {
+          pdfStatus.textContent = 'ไม่สามารถโหลด pdf-lib ได้ กรุณาเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่';
+          return;
+        }
+
+        if (pdfFiles.length < 2) {
+          pdfStatus.textContent = 'เลือก PDF อย่างน้อย 2 ไฟล์เพื่อรวมไฟล์';
+          return;
+        }
+
+        mergePdfButton.disabled = true;
+        mergePdfButton.textContent = 'กำลังรวมไฟล์...';
+        pdfStatus.textContent = 'กำลังประมวลผล PDF ในเบราว์เซอร์';
+
+        try {
+          const mergedPdf = await PDFLib.PDFDocument.create();
+
+          for (const file of pdfFiles) {
+            const bytes = await file.arrayBuffer();
+            const sourcePdf = await PDFLib.PDFDocument.load(bytes);
+            const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
+            copiedPages.forEach(page => mergedPdf.addPage(page));
+          }
+
+          const mergedBytes = await mergedPdf.save();
+          const blob = new Blob([mergedBytes], { type: 'application/pdf' });
+          mergedPdfUrl = URL.createObjectURL(blob);
+          downloadPdf.href = mergedPdfUrl;
+          downloadPdf.download = outputName.value.trim() || 'merged-prathan-tools.pdf';
+          downloadPdf.classList.remove('hidden');
+          pdfStatus.textContent = `รวมไฟล์สำเร็จ ${pdfFiles.length} ไฟล์`;
+        } catch (error) {
+          pdfStatus.textContent = 'รวมไฟล์ไม่สำเร็จ ไฟล์ PDF บางไฟล์อาจถูกเข้ารหัสหรือเสียหาย';
+        } finally {
+          mergePdfButton.disabled = false;
+          mergePdfButton.textContent = 'รวมไฟล์ PDF';
+        }
+      }
+
+      pdfInput.addEventListener('change', event => {
+        pdfFiles = [...pdfFiles, ...Array.from(event.target.files || [])].filter(file => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+        pdfInput.value = '';
+        resetDownload();
+        renderPdfList();
+      });
+      clearPdfFiles.addEventListener('click', () => {
+        pdfFiles = [];
+        resetDownload();
+        renderPdfList();
+      });
+      mergePdfButton.addEventListener('click', mergePdfs);
+      renderPdfList();
+    }
+
+    menuToggle.addEventListener('click', openMobileMenu);
+    closeMenu.addEventListener('click', closeMobileMenu);
+    mobileOverlay.addEventListener('click', closeMobileMenu);
+    document.querySelector('#toolCount').textContent = tools.length;
+    loadTool('pdf');
+  </script>
+
+  <style>
+    .field {
+      border: 1px solid rgba(23, 33, 43, 0.16);
+      border-radius: 0.375rem;
+      padding: 0.75rem;
+      font-weight: 400;
+      outline: none;
+      width: 100%;
+    }
+
+    .field:focus {
+      border-color: #2fbf9b;
+      box-shadow: 0 0 0 3px rgba(47, 191, 155, 0.16);
+    }
+
+    .primary {
+      border-radius: 0.375rem;
+      background: #2fbf9b;
+      color: #fff;
+      font-weight: 800;
+      padding: 0.75rem 1rem;
+    }
+
+    .primary:hover {
+      background: #28a987;
+    }
+
+    .primary:disabled {
+      cursor: wait;
+      opacity: 0.7;
+    }
+
+    .secondary {
+      border: 1px solid rgba(23, 33, 43, 0.14);
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 800;
+      padding: 0.65rem 0.9rem;
+    }
+
+    .secondary:hover {
+      background: #17212b;
+      color: #fff;
+    }
+
+    .icon-button {
+      align-items: center;
+      border: 1px solid rgba(23, 33, 43, 0.12);
+      border-radius: 0.375rem;
+      display: inline-flex;
+      font-weight: 900;
+      height: 2.25rem;
+      justify-content: center;
+      width: 2.25rem;
+    }
+
+    .icon-button:hover {
+      background: rgba(23, 33, 43, 0.06);
+    }
+  </style>
+</body>
+</html>
