@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animal Image Classifier</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="classifier-panel">
+      <div class="intro">
+        <p class="eyebrow">CNN Animal Classifier</p>
+        <h1>ทายภาพสัตว์จากรูปภาพ</h1>
+        <p class="lead">อัปโหลดรูปภาพ แล้วให้โมเดลจาก Google Teachable Machine ทำนายว่าเป็นสัตว์ชนิดใด</p>
+      </div>
+
+      <div class="model-card">
+        <label for="model-url">Model URL จาก Teachable Machine</label>
+        <div class="model-input-row">
+          <input
+            id="model-url"
+            type="url"
+            placeholder="https://teachablemachine.withgoogle.com/models/XXXXXX/"
+            autocomplete="off"
+          />
+          <button id="load-model" type="button">โหลดโมเดล</button>
+        </div>
+        <p class="hint">นำลิงก์ที่ได้จาก Export Model แบบ TensorFlow.js มาวางที่นี่ แล้วกดโหลดโมเดล</p>
+        <p id="model-status" class="status">ยังไม่ได้โหลดโมเดล</p>
+      </div>
+
+      <div class="workspace">
+        <label class="upload-box" for="image-upload">
+          <input id="image-upload" type="file" accept="image/*" />
+          <span class="upload-icon">+</span>
+          <strong>เลือกรูปภาพสัตว์</strong>
+          <span>รองรับ JPG, PNG และ WEBP</span>
+        </label>
+
+        <div class="preview-area">
+          <img id="preview-image" alt="รูปภาพที่อัปโหลด" />
+          <div id="empty-preview" class="empty-preview">ยังไม่มีรูปภาพ</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="predict-button" type="button" disabled>ทำนายภาพ</button>
+        <button id="clear-button" type="button" class="secondary">ล้างรูป</button>
+      </div>
+    </section>
+
+    <aside class="result-panel">
+      <p class="eyebrow">Result</p>
+      <h2 id="top-result">รอรูปภาพและโมเดล</h2>
+      <p id="result-note">ผลลัพธ์จะแสดงคลาสที่มั่นใจที่สุด พร้อมเปอร์เซ็นต์ของทุกคลาสในโมเดล</p>
+      <div id="predictions" class="predictions"></div>
+    </aside>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

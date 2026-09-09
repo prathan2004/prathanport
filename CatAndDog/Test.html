@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ทายภาพแมวหรือสุนัข</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f4f6f8;
+      color: #222;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .box {
+      background: white;
+      padding: 24px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    input,
+    button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      font-size: 16px;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    img {
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      margin-top: 18px;
+      display: none;
+      background: #eee;
+    }
+
+    .result {
+      margin-top: 24px;
+      padding: 18px;
+      background: #eef6ff;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 20px;
+    }
+
+    .confidence {
+      margin-top: 10px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #2563eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>ทายภาพสัตว์</h1>
+
+    <p>เลือกรูปภาพ แล้วกดปุ่มทำนายผล</p>
+
+    <input type="file" id="imageInput" accept="image/*">
+    <img id="previewImage" alt="รูปภาพที่เลือก">
+
+    <button id="predictButton" disabled>ทำนายผล</button>
+
+    <div class="result">
+      <div id="animalName">กำลังโหลดโมเดล...</div>
+      <div>ความมั่นใจ</div>
+      <div id="confidence" class="confidence">0%</div>
+    </div>
+  </div>
+
+  <script>
+    const MODEL_URL = "https://teachablemachine.withgoogle.com/models/tKIKyM3aQ/";
+
+    let model;
+    let imageLoaded = false;
+
+    const imageInput = document.getElementById("imageInput");
+    const previewImage = document.getElementById("previewImage");
+    const predictButton = document.getElementById("predictButton");
+    const animalName = document.getElementById("animalName");
+    const confidence = document.getElementById("confidence");
+
+    function showMessage(message) {
+      animalName.textContent = message;
+    }
+
+    function translateClassName(className) {
+      if (className === "Cat") {
+        return "แมว";
+      }
+
+      if (className === "Dog") {
+        return "สุนัข";
+      }
+
+      return className;
+    }
+
+    // โหลดโมเดลจาก Teachable Machine ตอนเปิดหน้าเว็บ
+    async function loadModel() {
+      showMessage("กำลังโหลดโมเดล...");
+
+      const modelURL = MODEL_URL + "model.json";
+      const metadataURL = MODEL_URL + "metadata.json";
+
+      try {
+        model = await tmImage.load(modelURL, metadataURL);
+        showMessage("โหลดโมเดลสำเร็จ");
+      } catch (error) {
+        showMessage("โหลดโมเดลไม่สำเร็จ");
+        console.error(error);
+      }
+
+      checkReady();
+    }
+
+    // แสดงรูปที่ผู้ใช้เลือก
+    imageInput.addEventListener("change", function () {
+      const file = imageInput.files[0];
+
+      if (file) {
+        previewImage.src = URL.createObjectURL(file);
+        previewImage.style.display = "block";
+        imageLoaded = false;
+        showMessage("กำลังเปิดรูปภาพ...");
+        confidence.textContent = "0%";
+      }
+    });
+
+    previewImage.addEventListener("load", function () {
+      imageLoaded = true;
+      showMessage("พร้อมทำนาย");
+      checkReady();
+    });
+
+    // เปิดปุ่มเมื่อโหลดโมเดลแล้ว และมีรูปภาพแล้ว
+    function checkReady() {
+      if (model && imageLoaded) {
+        predictButton.disabled = false;
+      } else {
+        predictButton.disabled = true;
+      }
+    }
+
+    // ทำนายผลจากรูปภาพ
+    predictButton.addEventListener("click", async function () {
+      predictButton.disabled = true;
+      showMessage("กำลังทำนาย...");
+
+      try {
+        const predictions = await model.predict(previewImage);
+
+        predictions.sort(function (a, b) {
+          return b.probability - a.probability;
+        });
+
+        const bestResult = predictions[0];
+        animalName.textContent = translateClassName(bestResult.className);
+        confidence.textContent = (bestResult.probability * 100).toFixed(2) + "%";
+      } catch (error) {
+        showMessage("ทำนายผลไม่สำเร็จ");
+        console.error(error);
+      }
+
+      checkReady();
+    });
+
+    loadModel();
+  </script>
+</body>
+</html>
