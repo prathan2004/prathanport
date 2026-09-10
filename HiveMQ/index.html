@@ -55,6 +55,42 @@
       color: #52616b;
     }
 
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 16px 0 8px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 12px 20px;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .on-button {
+      background: #2e7d32;
+    }
+
+    .off-button {
+      background: #c62828;
+    }
+
+    #commandStatus {
+      color: #52616b;
+      min-height: 24px;
+      margin-bottom: 20px;
+    }
+
     pre {
       background: #222;
       color: #0f0;
@@ -85,6 +121,13 @@
       <span id="latestValue">-</span>
     </div>
 
+    <h3>ควบคุมไฟ</h3>
+    <div class="controls">
+      <button class="on-button" id="turnOnButton" type="button" disabled>เปิดไฟ</button>
+      <button class="off-button" id="turnOffButton" type="button" disabled>ปิดไฟ</button>
+    </div>
+    <div id="commandStatus">รอการเชื่อมต่อก่อนส่งคำสั่ง</div>
+
     <h3>ข้อมูลล่าสุด</h3>
     <pre id="log">ยังไม่มีข้อมูล</pre>
   </div>
@@ -95,14 +138,43 @@
     const username = "pcomejina";
     const password = "12345678";
     const topic = "temp";
+    const controlTopic = "led/control";
 
     const statusElement = document.getElementById("status");
     const topicElement = document.getElementById("topicName");
     const latestValueElement = document.getElementById("latestValue");
     const lastTimeElement = document.getElementById("lastTime");
     const logElement = document.getElementById("log");
+    const turnOnButton = document.getElementById("turnOnButton");
+    const turnOffButton = document.getElementById("turnOffButton");
+    const commandStatusElement = document.getElementById("commandStatus");
 
     topicElement.textContent = topic;
+
+    function setControlButtonsEnabled(enabled) {
+      turnOnButton.disabled = !enabled;
+      turnOffButton.disabled = !enabled;
+    }
+
+    function publishLightCommand(command) {
+      client.publish(controlTopic, command, function (error) {
+        if (error) {
+          commandStatusElement.textContent = "ส่งคำสั่งไม่สำเร็จ";
+          console.error(error);
+          return;
+        }
+
+        commandStatusElement.textContent = `ส่งคำสั่ง ${command} ไปที่ topic "${controlTopic}" แล้ว`;
+      });
+    }
+
+    turnOnButton.addEventListener("click", function () {
+      publishLightCommand("ON");
+    });
+
+    turnOffButton.addEventListener("click", function () {
+      publishLightCommand("OFF");
+    });
 
     const client = mqtt.connect(brokerUrl, {
       username,
@@ -126,6 +198,8 @@
         }
 
         statusElement.textContent = `Subscribe topic "${topic}" สำเร็จ`;
+        commandStatusElement.textContent = `พร้อมส่งคำสั่งไปที่ topic "${controlTopic}"`;
+        setControlButtonsEnabled(true);
       });
     });
 
@@ -148,17 +222,22 @@
     client.on("reconnect", function () {
       statusElement.textContent = "กำลังเชื่อมต่อใหม่...";
       statusElement.style.background = "#fff3cd";
+      commandStatusElement.textContent = "รอการเชื่อมต่อก่อนส่งคำสั่ง";
+      setControlButtonsEnabled(false);
     });
 
     client.on("error", function (error) {
       statusElement.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ";
       statusElement.style.background = "#ffcdd2";
+      setControlButtonsEnabled(false);
       console.error(error);
     });
 
     client.on("offline", function () {
       statusElement.textContent = "ออฟไลน์";
       statusElement.style.background = "#ffcdd2";
+      commandStatusElement.textContent = "ออฟไลน์ ไม่สามารถส่งคำสั่งได้";
+      setControlButtonsEnabled(false);
     });
   </script>
 </body>
