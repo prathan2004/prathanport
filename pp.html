@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PromptPay QR Generator</title>
+
+    <!-- QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Prompt", sans-serif;
+            background: linear-gradient(135deg, #eef5ff, #f8fbff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 430px;
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.10);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            color: #123b6d;
+        }
+
+        .header p {
+            margin: 8px 0 0;
+            color: #777;
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 16px;
+            outline: none;
+            transition: .2s;
+        }
+
+        input:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 3px rgba(22,119,255,.10);
+        }
+
+        .amount-wrapper {
+            position: relative;
+        }
+
+        .amount-wrapper input {
+            padding-right: 60px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .currency {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #777;
+        }
+
+        .generate-btn {
+            width: 100%;
+            border: 0;
+            padding: 15px;
+            border-radius: 12px;
+            background: #1677ff;
+            color: white;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        .generate-btn:hover {
+            background: #095fd1;
+            transform: translateY(-1px);
+        }
+
+        .qr-section {
+            display: none;
+            text-align: center;
+            margin-top: 28px;
+            padding-top: 25px;
+            border-top: 1px solid #eee;
+        }
+
+        #qrcode {
+            width: fit-content;
+            margin: 0 auto;
+            padding: 15px;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 16px;
+        }
+
+        #qrcode img,
+        #qrcode canvas {
+            display: block;
+        }
+
+        .pay-amount {
+            margin-top: 18px;
+            font-size: 30px;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .pay-label {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .promptpay-display {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .download-btn {
+            width: 100%;
+            margin-top: 20px;
+            border: 1px solid #1677ff;
+            padding: 13px;
+            border-radius: 12px;
+            background: white;
+            color: #1677ff;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .download-btn:hover {
+            background: #f0f7ff;
+        }
+
+        .warning {
+            margin-top: 18px;
+            padding: 12px;
+            background: #fff8e6;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #776000;
+            line-height: 1.6;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #aaa;
+            font-size: 11px;
+        }
+
+        @media(max-width: 480px) {
+            .card {
+                padding: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <div class="header">
+        <h1>💳 PromptPay</h1>
+        <p>สร้าง QR Code สำหรับรับชำระเงิน</p>
+    </div>
+
+
+    <!-- PromptPay ID -->
+
+    <div class="form-group">
+
+        <label>เบอร์โทรศัพท์ PromptPay</label>
+
+        <input
+            type="tel"
+            id="promptpay"
+            value="0812345678"
+            maxlength="10"
+            placeholder="0812345678"
+        >
+
+    </div>
+
+
+    <!-- Amount -->
+
+    <div class="form-group">
+
+        <label>จำนวนเงิน</label>
+
+        <div class="amount-wrapper">
+
+            <input
+                type="number"
+                id="amount"
+                value="150"
+                min="0.01"
+                step="0.01"
+                placeholder="150.00"
+            >
+
+            <span class="currency">บาท</span>
+
+        </div>
+
+    </div>
+
+
+    <button
+        class="generate-btn"
+        onclick="generatePromptPayQR()"
+    >
+        สร้าง QR รับเงิน
+    </button>
+
+
+
+    <!-- QR RESULT -->
+
+    <div
+        class="qr-section"
+        id="qrSection"
+    >
+
+        <div class="pay-label">
+            สแกนเพื่อชำระเงิน
+        </div>
+
+        <div
+            class="pay-amount"
+            id="displayAmount"
+        >
+            ฿0.00
+        </div>
+
+        <div
+            class="promptpay-display"
+            id="displayPromptPay"
+        ></div>
+
+
+        <div
+            id="qrcode"
+            style="margin-top:20px;"
+        ></div>
+
+
+        <button
+            class="download-btn"
+            onclick="downloadQR()"
+        >
+            ดาวน์โหลด QR Code
+        </button>
+
+
+        <div class="warning">
+
+            ⚠️ กรุณาตรวจสอบชื่อผู้รับและจำนวนเงิน
+            ที่แอปธนาคารแสดงก่อนยืนยันการโอนเงินจริง
+
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+        PromptPay QR Generator
+    </div>
+
+</div>
+
+
+<script>
+
+/* ==========================================================
+   EMV Helper
+========================================================== */
+
+function formatField(id, value) {
+
+    return id +
+           value.length.toString().padStart(2, "0") +
+           value;
+
+}
+
+
+
+/* ==========================================================
+   CRC16 CCITT
+========================================================== */
+
+function crc16(str) {
+
+    let crc = 0xFFFF;
+
+    for (let i = 0; i < str.length; i++) {
+
+        crc ^= str.charCodeAt(i) << 8;
+
+        for (let j = 0; j < 8; j++) {
+
+            if (crc & 0x8000) {
+
+                crc = (crc << 1) ^ 0x1021;
+
+            } else {
+
+                crc = crc << 1;
+
+            }
+
+            crc &= 0xFFFF;
+
+        }
+
+    }
+
+    return crc
+        .toString(16)
+        .toUpperCase()
+        .padStart(4, "0");
+
+}
+
+
+
+/* ==========================================================
+   Convert Thai Mobile Number
+   0812345678
+   ↓
+   0066812345678
+========================================================== */
+
+function formatPromptPayPhone(phone) {
+
+    phone = phone.replace(/\D/g, "");
+
+    if (phone.startsWith("0")) {
+
+        phone = phone.substring(1);
+
+    }
+
+    return "0066" + phone;
+
+}
+
+
+
+/* ==========================================================
+   Create PromptPay Payload
+========================================================== */
+
+function generatePayload(phone, amount) {
+
+    const promptPayID =
+        formatPromptPayPhone(phone);
+
+
+    /*
+        Merchant Account Information
+
+        00 = PromptPay AID
+        01 = Mobile Number
+    */
+
+    const merchantAccount =
+        formatField(
+            "00",
+            "A000000677010111"
+        )
+        +
+        formatField(
+            "01",
+            promptPayID
+        );
+
+
+    let payload = "";
+
+
+    // Payload Format Indicator
+
+    payload += formatField(
+        "00",
+        "01"
+    );
+
+
+    // Point of Initiation Method
+    // 12 = Dynamic QR
+
+    payload += formatField(
+        "01",
+        "12"
+    );
+
+
+    // Merchant Account
+
+    payload += formatField(
+        "29",
+        merchantAccount
+    );
+
+
+    // Merchant Category Code
+
+    payload += formatField(
+        "52",
+        "0000"
+    );
+
+
+    // Currency THB = 764
+
+    payload += formatField(
+        "53",
+        "764"
+    );
+
+
+    // Amount
+
+    payload += formatField(
+        "54",
+        parseFloat(amount).toFixed(2)
+    );
+
+
+    // Country
+
+    payload += formatField(
+        "58",
+        "TH"
+    );
+
+
+    // CRC
+
+    payload += "6304";
+
+    payload += crc16(payload);
+
+
+    return payload;
+
+}
+
+
+
+/* ==========================================================
+   Generate QR
+========================================================== */
+
+function generatePromptPayQR() {
+
+    const phone =
+        document
+        .getElementById("promptpay")
+        .value
+        .replace(/\D/g, "");
+
+
+    const amount =
+        parseFloat(
+            document
+            .getElementById("amount")
+            .value
+        );
+
+
+    /* Validation */
+
+    if (phone.length !== 10) {
+
+        alert(
+            "กรุณากรอกเบอร์โทรศัพท์ PromptPay 10 หลัก"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !Number.isFinite(amount) ||
+        amount <= 0
+    ) {
+
+        alert(
+            "กรุณากรอกจำนวนเงินมากกว่า 0 บาท"
+        );
+
+        return;
+
+    }
+
+
+    /* Generate Payload */
+
+    const payload =
+        generatePayload(
+            phone,
+            amount
+        );
+
+
+    /* Clear old QR */
+
+    const qrContainer =
+        document.getElementById(
+            "qrcode"
+        );
+
+    qrContainer.innerHTML = "";
+
+
+    /* Generate QR */
+
+    new QRCode(
+        qrContainer,
+        {
+
+            text: payload,
+
+            width: 260,
+
+            height: 260,
+
+            colorDark:
+                "#000000",
+
+            colorLight:
+                "#ffffff",
+
+            correctLevel:
+                QRCode.CorrectLevel.M
+
+        }
+    );
+
+
+    /* Display */
+
+    document
+        .getElementById(
+            "displayAmount"
+        )
+        .textContent =
+        "฿" +
+        amount.toLocaleString(
+            "th-TH",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        );
+
+
+    document
+        .getElementById(
+            "displayPromptPay"
+        )
+        .textContent =
+        maskPhone(phone);
+
+
+    document
+        .getElementById(
+            "qrSection"
+        )
+        .style.display =
+        "block";
+
+}
+
+
+
+/* ==========================================================
+   Mask Phone
+========================================================== */
+
+function maskPhone(phone) {
+
+    return (
+        phone.substring(0,3)
+        +
+        "-XXX-"
+        +
+        phone.substring(6)
+    );
+
+}
+
+
+
+/* ==========================================================
+   Download QR
+========================================================== */
+
+function downloadQR() {
+
+    const qrContainer =
+        document.getElementById(
+            "qrcode"
+        );
+
+
+    const canvas =
+        qrContainer.querySelector(
+            "canvas"
+        );
+
+
+    const img =
+        qrContainer.querySelector(
+            "img"
+        );
+
+
+    if (!canvas && !img) {
+
+        alert(
+            "กรุณาสร้าง QR Code ก่อน"
+        );
+
+        return;
+
+    }
+
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+
+    if (canvas) {
+
+        link.href =
+            canvas.toDataURL(
+                "image/png"
+            );
+
+    } else {
+
+        link.href =
+            img.src;
+
+    }
+
+
+    link.download =
+        "promptpay-qr.png";
+
+
+    document
+        .body
+        .appendChild(link);
+
+
+    link.click();
+
+
+    document
+        .body
+        .removeChild(link);
+
+}
+
+
+
+/* ==========================================================
+   Press Enter
+========================================================== */
+
+document
+.getElementById("amount")
+.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.key === "Enter") {
+
+            generatePromptPayQR();
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+</html>
