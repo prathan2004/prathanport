@@ -213,6 +213,93 @@ select:focus {
   font-size: 1.8rem;
 }
 
+.dashboard-grid {
+  grid-template-columns: 1fr;
+}
+
+.chart-card,
+.card {
+  min-width: 0;
+  padding: 1rem;
+}
+
+.section-heading {
+  align-items: start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.section-heading h2 {
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.run-list,
+.leaderboard-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.run-item,
+.leaderboard-item {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: 1fr auto;
+  padding: 0.75rem;
+}
+
+.run-item span,
+.leaderboard-item span {
+  color: var(--muted);
+  display: block;
+  font-size: 0.85rem;
+  margin-top: 0.15rem;
+}
+
+.leaderboard-item {
+  grid-template-columns: auto 1fr auto;
+}
+
+.leaderboard-item .rank {
+  align-items: center;
+  background: rgba(33, 166, 122, 0.12);
+  border-radius: 999px;
+  color: var(--mint-dark);
+  display: inline-flex;
+  font-weight: 900;
+  height: 2rem;
+  justify-content: center;
+  margin: 0;
+  min-width: 2.25rem;
+}
+
+.status-pill {
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0.35rem 0.6rem;
+}
+
+.status-pill.pending {
+  background: #fff7e6;
+  color: #9a6700;
+}
+
+.status-pill.approved {
+  background: rgba(33, 166, 122, 0.12);
+  color: var(--mint-dark);
+}
+
+.status-pill.rejected {
+  background: #fff0f0;
+  color: #b42318;
+}
+
 .profile-form {
   display: grid;
   gap: 1rem;
@@ -229,5 +316,9 @@ select:focus {
   .app-nav {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }

@@ -6,6 +6,7 @@
   <title>Dashboard | MH Running App</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script defer src="js/supabase.js"></script>
   <script defer src="js/auth.js"></script>
   <script defer src="js/dashboard.js"></script>
@@ -41,6 +42,68 @@
       <article class="card stat-card">
         <span>สะสมทั้งหมด</span>
         <strong id="allTimeDistance">0 km</strong>
+      </article>
+      <article class="card stat-card">
+        <span>จำนวนครั้ง</span>
+        <strong id="totalRuns">0</strong>
+      </article>
+      <article class="card stat-card">
+        <span>Average Pace</span>
+        <strong id="averagePace">-</strong>
+      </article>
+      <article class="card stat-card">
+        <span>อันดับปัจจุบัน</span>
+        <strong id="currentRank">-</strong>
+      </article>
+      <article class="card stat-card">
+        <span>รอตรวจสอบ</span>
+        <strong id="pendingRuns">0</strong>
+      </article>
+    </section>
+
+    <section class="grid dashboard-grid">
+      <article class="card chart-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">7 Days</p>
+            <h2>ระยะทางย้อนหลัง 7 วัน</h2>
+          </div>
+        </div>
+        <canvas id="weeklyChart" height="220"></canvas>
+      </article>
+
+      <article class="card chart-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Monthly</p>
+            <h2>ระยะทางรายเดือน</h2>
+          </div>
+        </div>
+        <canvas id="monthlyChart" height="220"></canvas>
+      </article>
+    </section>
+
+    <section class="grid dashboard-grid">
+      <article class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Recent</p>
+            <h2>ประวัติล่าสุด</h2>
+          </div>
+          <a href="history.html">ดูทั้งหมด</a>
+        </div>
+        <div id="recentRuns" class="run-list"></div>
+      </article>
+
+      <article class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Leaderboard</p>
+            <h2>อันดับ Top 5</h2>
+          </div>
+          <a href="leaderboard.html">ดูอันดับ</a>
+        </div>
+        <div id="leaderboardPreview" class="leaderboard-list"></div>
       </article>
     </section>
 

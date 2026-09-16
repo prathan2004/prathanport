@@ -11,6 +11,7 @@ This project is planned as a static frontend connected directly to Supabase.
 - Phase 3: Supabase SQL
 - Phase 4: Row Level Security
 - Phase 5: Authentication
+- Phase 6: Member Dashboard
 
 ## Documents
 
@@ -19,6 +20,7 @@ This project is planned as a static frontend connected directly to Supabase.
 - [Phase 3 - Supabase SQL](docs/phase-03-supabase-sql.md)
 - [Phase 4 - RLS Policies](docs/phase-04-rls-policies.md)
 - [Phase 5 - Authentication](docs/phase-05-authentication.md)
+- [Phase 6 - Member Dashboard](docs/phase-06-member-dashboard.md)
 
 ## SQL
 
