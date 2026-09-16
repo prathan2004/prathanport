@@ -7,6 +7,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -225,6 +228,66 @@
     </div>
   </template>
 
+  <template id="pdfConvertTool">
+    <div class="grid gap-5">
+      <div class="rounded-lg border border-ink/10 bg-[#fbfbf8] p-5">
+        <h3 class="text-lg font-bold">PDF Converter</h3>
+        <p class="mt-2 text-sm leading-6 text-ink/65">แปลง PDF เป็นภาพ PNG, ไฟล์ PPT หรือชุดภาพสำหรับนำไปสร้าง Google Slides</p>
+      </div>
+
+      <div class="rounded-lg border border-dashed border-ink/20 bg-[#fbfbf8] p-5">
+        <label class="grid cursor-pointer gap-2 text-center">
+          <span class="text-lg font-bold">เลือกไฟล์ PDF ที่ต้องการแปลง</span>
+          <span class="text-sm text-ink/60">รองรับไฟล์ PDF 1 ไฟล์ต่อครั้ง และประมวลผลในเบราว์เซอร์</span>
+          <input id="convertPdfInput" type="file" accept="application/pdf,.pdf" class="sr-only">
+          <span class="mx-auto mt-2 rounded-md bg-mint px-4 py-3 text-sm font-extrabold text-white hover:bg-[#28a987]">เลือกไฟล์ PDF</span>
+        </label>
+      </div>
+
+      <div class="grid gap-4 lg:grid-cols-[1fr_260px]">
+        <div class="grid gap-4 rounded-lg border border-ink/10 bg-white p-4">
+          <div class="grid gap-4 md:grid-cols-3">
+            <label class="grid gap-1 text-sm font-semibold">
+              รูปแบบไฟล์
+              <select id="convertOutputType" class="field">
+                <option value="images">ภาพ PNG (.zip)</option>
+                <option value="pptx">PowerPoint (.pptx)</option>
+                <option value="google-slides">Google Slides image pack (.zip)</option>
+              </select>
+            </label>
+            <label class="grid gap-1 text-sm font-semibold">
+              ความละเอียด
+              <select id="convertScale" class="field">
+                <option value="1.5">ปกติ</option>
+                <option value="2" selected>คมชัด</option>
+                <option value="3">คมชัดมาก</option>
+              </select>
+            </label>
+            <label class="grid gap-1 text-sm font-semibold">
+              ชื่อไฟล์
+              <input id="convertOutputName" class="field" value="converted-pdf">
+            </label>
+          </div>
+
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <button id="convertPdfButton" class="primary">แปลงไฟล์</button>
+            <button id="clearConvertPdfButton" class="secondary">ล้างข้อมูล</button>
+          </div>
+
+          <p id="convertPdfStatus" class="text-sm text-ink/60">ยังไม่ได้เลือกไฟล์ PDF</p>
+        </div>
+
+        <div class="rounded-lg border border-ink/10 bg-[#fbfbf8] p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-ink/45">Pages</p>
+          <p id="convertPageCount" class="mt-2 text-4xl font-black">0</p>
+          <p id="convertFileName" class="mt-2 break-words text-sm text-ink/60">-</p>
+        </div>
+      </div>
+
+      <div id="convertPreviewList" class="grid gap-3 md:grid-cols-2 xl:grid-cols-3"></div>
+    </div>
+  </template>
+
   <template id="pdfTool">
     <div class="grid gap-5">
       <div class="rounded-lg border border-dashed border-ink/20 bg-[#fbfbf8] p-5">
@@ -314,6 +377,13 @@
         template: 'qrCodeTool'
       },
       {
+        id: 'pdf-convert',
+        title: 'PDF Converter',
+        type: 'PDF Tool',
+        description: 'แปลง PDF เป็นภาพ, PPT หรือชุดภาพสำหรับ Google Slides',
+        template: 'pdfConvertTool'
+      },
+      {
         id: 'pdf',
         title: 'รวมไฟล์ PDF',
         type: 'PDF Tool',
@@ -379,7 +449,11 @@
 
       document.querySelectorAll('.tool-button').forEach(button => {
         button.addEventListener('click', () => {
-          loadTool(button.dataset.tool);
+          if (window.location.hash === `#${button.dataset.tool}`) {
+            loadTool(button.dataset.tool);
+          } else {
+            window.location.hash = button.dataset.tool;
+          }
           closeMobileMenu();
         });
       });
@@ -403,6 +477,10 @@
 
       if (toolId === 'qr-code') {
         bindQrCodeTool();
+      }
+
+      if (toolId === 'pdf-convert') {
+        bindPdfConvertTool();
       }
 
       if (toolId === 'pdf') {
@@ -555,6 +633,224 @@
       generateQrButton.addEventListener('click', generateQrCode);
       downloadQrButton.addEventListener('click', downloadQrCode);
       clearQrButton.addEventListener('click', clearQrCode);
+    }
+
+    function bindPdfConvertTool() {
+      const convertPdfInput = document.querySelector('#convertPdfInput');
+      const convertOutputType = document.querySelector('#convertOutputType');
+      const convertScale = document.querySelector('#convertScale');
+      const convertOutputName = document.querySelector('#convertOutputName');
+      const convertPdfButton = document.querySelector('#convertPdfButton');
+      const clearConvertPdfButton = document.querySelector('#clearConvertPdfButton');
+      const convertPdfStatus = document.querySelector('#convertPdfStatus');
+      const convertPageCount = document.querySelector('#convertPageCount');
+      const convertFileName = document.querySelector('#convertFileName');
+      const convertPreviewList = document.querySelector('#convertPreviewList');
+      let convertPdfFile = null;
+
+      if (window.pdfjsLib) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+
+      function getOutputBaseName() {
+        return (convertOutputName.value.trim() || 'converted-pdf').replace(/[\\/:*?"<>|]+/g, '-');
+      }
+
+      function dataUrlToBlob(dataUrl) {
+        const [meta, data] = dataUrl.split(',');
+        const mime = meta.match(/:(.*?);/)[1];
+        const binary = atob(data);
+        const bytes = new Uint8Array(binary.length);
+        for (let index = 0; index < binary.length; index += 1) {
+          bytes[index] = binary.charCodeAt(index);
+        }
+        return new Blob([bytes], { type: mime });
+      }
+
+      function downloadBlob(blob, fileName) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      async function renderPdfPages() {
+        if (!window.pdfjsLib) {
+          throw new Error('pdfjs-missing');
+        }
+
+        const bytes = await convertPdfFile.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+        const scale = Number(convertScale.value) || 2;
+        const pages = [];
+        convertPreviewList.innerHTML = '';
+
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+          convertPdfStatus.textContent = `กำลังแปลงหน้า ${pageNumber} จาก ${pdf.numPages}`;
+          const page = await pdf.getPage(pageNumber);
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({ canvasContext: context, viewport }).promise;
+          const dataUrl = canvas.toDataURL('image/png');
+          pages.push({ pageNumber, width: canvas.width, height: canvas.height, dataUrl });
+
+          if (pageNumber <= 6) {
+            const preview = document.createElement('div');
+            preview.className = 'rounded-lg border border-ink/10 bg-white p-3';
+            preview.innerHTML = `
+              <img src="${dataUrl}" alt="Page ${pageNumber}" class="mx-auto max-h-52 rounded border border-ink/10 object-contain">
+              <p class="mt-2 text-center text-xs font-semibold text-ink/60">Page ${pageNumber}</p>
+            `;
+            convertPreviewList.appendChild(preview);
+          }
+        }
+
+        return pages;
+      }
+
+      async function downloadImagesZip(pages, fileName) {
+        if (!window.JSZip) {
+          throw new Error('zip-missing');
+        }
+
+        const zip = new JSZip();
+        pages.forEach(page => {
+          zip.file(`${fileName}-page-${String(page.pageNumber).padStart(3, '0')}.png`, dataUrlToBlob(page.dataUrl));
+        });
+
+        if (convertOutputType.value === 'google-slides') {
+          zip.file('google-slides-note.txt', 'Upload these PNG files to Google Slides and place each image on a separate slide.');
+        }
+
+        const blob = await zip.generateAsync({ type: 'blob' });
+        downloadBlob(blob, `${fileName}.zip`);
+      }
+
+      async function downloadPptx(pages, fileName) {
+        if (!window.pptxgen) {
+          throw new Error('pptx-missing');
+        }
+
+        const pptx = new pptxgen();
+        pptx.layout = 'LAYOUT_WIDE';
+        pptx.author = 'PRATHAN Tools';
+        pptx.subject = 'PDF converted to slides';
+        pptx.title = fileName;
+        const slideWidth = 13.333;
+        const slideHeight = 7.5;
+
+        pages.forEach(page => {
+          const slide = pptx.addSlide();
+          slide.background = { color: 'FFFFFF' };
+          const imageRatio = page.width / page.height;
+          const slideRatio = slideWidth / slideHeight;
+          let width = slideWidth;
+          let height = slideHeight;
+          let x = 0;
+          let y = 0;
+
+          if (imageRatio > slideRatio) {
+            height = slideWidth / imageRatio;
+            y = (slideHeight - height) / 2;
+          } else {
+            width = slideHeight * imageRatio;
+            x = (slideWidth - width) / 2;
+          }
+
+          slide.addImage({ data: page.dataUrl, x, y, w: width, h: height });
+        });
+
+        await pptx.writeFile({ fileName: `${fileName}.pptx` });
+      }
+
+      async function convertPdf() {
+        if (!convertPdfFile) {
+          convertPdfStatus.textContent = 'กรุณาเลือกไฟล์ PDF ก่อน';
+          return;
+        }
+
+        convertPdfButton.disabled = true;
+        convertPdfButton.textContent = 'กำลังแปลงไฟล์...';
+
+        try {
+          const fileName = getOutputBaseName();
+          const pages = await renderPdfPages();
+
+          if (convertOutputType.value === 'pptx') {
+            await downloadPptx(pages, fileName);
+            convertPdfStatus.textContent = `สร้างไฟล์ PPT สำเร็จ ${pages.length} หน้า`;
+          } else {
+            await downloadImagesZip(pages, fileName);
+            convertPdfStatus.textContent = convertOutputType.value === 'google-slides'
+              ? `สร้างชุดภาพสำหรับ Google Slides สำเร็จ ${pages.length} หน้า`
+              : `สร้างไฟล์ภาพ PNG สำเร็จ ${pages.length} หน้า`;
+          }
+        } catch (error) {
+          if (error.message === 'pdfjs-missing') {
+            convertPdfStatus.textContent = 'ไม่สามารถโหลด pdf.js ได้ กรุณาเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่';
+          } else if (error.message === 'pptx-missing') {
+            convertPdfStatus.textContent = 'ไม่สามารถโหลด pptxgenjs ได้ กรุณาเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่';
+          } else if (error.message === 'zip-missing') {
+            convertPdfStatus.textContent = 'ไม่สามารถโหลด JSZip ได้ กรุณาเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่';
+          } else {
+            convertPdfStatus.textContent = 'แปลงไฟล์ไม่สำเร็จ ไฟล์ PDF อาจถูกเข้ารหัสหรือเสียหาย';
+          }
+        } finally {
+          convertPdfButton.disabled = false;
+          convertPdfButton.textContent = 'แปลงไฟล์';
+        }
+      }
+
+      function clearConvertPdf() {
+        convertPdfFile = null;
+        convertPdfInput.value = '';
+        convertPageCount.textContent = '0';
+        convertFileName.textContent = '-';
+        convertPreviewList.innerHTML = '';
+        convertPdfStatus.textContent = 'ล้างข้อมูลแล้ว';
+      }
+
+      convertPdfInput.addEventListener('change', async event => {
+        convertPdfFile = Array.from(event.target.files || [])[0] || null;
+        convertPreviewList.innerHTML = '';
+
+        if (!convertPdfFile) {
+          convertPdfStatus.textContent = 'ยังไม่ได้เลือกไฟล์ PDF';
+          return;
+        }
+
+        if (!(convertPdfFile.type === 'application/pdf' || convertPdfFile.name.toLowerCase().endsWith('.pdf'))) {
+          clearConvertPdf();
+          convertPdfStatus.textContent = 'กรุณาเลือกไฟล์ PDF เท่านั้น';
+          return;
+        }
+
+        convertFileName.textContent = convertPdfFile.name;
+        convertOutputName.value = convertPdfFile.name.replace(/\.pdf$/i, '') || 'converted-pdf';
+        convertPdfStatus.textContent = `เลือกไฟล์แล้ว: ${convertPdfFile.name}`;
+
+        if (window.pdfjsLib) {
+          try {
+            const bytes = await convertPdfFile.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+            convertPageCount.textContent = pdf.numPages;
+            convertPdfStatus.textContent = `พร้อมแปลง ${pdf.numPages} หน้า`;
+          } catch (error) {
+            convertPageCount.textContent = '?';
+            convertPdfStatus.textContent = 'เลือกไฟล์แล้ว แต่ยังอ่านจำนวนหน้าไม่ได้';
+          }
+        }
+      });
+
+      convertPdfButton.addEventListener('click', convertPdf);
+      clearConvertPdfButton.addEventListener('click', clearConvertPdf);
     }
 
     function getBmiCategory(bmi) {
@@ -873,7 +1169,14 @@
     closeMenu.addEventListener('click', closeMobileMenu);
     mobileOverlay.addEventListener('click', closeMobileMenu);
     document.querySelector('#toolCount').textContent = tools.length;
-    loadTool('rctf-prompt');
+    window.addEventListener('hashchange', () => {
+      const hashTool = window.location.hash.replace('#', '');
+      if (tools.some(tool => tool.id === hashTool)) {
+        loadTool(hashTool);
+      }
+    });
+    const initialTool = window.location.hash.replace('#', '');
+    loadTool(tools.some(tool => tool.id === initialTool) ? initialTool : 'rctf-prompt');
   </script>
 
   <style>
