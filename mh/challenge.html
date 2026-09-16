@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Challenge | MH Running App</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="js/supabase.js"></script>
+  <script defer src="js/auth.js"></script>
+  <script defer src="js/challenge.js"></script>
+</head>
+<body data-protected="true">
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Challenge</p>
+      <h1>กิจกรรมท้าทาย</h1>
+    </div>
+    <button id="logoutButton" class="button secondary" type="button">ออกจากระบบ</button>
+  </header>
+
+  <nav class="app-nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="add-run.html">บันทึกการวิ่ง</a>
+    <a href="history.html">ประวัติ</a>
+    <a href="leaderboard.html">Leaderboard</a>
+    <a class="active" href="challenge.html">Challenge</a>
+    <a href="profile.html">Profile</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+
+  <main class="app-shell">
+    <section id="challengeList" class="grid"></section>
+  </main>
+</body>
+</html>

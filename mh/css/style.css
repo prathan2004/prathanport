@@ -36,7 +36,8 @@ label {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -46,7 +47,8 @@ select {
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: var(--mint);
   box-shadow: 0 0 0 3px rgba(33, 166, 122, 0.14);
   outline: none;
@@ -125,6 +127,18 @@ select:focus {
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 1.25rem;
+}
+
+.actions.compact {
+  align-items: center;
+  display: flex;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.actions.compact .button {
+  min-height: 36px;
+  padding: 0.45rem 0.65rem;
 }
 
 .eyebrow {
@@ -265,6 +279,19 @@ select:focus {
   grid-template-columns: auto 1fr auto;
 }
 
+.leaderboard-item.current-user {
+  border-color: var(--mint);
+  background: rgba(33, 166, 122, 0.08);
+}
+
+.leaderboard-item small {
+  color: var(--muted);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-top: 0.15rem;
+}
+
 .leaderboard-item .rank {
   align-items: center;
   background: rgba(33, 166, 122, 0.12);
@@ -306,6 +333,46 @@ select:focus {
   padding: 1rem;
 }
 
+.form-grid {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.span-2 {
+  grid-column: 1 / -1;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filters .button.active {
+  background: var(--mint);
+  color: white;
+}
+
+.challenge-card {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.progress {
+  background: #e9eef3;
+  border-radius: 999px;
+  height: 0.75rem;
+  overflow: hidden;
+}
+
+.progress span {
+  background: var(--mint);
+  display: block;
+  height: 100%;
+}
+
 @media (min-width: 760px) {
   .auth-card,
   .profile-form {
@@ -320,5 +387,10 @@ select:focus {
 
   .dashboard-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 1.5rem;
   }
 }

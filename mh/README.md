@@ -12,6 +12,11 @@ This project is planned as a static frontend connected directly to Supabase.
 - Phase 4: Row Level Security
 - Phase 5: Authentication
 - Phase 6: Member Dashboard
+- Phase 7: Running Record
+- Phase 8: Leaderboard
+- Phase 9: Challenge
+- Phase 10: Admin Dashboard
+- Phase 11: Security Review
 
 ## Documents
 
@@ -21,6 +26,11 @@ This project is planned as a static frontend connected directly to Supabase.
 - [Phase 4 - RLS Policies](docs/phase-04-rls-policies.md)
 - [Phase 5 - Authentication](docs/phase-05-authentication.md)
 - [Phase 6 - Member Dashboard](docs/phase-06-member-dashboard.md)
+- [Phase 7 - Running Record](docs/phase-07-running-record.md)
+- [Phase 8 - Leaderboard](docs/phase-08-leaderboard.md)
+- [Phase 9 - Challenge](docs/phase-09-challenge.md)
+- [Phase 10 - Admin Dashboard](docs/phase-10-admin-dashboard.md)
+- [Phase 11 - Security Review](docs/phase-11-security-review.md)
 
 ## SQL
 

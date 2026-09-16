@@ -104,6 +104,11 @@ async function protectRoute() {
     if (!profile || profile.status !== 'active') {
       await sb.auth.signOut();
       window.location.href = 'login.html';
+      return;
+    }
+
+    if (document.body.dataset.admin === 'true' && profile.role !== 'admin') {
+      window.location.href = 'dashboard.html';
     }
   } catch (error) {
     console.error(error);

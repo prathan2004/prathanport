@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>บันทึกการวิ่ง | MH Running App</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="js/supabase.js"></script>
+  <script defer src="js/auth.js"></script>
+  <script defer src="js/running.js"></script>
+</head>
+<body data-protected="true">
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Add Run</p>
+      <h1>บันทึกการวิ่ง</h1>
+    </div>
+    <button id="logoutButton" class="button secondary" type="button">ออกจากระบบ</button>
+  </header>
+
+  <nav class="app-nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a class="active" href="add-run.html">บันทึกการวิ่ง</a>
+    <a href="history.html">ประวัติ</a>
+    <a href="leaderboard.html">Leaderboard</a>
+    <a href="challenge.html">Challenge</a>
+    <a href="profile.html">Profile</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+
+  <main class="app-shell">
+    <form id="runForm" class="card form-grid">
+      <label>
+        วันที่วิ่ง
+        <input id="runDate" type="date" required>
+      </label>
+      <label>
+        ระยะทาง (km)
+        <input id="distanceKm" type="number" min="0.01" step="0.01" required>
+      </label>
+      <label>
+        เวลา (นาที)
+        <input id="durationMinutes" type="number" min="1" step="1" required>
+      </label>
+      <label>
+        Pace
+        <input id="pacePreview" type="text" readonly value="-">
+      </label>
+      <label class="span-2">
+        หมายเหตุ
+        <input id="runNote" type="text" maxlength="300" placeholder="เช่น Easy run, Long run">
+      </label>
+      <label class="span-2">
+        รูปหลักฐาน
+        <input id="evidenceFile" type="file" accept="image/jpeg,image/png,image/webp">
+      </label>
+      <button class="button primary" type="submit">ส่งผลการวิ่ง</button>
+      <p id="runMessage" class="message"></p>
+    </form>
+  </main>
+</body>
+</html>

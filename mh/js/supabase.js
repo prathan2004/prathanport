@@ -38,3 +38,46 @@ function setMessage(element, text, isError = false) {
   element.textContent = text;
   element.classList.toggle('error', isError);
 }
+
+function formatDistance(value) {
+  return Number(value || 0).toFixed(2);
+}
+
+function formatPace(value) {
+  const pace = Number(value || 0);
+  if (!pace) return '-';
+  const minutes = Math.floor(pace);
+  const seconds = Math.round((pace - minutes) * 60);
+  return `${minutes}:${String(seconds).padStart(2, '0')} min/km`;
+}
+
+function formatThaiDate(value) {
+  if (!value) return '-';
+  return new Date(value).toLocaleDateString('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+}
+
+function formatStatus(status) {
+  const labels = {
+    pending: 'รอตรวจ',
+    approved: 'อนุมัติ',
+    rejected: 'ไม่ผ่าน'
+  };
+  return labels[status] || status || '-';
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}

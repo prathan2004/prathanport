@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ประวัติ | MH Running App</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="js/supabase.js"></script>
+  <script defer src="js/auth.js"></script>
+  <script defer src="js/running.js"></script>
+</head>
+<body data-protected="true">
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">History</p>
+      <h1>ประวัติการวิ่ง</h1>
+    </div>
+    <button id="logoutButton" class="button secondary" type="button">ออกจากระบบ</button>
+  </header>
+
+  <nav class="app-nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="add-run.html">บันทึกการวิ่ง</a>
+    <a class="active" href="history.html">ประวัติ</a>
+    <a href="leaderboard.html">Leaderboard</a>
+    <a href="challenge.html">Challenge</a>
+    <a href="profile.html">Profile</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+
+  <main class="app-shell">
+    <section class="card">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">My Runs</p>
+          <h2>รายการทั้งหมด</h2>
+        </div>
+      </div>
+      <div id="historyList" class="run-list"></div>
+    </section>
+  </main>
+</body>
+</html>
