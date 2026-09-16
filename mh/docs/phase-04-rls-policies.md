@@ -10,7 +10,6 @@ Phase 4 enables Row Level Security and creates policies for:
 - Admin running record approval workflow.
 - Challenge visibility and management.
 - Challenge joining.
-- Supabase Storage evidence access.
 
 SQL file:
 
@@ -19,13 +18,6 @@ sql/phase-04-rls.sql
 ```
 
 Run this file after `sql/phase-03-schema.sql`.
-
-## Files Created
-
-```text
-mh/sql/phase-04-rls.sql
-mh/docs/phase-04-rls-policies.md
-```
 
 ## Security Model
 
@@ -37,7 +29,6 @@ Members can:
 - Read their own running records.
 - Update or delete their own `pending` or `rejected` running records.
 - Join active challenges.
-- Upload evidence only to their own Storage folder.
 
 Admins can:
 
@@ -45,7 +36,6 @@ Admins can:
 - Read, approve, reject, update, and delete all running records.
 - Manage all challenges.
 - Manage all challenge memberships.
-- Read all evidence images.
 
 ## Important Rules
 
@@ -71,31 +61,9 @@ public.is_active_member()
 
 These functions read the authenticated user's profile from Supabase, not data passed from the browser.
 
-## Storage Bucket
+## Storage
 
-Bucket:
-
-```text
-running-evidence
-```
-
-Path format:
-
-```text
-{user_id}/{record_id}/evidence.jpg
-```
-
-Allowed MIME types:
-
-- `image/jpeg`
-- `image/png`
-- `image/webp`
-
-Maximum file size:
-
-```text
-5 MB
-```
+This version does not use Supabase Storage. Image upload was removed to avoid Storage cost.
 
 ## Testing Steps
 
@@ -109,7 +77,7 @@ Maximum file size:
 8. Confirm member cannot read another user's private running records.
 9. Promote a test user to admin manually in Supabase Table Editor.
 10. Confirm admin can approve or reject running records.
-11. Confirm member can upload evidence only to their own folder.
+11. Confirm no Storage bucket is required.
 
 ## Known Follow-Up
 

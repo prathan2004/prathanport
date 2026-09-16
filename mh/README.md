@@ -45,7 +45,6 @@ This project is planned as a static frontend connected directly to Supabase.
 - Chart.js
 - Supabase Auth
 - Supabase PostgreSQL
-- Supabase Storage
 - Supabase Row Level Security
 
 ## Important Security Rule

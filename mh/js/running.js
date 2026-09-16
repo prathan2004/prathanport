@@ -12,7 +12,6 @@ function bindRunForm(runForm) {
   const durationMinutes = document.querySelector('#durationMinutes');
   const pacePreview = document.querySelector('#pacePreview');
   const runMessage = document.querySelector('#runMessage');
-  const evidenceFile = document.querySelector('#evidenceFile');
   runDate.max = todayKey();
   runDate.value = todayKey();
 
@@ -31,7 +30,6 @@ function bindRunForm(runForm) {
 
     const distance = Number(distanceKm.value);
     const duration = Number(durationMinutes.value);
-    const file = evidenceFile.files[0] || null;
 
     if (!runDate.value || runDate.value > todayKey()) {
       setMessage(runMessage, 'วันที่วิ่งต้องไม่เป็นวันในอนาคต', true);
@@ -41,18 +39,9 @@ function bindRunForm(runForm) {
       setMessage(runMessage, 'ระยะทางและเวลาต้องมากกว่า 0', true);
       return;
     }
-    if (file && !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setMessage(runMessage, 'รองรับเฉพาะไฟล์ JPG, PNG หรือ WebP', true);
-      return;
-    }
-    if (file && file.size > 5 * 1024 * 1024) {
-      setMessage(runMessage, 'ขนาดไฟล์หลักฐานต้องไม่เกิน 5 MB', true);
-      return;
-    }
-
     try {
       const user = await getCurrentUser();
-      const { data: record, error: insertError } = await sb
+      const { error: insertError } = await sb
         .from('running_records')
         .insert({
           user_id: user.id,
@@ -61,25 +50,9 @@ function bindRunForm(runForm) {
           duration_minutes: duration,
           note: document.querySelector('#runNote').value.trim() || null,
           status: 'pending'
-        })
-        .select('id')
-        .single();
+        });
 
       if (insertError) throw insertError;
-
-      if (file) {
-        const extension = file.name.split('.').pop().toLowerCase();
-        const path = `${user.id}/${record.id}/evidence.${extension}`;
-        const { error: uploadError } = await sb.storage
-          .from('running-evidence')
-          .upload(path, file, { upsert: true, contentType: file.type });
-        if (uploadError) throw uploadError;
-
-        await sb
-          .from('running_records')
-          .update({ evidence_url: path })
-          .eq('id', record.id);
-      }
 
       runForm.reset();
       runDate.value = todayKey();

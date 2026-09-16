@@ -66,7 +66,6 @@ create table if not exists public.running_records (
   duration_minutes integer not null,
   pace numeric(8,2) generated always as (round(duration_minutes::numeric / nullif(distance_km, 0), 2)) stored,
   note text,
-  evidence_url text,
   status text not null default 'pending',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

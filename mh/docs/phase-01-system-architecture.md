@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build a mobile-first running record web application for about 70 members. Members can register, log in, record running distance, upload evidence, view history, and see leaderboards. Admins can manage members, approve or reject running records, manage challenges, and view the overall dashboard.
+Build a mobile-first running record web application for about 70 members. Members can register, log in, record running distance, view history, and see leaderboards. Admins can manage members, approve or reject running records, manage challenges, and view the overall dashboard.
 
 The app must be deployable on static hosting such as GitHub Pages, Cloudflare Pages, or Netlify.
 
@@ -19,7 +19,6 @@ Supabase
   |
   | Auth
   | PostgreSQL
-  | Storage
   | RLS Policies
   v
 Static Hosting
@@ -75,7 +74,6 @@ Responsibilities:
 - Initialize Supabase client using anon/publishable key.
 - Manage auth session and route protection.
 - Call Supabase queries, views, and RPC functions.
-- Upload evidence images to Supabase Storage.
 - Render charts using Chart.js.
 - Format pace, dates, distances, and ranking data.
 
@@ -85,7 +83,6 @@ Supabase provides:
 
 - Authentication: email/password, session persistence, password reset.
 - PostgreSQL database: profiles, running records, challenges, challenge members.
-- Storage: running evidence images.
 - RLS: all authorization rules.
 - Views/RPC: aggregation for dashboard and leaderboard.
 
@@ -98,7 +95,6 @@ Allowed actions:
 - Register, log in, log out.
 - View and edit own profile.
 - Add own running records.
-- Upload evidence image.
 - View own history.
 - View own total distance and current ranking.
 - View public leaderboard.
@@ -145,10 +141,8 @@ Login form
 
 ```text
 Add run form
-  -> validate date, distance, duration, file
+  -> validate date, distance, duration
   -> insert running_records status = pending
-  -> upload evidence to running-evidence/user_id/record_id/
-  -> update evidence_url
   -> show pending status
 ```
 
@@ -168,7 +162,6 @@ Display format:
 
 ```text
 Admin review
-  -> open evidence image
   -> approve or reject record
   -> approved records become visible in leaderboard totals
 ```
@@ -229,31 +222,12 @@ Do not trust these values when sent from the browser:
 - `role`
 - `status`
 - running record status
-- evidence path ownership
 
 RLS and database constraints must enforce ownership and admin privileges.
 
 ## Storage Architecture
 
-Bucket:
-
-```text
-running-evidence
-```
-
-Path format:
-
-```text
-running-evidence/{user_id}/{record_id}/evidence.{ext}
-```
-
-Rules:
-
-- Member can upload only to own folder.
-- Member can read own evidence.
-- Admin can read all evidence.
-- File type should be limited to images.
-- File size should be limited by frontend and Storage policy where possible.
+No Supabase Storage bucket is required in this version. Image upload was removed to avoid Storage cost.
 
 ## Performance Strategy
 

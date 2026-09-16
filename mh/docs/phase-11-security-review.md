@@ -9,7 +9,6 @@ Reviewed areas:
 - Authentication.
 - Authorization.
 - RLS.
-- Storage.
 - Input validation.
 - XSS prevention.
 - Secret management.
@@ -35,7 +34,6 @@ Supabase RLS controls:
 - Own running records.
 - Admin access to all records.
 - Challenge joins.
-- Storage folder ownership.
 
 ### Secret Management
 
@@ -53,19 +51,11 @@ service_role key
 
 ### XSS Prevention
 
-Dynamic display text uses `escapeHtml()` in the new list-rendering scripts.
+Dynamic display text uses `escapeHtml()` in the list-rendering scripts.
 
-### Upload Validation
+### Upload Policy
 
-Frontend validates:
-
-- MIME type.
-- File size.
-
-Storage bucket also limits:
-
-- MIME type.
-- File size.
+Image upload is intentionally disabled to avoid Supabase Storage cost and reduce abuse risk.
 
 ## Risks / Follow-Up
 
@@ -73,7 +63,6 @@ Storage bucket also limits:
 - Add rate limiting if the app becomes public.
 - Add audit log table for admin approvals/rejections.
 - Consider anti-abuse checks for suspicious distances or pace.
-- Consider image compression before upload.
 - Review all Supabase SQL in a staging project before production.
 
 ## Manual Test Checklist
@@ -83,10 +72,8 @@ Storage bucket also limits:
 - Member cannot update own role/status.
 - Member cannot access admin page.
 - Admin can approve/reject records.
-- Admin can view evidence images.
-- Member can upload only to own Storage folder.
 - Leaderboard counts approved records only.
 
 ## Result
 
-The current design keeps sensitive authorization in Supabase/RLS and does not require a custom backend.
+The current design keeps sensitive authorization in Supabase/RLS and does not require a custom backend or Storage bucket.

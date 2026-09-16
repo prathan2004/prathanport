@@ -22,7 +22,6 @@ css/style.css
 - Activate/inactivate members.
 - Review pending running records.
 - Approve or reject running records.
-- Open evidence image by signed URL.
 - Create active challenges.
 
 ## Security

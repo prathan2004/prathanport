@@ -42,7 +42,7 @@ async function loadAdminMembers() {
 async function loadAdminPendingRuns() {
   const { data, error } = await sb
     .from('running_records')
-    .select('id, user_id, run_date, distance_km, pace, status, evidence_url, profiles(display_name)')
+    .select('id, user_id, run_date, distance_km, pace, status, profiles(display_name)')
     .eq('status', 'pending')
     .order('run_date', { ascending: false });
   if (error) throw error;
@@ -59,7 +59,6 @@ async function loadAdminPendingRuns() {
       <div>
         <strong>${formatDistance(record.distance_km)} km</strong>
         <span>${escapeHtml(record.profiles?.display_name || 'Member')} · ${formatThaiDate(record.run_date)} · ${formatPace(record.pace)}</span>
-        ${record.evidence_url ? `<a href="#" data-evidence="${record.evidence_url}">ดูหลักฐาน</a>` : '<span>ไม่มีหลักฐาน</span>'}
       </div>
       <div class="actions compact">
         <button class="button primary" data-approve="${record.id}">อนุมัติ</button>
@@ -73,12 +72,6 @@ async function loadAdminPendingRuns() {
   });
   document.querySelectorAll('[data-reject]').forEach(button => {
     button.addEventListener('click', () => updateRunStatus(button.dataset.reject, 'rejected'));
-  });
-  document.querySelectorAll('[data-evidence]').forEach(link => {
-    link.addEventListener('click', event => {
-      event.preventDefault();
-      openEvidence(link.dataset.evidence);
-    });
   });
 }
 
@@ -107,15 +100,6 @@ async function toggleMemberStatus(id, currentStatus) {
     return;
   }
   await loadAdminMembers();
-}
-
-async function openEvidence(path) {
-  const { data, error } = await sb.storage.from('running-evidence').createSignedUrl(path, 60);
-  if (error) {
-    alert(error.message);
-    return;
-  }
-  window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
 }
 
 function bindChallengeForm() {

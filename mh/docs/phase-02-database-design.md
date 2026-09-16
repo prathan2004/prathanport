@@ -15,7 +15,6 @@ Recommended supporting objects:
 
 - Dashboard views or RPC functions.
 - Leaderboard views or RPC functions.
-- Storage bucket named `running-evidence`.
 
 ## Entity Relationship Diagram
 
@@ -53,7 +52,6 @@ erDiagram
     int duration_minutes
     numeric pace
     text note
-    text evidence_url
     text status
     timestamptz created_at
     timestamptz updated_at
@@ -131,7 +129,6 @@ Columns:
 | `duration_minutes` | `int` | Required, greater than 0 |
 | `pace` | `numeric(8,2)` | Generated or calculated as minutes per km |
 | `note` | `text` | Optional |
-| `evidence_url` | `text` | Optional but recommended |
 | `status` | `text` | `pending`, `approved`, or `rejected` |
 | `created_at` | `timestamptz` | Default now |
 | `updated_at` | `timestamptz` | Default now |
@@ -283,29 +280,7 @@ Returned fields:
 
 ## Storage Design
 
-Bucket:
-
-```text
-running-evidence
-```
-
-Path convention:
-
-```text
-{user_id}/{record_id}/evidence.{ext}
-```
-
-Accepted files:
-
-- JPG
-- PNG
-- WebP
-
-Suggested max size:
-
-```text
-5 MB
-```
+No Storage bucket is required in this version. Image upload was removed to avoid Storage cost.
 
 ## RLS Planning Notes
 
@@ -335,7 +310,7 @@ Required policy boundaries:
 - Columns, constraints, and indexes planned.
 - ER diagram documented.
 - Aggregation strategy documented.
-- Storage structure documented.
+- No-upload decision documented.
 
 ## Test Checklist
 

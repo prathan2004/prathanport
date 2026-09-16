@@ -2,7 +2,7 @@
 
 ## What This Phase Builds
 
-Phase 7 adds member running record workflows.
+Phase 7 adds member running record workflows without image upload.
 
 Files:
 
@@ -20,7 +20,6 @@ css/style.css
 - Add duration in minutes.
 - Auto-preview pace.
 - Add note.
-- Upload evidence image to Supabase Storage.
 - Create `running_records` row with `status = pending`.
 - View personal running history.
 
@@ -31,24 +30,18 @@ Frontend validation checks:
 - Run date must not be in the future.
 - Distance must be greater than 0.
 - Duration must be greater than 0.
-- Evidence file must be JPG, PNG, or WebP.
-- Evidence file must be 5 MB or smaller.
 
 Database constraints and RLS still enforce the final security rules.
 
-## Evidence Upload Path
+## No Image Upload
 
-```text
-running-evidence/{user_id}/{record_id}/evidence.{ext}
-```
+Image evidence upload was removed to avoid Supabase Storage cost and reduce abuse risk.
 
 ## Testing Steps
 
 1. Log in as a member.
 2. Open `add-run.html`.
-3. Add a valid run without image.
+3. Add a valid run.
 4. Confirm the row appears in `running_records` with `pending`.
-5. Add another run with evidence image.
-6. Confirm the image appears in Storage under the user's folder.
-7. Open `history.html`.
-8. Confirm both records appear.
+5. Open `history.html`.
+6. Confirm the record appears.
