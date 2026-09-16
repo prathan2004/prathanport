@@ -42,7 +42,7 @@
           </span>
         </button>
         <div class="hidden rounded-lg border border-ink/10 bg-white px-4 py-3 text-sm font-semibold shadow-sm sm:block">
-          เครื่องมือทั้งหมด: <span id="toolCount" class="text-mint">3</span>
+          เครื่องมือทั้งหมด: <span id="toolCount" class="text-mint">4</span>
         </div>
       </div>
       <p class="mt-3 max-w-2xl text-sm leading-6 text-ink/70">
@@ -131,6 +131,52 @@
     </div>
   </template>
 
+  <template id="rctfPromptTool">
+    <div class="grid gap-5">
+      <div class="rounded-lg border border-ink/10 bg-[#fbfbf8] p-5">
+        <h3 class="text-lg font-bold">สร้าง Prompt แบบ RCTF</h3>
+        <p class="mt-2 text-sm leading-6 text-ink/65">กรอก Role, Context, Task และ Format ระบบจะรวมเป็น Prompt ที่พร้อมนำไปใช้กับ AI</p>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-2">
+        <label class="grid gap-1 text-sm font-semibold">
+          Role
+          <input id="promptRole" class="field" placeholder="เช่น คุณคือผู้เชี่ยวชาญด้านการสอนคอมพิวเตอร์">
+        </label>
+        <label class="grid gap-1 text-sm font-semibold">
+          Format
+          <input id="promptFormat" class="field" placeholder="เช่น ตอบเป็นตาราง Markdown พร้อมตัวอย่าง">
+        </label>
+      </div>
+
+      <label class="grid gap-1 text-sm font-semibold">
+        Context
+        <textarea id="promptContext" class="field min-h-[120px] resize-y" placeholder="เช่น นักศึกษาชั้นปีที่ 1 ยังไม่มีพื้นฐานการเขียนโปรแกรม"></textarea>
+      </label>
+
+      <label class="grid gap-1 text-sm font-semibold">
+        Task
+        <textarea id="promptTask" class="field min-h-[120px] resize-y" placeholder="เช่น ช่วยออกแบบกิจกรรมการเรียนรู้เรื่องตัวแปรและชนิดข้อมูล"></textarea>
+      </label>
+
+      <div class="flex flex-col gap-2 sm:flex-row">
+        <button id="generatePromptButton" class="primary">สร้าง Prompt</button>
+        <button id="clearPromptButton" class="secondary">ล้างข้อมูล</button>
+      </div>
+
+      <div class="rounded-lg border border-ink/10 bg-white p-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="font-bold">Prompt พร้อมใช้งาน</h3>
+            <p id="copyPromptStatus" class="mt-1 text-sm text-ink/60">สร้าง Prompt แล้วกด Copy เพื่อนำไปใช้ต่อ</p>
+          </div>
+          <button id="copyPromptButton" class="primary">Copy</button>
+        </div>
+        <textarea id="promptOutput" class="field mt-4 min-h-[260px] resize-y font-mono text-sm leading-6" readonly></textarea>
+      </div>
+    </div>
+  </template>
+
   <template id="pdfTool">
     <div class="grid gap-5">
       <div class="rounded-lg border border-dashed border-ink/20 bg-[#fbfbf8] p-5">
@@ -206,6 +252,13 @@
   <script>
     const tools = [
       {
+        id: 'rctf-prompt',
+        title: 'RCTF Prompt Generator',
+        type: 'AI Tool',
+        description: 'สร้าง Prompt แบบ Role + Context + Task + Format',
+        template: 'rctfPromptTool'
+      },
+      {
         id: 'pdf',
         title: 'รวมไฟล์ PDF',
         type: 'PDF Tool',
@@ -236,7 +289,7 @@
     const menuToggle = document.querySelector('#menuToggle');
     const closeMenu = document.querySelector('#closeMenu');
     const mobileOverlay = document.querySelector('#mobileOverlay');
-    let activeTool = 'pdf';
+    let activeTool = 'rctf-prompt';
     let pdfFiles = [];
     let mergedPdfUrl = '';
     let splitPdfFile = null;
@@ -289,6 +342,10 @@
         bindBmiTool();
       }
 
+      if (toolId === 'rctf-prompt') {
+        bindRctfPromptTool();
+      }
+
       if (toolId === 'pdf') {
         bindPdfTool();
       }
@@ -296,6 +353,72 @@
       if (toolId === 'split-pdf') {
         bindSplitPdfTool();
       }
+    }
+
+    function bindRctfPromptTool() {
+      const roleInput = document.querySelector('#promptRole');
+      const contextInput = document.querySelector('#promptContext');
+      const taskInput = document.querySelector('#promptTask');
+      const formatInput = document.querySelector('#promptFormat');
+      const promptOutput = document.querySelector('#promptOutput');
+      const copyPromptButton = document.querySelector('#copyPromptButton');
+      const copyPromptStatus = document.querySelector('#copyPromptStatus');
+      const generatePromptButton = document.querySelector('#generatePromptButton');
+      const clearPromptButton = document.querySelector('#clearPromptButton');
+
+      function buildPrompt() {
+        const role = roleInput.value.trim() || '[ระบุบทบาทของ AI]';
+        const context = contextInput.value.trim() || '[ระบุบริบท ข้อมูลพื้นฐาน กลุ่มเป้าหมาย หรือข้อจำกัด]';
+        const task = taskInput.value.trim() || '[ระบุงานที่ต้องการให้ AI ทำอย่างชัดเจน]';
+        const format = formatInput.value.trim() || '[ระบุรูปแบบคำตอบที่ต้องการ]';
+
+        promptOutput.value = [
+          'Role:',
+          role,
+          '',
+          'Context:',
+          context,
+          '',
+          'Task:',
+          task,
+          '',
+          'Format:',
+          format
+        ].join('\n');
+        copyPromptStatus.textContent = 'Prompt พร้อมใช้งานแล้ว';
+      }
+
+      async function copyPrompt() {
+        if (!promptOutput.value.trim()) {
+          buildPrompt();
+        }
+
+        try {
+          await navigator.clipboard.writeText(promptOutput.value);
+          copyPromptStatus.textContent = 'คัดลอก Prompt แล้ว';
+        } catch (error) {
+          promptOutput.select();
+          document.execCommand('copy');
+          copyPromptStatus.textContent = 'คัดลอก Prompt แล้ว';
+        }
+      }
+
+      function clearPrompt() {
+        roleInput.value = '';
+        contextInput.value = '';
+        taskInput.value = '';
+        formatInput.value = '';
+        buildPrompt();
+        copyPromptStatus.textContent = 'ล้างข้อมูลแล้ว';
+      }
+
+      [roleInput, contextInput, taskInput, formatInput].forEach(input => {
+        input.addEventListener('input', buildPrompt);
+      });
+      generatePromptButton.addEventListener('click', buildPrompt);
+      copyPromptButton.addEventListener('click', copyPrompt);
+      clearPromptButton.addEventListener('click', clearPrompt);
+      buildPrompt();
     }
 
     function getBmiCategory(bmi) {
@@ -614,7 +737,7 @@
     closeMenu.addEventListener('click', closeMobileMenu);
     mobileOverlay.addEventListener('click', closeMobileMenu);
     document.querySelector('#toolCount').textContent = tools.length;
-    loadTool('pdf');
+    loadTool('rctf-prompt');
   </script>
 
   <style>
