@@ -46,7 +46,7 @@
           </span>
         </button>
         <div class="hidden rounded-lg border border-ink/10 bg-white px-4 py-3 text-sm font-semibold shadow-sm sm:block">
-          เครื่องมือทั้งหมด: <span id="toolCount" class="text-mint">5</span>
+          เครื่องมือทั้งหมด: <span id="toolCount" class="text-mint">6</span>
         </div>
       </div>
       <p class="mt-3 max-w-2xl text-sm leading-6 text-ink/70">
@@ -228,6 +228,49 @@
     </div>
   </template>
 
+  <template id="promptPayQrTool">
+    <div class="grid gap-5">
+      <div class="rounded-lg border border-ink/10 bg-[#fbfbf8] p-5">
+        <h3 class="text-lg font-bold">PromptPay QR Generator</h3>
+        <p class="mt-2 text-sm leading-6 text-ink/65">สร้าง QR Code สำหรับรับเงินผ่าน PromptPay โดยระบุเบอร์โทรและยอดเงินได้</p>
+      </div>
+
+      <div class="grid gap-4 lg:grid-cols-[1fr_320px] lg:items-start">
+        <div class="grid gap-4 rounded-lg border border-ink/10 bg-white p-4">
+          <div class="grid gap-4 md:grid-cols-2">
+            <label class="grid gap-1 text-sm font-semibold">
+              เบอร์โทร PromptPay
+              <input id="promptPayPhone" class="field" inputmode="tel" placeholder="เช่น 0812345678">
+            </label>
+            <label class="grid gap-1 text-sm font-semibold">
+              ยอดเงิน (บาท)
+              <input id="promptPayAmount" type="number" min="0" step="0.01" class="field" placeholder="เว้นว่างได้">
+            </label>
+          </div>
+
+          <label class="grid gap-1 text-sm font-semibold">
+            ชื่อไฟล์
+            <input id="promptPayFileName" class="field" value="promptpay-qr">
+          </label>
+
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <button id="generatePromptPayButton" class="primary">สร้าง PromptPay QR</button>
+            <button id="downloadPromptPayButton" class="secondary">ดาวน์โหลด PNG</button>
+            <button id="clearPromptPayButton" class="secondary">ล้างข้อมูล</button>
+          </div>
+
+          <p id="promptPayStatus" class="text-sm text-ink/60">กรอกเบอร์โทรเพื่อเริ่มสร้าง PromptPay QR</p>
+        </div>
+
+        <div class="rounded-lg border border-ink/10 bg-[#fbfbf8] p-5">
+          <div class="mx-auto flex aspect-square w-full max-w-[280px] items-center justify-center rounded-lg border border-dashed border-ink/15 bg-white p-3">
+            <div id="promptPayPreview" class="flex items-center justify-center"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
   <template id="pdfConvertTool">
     <div class="grid gap-5">
       <div class="rounded-lg border border-ink/10 bg-[#fbfbf8] p-5">
@@ -377,6 +420,13 @@
         template: 'qrCodeTool'
       },
       {
+        id: 'promptpay-qr',
+        title: 'PromptPay QR',
+        type: 'Payment QR',
+        description: 'สร้าง QR Code PromptPay จากเบอร์โทรและยอดเงิน',
+        template: 'promptPayQrTool'
+      },
+      {
         id: 'pdf-convert',
         title: 'PDF Converter',
         type: 'PDF Tool',
@@ -477,6 +527,10 @@
 
       if (toolId === 'qr-code') {
         bindQrCodeTool();
+      }
+
+      if (toolId === 'promptpay-qr') {
+        bindPromptPayQrTool();
       }
 
       if (toolId === 'pdf-convert') {
@@ -633,6 +687,138 @@
       generateQrButton.addEventListener('click', generateQrCode);
       downloadQrButton.addEventListener('click', downloadQrCode);
       clearQrButton.addEventListener('click', clearQrCode);
+    }
+
+    function bindPromptPayQrTool() {
+      const promptPayPhone = document.querySelector('#promptPayPhone');
+      const promptPayAmount = document.querySelector('#promptPayAmount');
+      const promptPayFileName = document.querySelector('#promptPayFileName');
+      const promptPayPreview = document.querySelector('#promptPayPreview');
+      const promptPayStatus = document.querySelector('#promptPayStatus');
+      const generatePromptPayButton = document.querySelector('#generatePromptPayButton');
+      const downloadPromptPayButton = document.querySelector('#downloadPromptPayButton');
+      const clearPromptPayButton = document.querySelector('#clearPromptPayButton');
+      let promptPayTimer = null;
+
+      function emvField(id, value) {
+        return `${id}${String(value.length).padStart(2, '0')}${value}`;
+      }
+
+      function crc16Ccitt(value) {
+        let crc = 0xffff;
+        for (let index = 0; index < value.length; index += 1) {
+          crc ^= value.charCodeAt(index) << 8;
+          for (let bit = 0; bit < 8; bit += 1) {
+            crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1);
+            crc &= 0xffff;
+          }
+        }
+        return crc.toString(16).toUpperCase().padStart(4, '0');
+      }
+
+      function normalizePromptPayPhone(phone) {
+        const digits = phone.replace(/\D/g, '');
+        if (/^0[689]\d{8}$/.test(digits)) {
+          return `0066${digits.slice(1)}`;
+        }
+        if (/^66[689]\d{8}$/.test(digits)) {
+          return `00${digits}`;
+        }
+        if (/^0066[689]\d{8}$/.test(digits)) {
+          return digits;
+        }
+        throw new Error('phone');
+      }
+
+      function buildPromptPayPayload(phone, amount) {
+        const proxy = normalizePromptPayPhone(phone);
+        const merchantAccount = emvField('00', 'A000000677010111') + emvField('01', proxy);
+        const fields = [
+          emvField('00', '01'),
+          emvField('01', amount ? '12' : '11'),
+          emvField('29', merchantAccount),
+          emvField('53', '764'),
+          amount ? emvField('54', Number(amount).toFixed(2)) : '',
+          emvField('58', 'TH')
+        ].join('');
+        const payloadWithoutCrc = `${fields}6304`;
+        return `${payloadWithoutCrc}${crc16Ccitt(payloadWithoutCrc)}`;
+      }
+
+      function generatePromptPayQr() {
+        const phone = promptPayPhone.value.trim();
+        const amountText = promptPayAmount.value.trim();
+        promptPayPreview.innerHTML = '';
+
+        if (!window.QRCode) {
+          promptPayStatus.textContent = 'ไม่สามารถโหลด qrcodejs ได้ กรุณาเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่';
+          return;
+        }
+
+        if (!phone) {
+          promptPayStatus.textContent = 'กรุณากรอกเบอร์โทร PromptPay';
+          return;
+        }
+
+        if (amountText && (!Number.isFinite(Number(amountText)) || Number(amountText) < 0)) {
+          promptPayStatus.textContent = 'กรุณากรอกยอดเงินให้ถูกต้อง';
+          return;
+        }
+
+        try {
+          const payload = buildPromptPayPayload(phone, amountText);
+          new QRCode(promptPayPreview, {
+            text: payload,
+            width: 260,
+            height: 260,
+            colorDark: '#17212b',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+          });
+          promptPayStatus.textContent = amountText
+            ? `PromptPay QR พร้อมใช้งาน ยอด ${Number(amountText).toFixed(2)} บาท`
+            : 'PromptPay QR พร้อมใช้งาน แบบไม่ระบุยอดเงิน';
+        } catch (error) {
+          promptPayStatus.textContent = 'กรุณากรอกเบอร์โทรไทยให้ถูกต้อง เช่น 0812345678';
+        }
+      }
+
+      function schedulePromptPayQr() {
+        clearTimeout(promptPayTimer);
+        promptPayTimer = setTimeout(generatePromptPayQr, 250);
+      }
+
+      function downloadPromptPayQr() {
+        const canvas = promptPayPreview.querySelector('canvas');
+        const img = promptPayPreview.querySelector('img');
+
+        if (!canvas && !img) {
+          promptPayStatus.textContent = 'กรุณาสร้าง PromptPay QR ก่อนดาวน์โหลด';
+          return;
+        }
+
+        const fileName = (promptPayFileName.value.trim() || 'promptpay-qr').replace(/[\\/:*?"<>|]+/g, '-');
+        const link = document.createElement('a');
+        link.href = canvas ? canvas.toDataURL('image/png') : img.src;
+        link.download = `${fileName}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        promptPayStatus.textContent = 'ดาวน์โหลด PromptPay QR แล้ว';
+      }
+
+      function clearPromptPayQr() {
+        promptPayPhone.value = '';
+        promptPayAmount.value = '';
+        promptPayPreview.innerHTML = '';
+        promptPayStatus.textContent = 'ล้างข้อมูลแล้ว';
+      }
+
+      promptPayPhone.addEventListener('input', schedulePromptPayQr);
+      promptPayAmount.addEventListener('input', schedulePromptPayQr);
+      generatePromptPayButton.addEventListener('click', generatePromptPayQr);
+      downloadPromptPayButton.addEventListener('click', downloadPromptPayQr);
+      clearPromptPayButton.addEventListener('click', clearPromptPayQr);
     }
 
     function bindPdfConvertTool() {
