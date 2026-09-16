@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Profile | MH Running App</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="js/supabase.js"></script>
+  <script defer src="js/auth.js"></script>
+  <script defer src="js/profile.js"></script>
+</head>
+<body data-protected="true">
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Profile</p>
+      <h1>ข้อมูลสมาชิก</h1>
+    </div>
+    <button id="logoutButton" class="button secondary" type="button">ออกจากระบบ</button>
+  </header>
+
+  <nav class="app-nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a class="active" href="profile.html">Profile</a>
+  </nav>
+
+  <main class="app-shell">
+    <form id="profileForm" class="card profile-form">
+      <label>
+        ชื่อ-นามสกุล
+        <input id="fullName" type="text">
+      </label>
+      <label>
+        ชื่อที่แสดง
+        <input id="displayName" type="text" required>
+      </label>
+      <label>
+        เพศ
+        <select id="gender">
+          <option value="">ไม่ระบุ</option>
+          <option value="male">ชาย</option>
+          <option value="female">หญิง</option>
+          <option value="other">อื่น ๆ</option>
+        </select>
+      </label>
+      <label>
+        ปีเกิด
+        <input id="birthYear" type="number" min="1900">
+      </label>
+      <button class="button primary" type="submit">บันทึกข้อมูล</button>
+      <p id="profileMessage" class="message"></p>
+    </form>
+  </main>
+</body>
+</html>

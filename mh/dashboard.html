@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard | MH Running App</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="js/supabase.js"></script>
+  <script defer src="js/auth.js"></script>
+  <script defer src="js/dashboard.js"></script>
+</head>
+<body data-protected="true">
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Dashboard</p>
+      <h1 id="welcomeName">MH Running App</h1>
+    </div>
+    <button id="logoutButton" class="button secondary" type="button">ออกจากระบบ</button>
+  </header>
+
+  <nav class="app-nav">
+    <a class="active" href="dashboard.html">Dashboard</a>
+    <a href="profile.html">Profile</a>
+  </nav>
+
+  <main class="app-shell">
+    <section class="grid stats-grid">
+      <article class="card stat-card">
+        <span>วันนี้</span>
+        <strong id="todayDistance">0 km</strong>
+      </article>
+      <article class="card stat-card">
+        <span>สัปดาห์นี้</span>
+        <strong id="weekDistance">0 km</strong>
+      </article>
+      <article class="card stat-card">
+        <span>เดือนนี้</span>
+        <strong id="monthDistance">0 km</strong>
+      </article>
+      <article class="card stat-card">
+        <span>สะสมทั้งหมด</span>
+        <strong id="allTimeDistance">0 km</strong>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>สถานะระบบ</h2>
+      <p id="dashboardMessage" class="muted">กำลังโหลดข้อมูล...</p>
+    </section>
+  </main>
+</body>
+</html>

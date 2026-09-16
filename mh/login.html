@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>เข้าสู่ระบบ | MH Running App</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="js/supabase.js"></script>
+  <script defer src="js/auth.js"></script>
+</head>
+<body>
+  <main class="auth-shell">
+    <form id="loginForm" class="card auth-card">
+      <p class="eyebrow">Welcome Back</p>
+      <h1>เข้าสู่ระบบ</h1>
+      <label>
+        อีเมล
+        <input id="email" type="email" autocomplete="email" required>
+      </label>
+      <label>
+        รหัสผ่าน
+        <input id="password" type="password" autocomplete="current-password" required>
+      </label>
+      <button class="button primary" type="submit">เข้าสู่ระบบ</button>
+      <button id="resetPasswordButton" class="button ghost" type="button">ลืมรหัสผ่าน</button>
+      <p id="authMessage" class="message"></p>
+      <p class="muted">ยังไม่มีบัญชี? <a href="register.html">สมัครสมาชิก</a></p>
+    </form>
+  </main>
+</body>
+</html>
