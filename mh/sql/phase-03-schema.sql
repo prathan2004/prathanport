@@ -87,6 +87,7 @@ create table if not exists public.challenges (
   end_date date not null,
   target_distance numeric(8,2) not null,
   status text not null default 'draft',
+  is_current_challenge boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint challenges_name_not_blank check (length(trim(challenge_name)) > 0),
@@ -122,6 +123,9 @@ create index if not exists challenges_date_range_idx on public.challenges(start_
 
 create index if not exists challenge_members_challenge_id_idx on public.challenge_members(challenge_id);
 create index if not exists challenge_members_user_id_idx on public.challenge_members(user_id);
+create unique index if not exists challenges_single_current_idx
+on public.challenges(is_current_challenge)
+where is_current_challenge = true;
 
 create or replace function public.is_admin()
 returns boolean
@@ -195,7 +199,13 @@ stable
 security definer
 set search_path = public
 as $$
-  with bounds as (
+  with current_challenge as (
+    select start_date, end_date
+    from public.challenges
+    where is_current_challenge = true
+    limit 1
+  ),
+  fallback_bounds as (
     select
       case
         when range_key = 'today' then current_date
@@ -204,6 +214,13 @@ as $$
         else date '1900-01-01'
       end as start_date,
       current_date as end_date
+  ),
+  bounds as (
+    select
+      coalesce(cc.start_date, fb.start_date) as start_date,
+      coalesce(cc.end_date, fb.end_date) as end_date
+    from fallback_bounds fb
+    left join current_challenge cc on true
   ),
   totals as (
     select
@@ -247,10 +264,16 @@ security definer
 set search_path = public
 as $$
   with approved as (
-    select *
+    select rr.*
     from public.running_records
-    where user_id = auth.uid()
-      and status = 'approved'
+    rr
+    left join public.challenges c on c.is_current_challenge = true
+    where rr.user_id = auth.uid()
+      and rr.status = 'approved'
+      and (
+        c.id is null
+        or rr.run_date between c.start_date and c.end_date
+      )
   ),
   my_totals as (
     select
@@ -263,9 +286,15 @@ as $$
     from approved
   ),
   ranked as (
-    select user_id, dense_rank() over (order by sum(distance_km) desc) as rank
+    select rr.user_id, dense_rank() over (order by sum(rr.distance_km) desc) as rank
     from public.running_records
-    where status = 'approved'
+    rr
+    left join public.challenges c on c.is_current_challenge = true
+    where rr.status = 'approved'
+      and (
+        c.id is null
+        or rr.run_date between c.start_date and c.end_date
+      )
     group by user_id
   )
   select

@@ -6,14 +6,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (historyList) loadHistory(historyList);
 });
 
-function bindRunForm(runForm) {
+async function bindRunForm(runForm) {
   const runDate = document.querySelector('#runDate');
   const distanceKm = document.querySelector('#distanceKm');
   const durationMinutes = document.querySelector('#durationMinutes');
   const pacePreview = document.querySelector('#pacePreview');
   const runMessage = document.querySelector('#runMessage');
-  runDate.max = todayKey();
-  runDate.value = todayKey();
+  const currentChallenge = await loadCurrentChallenge(runMessage);
+
+  if (currentChallenge) {
+    runDate.min = currentChallenge.start_date;
+    runDate.max = currentChallenge.end_date < todayKey() ? currentChallenge.end_date : todayKey();
+    runDate.value = runDate.max;
+    setMessage(runMessage, `ส่งผลได้เฉพาะช่วง ${formatThaiDate(currentChallenge.start_date)} - ${formatThaiDate(currentChallenge.end_date)}`);
+  } else {
+    runDate.max = todayKey();
+    runDate.value = todayKey();
+    runForm.querySelectorAll('input, button').forEach(element => {
+      element.disabled = true;
+    });
+    setMessage(runMessage, 'ยังไม่มี Challenge ปัจจุบัน กรุณาให้ Admin ตั้งค่า Challenge ก่อน', true);
+  }
 
   function updatePace() {
     const distance = Number(distanceKm.value);
@@ -31,14 +44,23 @@ function bindRunForm(runForm) {
     const distance = Number(distanceKm.value);
     const duration = Number(durationMinutes.value);
 
+    if (!currentChallenge) {
+      setMessage(runMessage, 'ยังไม่มี Challenge ปัจจุบัน ไม่สามารถส่งผลวิ่งได้', true);
+      return;
+    }
     if (!runDate.value || runDate.value > todayKey()) {
       setMessage(runMessage, 'วันที่วิ่งต้องไม่เป็นวันในอนาคต', true);
+      return;
+    }
+    if (runDate.value < currentChallenge.start_date || runDate.value > currentChallenge.end_date) {
+      setMessage(runMessage, 'วันที่วิ่งต้องอยู่ในช่วง Challenge ปัจจุบัน', true);
       return;
     }
     if (!distance || distance <= 0 || !duration || duration <= 0) {
       setMessage(runMessage, 'ระยะทางและเวลาต้องมากกว่า 0', true);
       return;
     }
+
     try {
       const user = await getCurrentUser();
       const { error: insertError } = await sb
@@ -55,7 +77,7 @@ function bindRunForm(runForm) {
       if (insertError) throw insertError;
 
       runForm.reset();
-      runDate.value = todayKey();
+      runDate.value = runDate.max;
       pacePreview.value = '-';
       setMessage(runMessage, 'บันทึกผลการวิ่งแล้ว รอ Admin ตรวจสอบ');
     } catch (error) {
@@ -63,6 +85,21 @@ function bindRunForm(runForm) {
       setMessage(runMessage, error.message || 'บันทึกไม่สำเร็จ', true);
     }
   });
+}
+
+async function loadCurrentChallenge(messageElement) {
+  const { data, error } = await sb
+    .from('challenges')
+    .select('id, challenge_name, start_date, end_date')
+    .eq('is_current_challenge', true)
+    .maybeSingle();
+
+  if (error?.message?.includes('is_current_challenge')) {
+    setMessage(messageElement, 'ต้องรัน SQL migration phase-12-current-challenge.sql ก่อน', true);
+    return null;
+  }
+  if (error) throw error;
+  return data;
 }
 
 async function loadHistory(container) {

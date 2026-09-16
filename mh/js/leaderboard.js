@@ -1,27 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const buttons = document.querySelectorAll('[data-range]');
-  buttons.forEach(button => {
-    button.addEventListener('click', () => {
-      buttons.forEach(item => item.classList.remove('active'));
-      button.classList.add('active');
-      loadLeaderboard(button.dataset.range);
-    });
-  });
-  loadLeaderboard('today');
+  loadLeaderboard();
 });
 
-async function loadLeaderboard(range) {
+async function loadLeaderboard() {
   const container = document.querySelector('#leaderboardList');
   container.innerHTML = '<p class="muted">กำลังโหลดอันดับ...</p>';
 
   try {
     const user = await getCurrentUser();
-    const { data, error } = await sb.rpc('get_leaderboard', { range_key: range });
+    const { data, error } = await sb.rpc('get_leaderboard', { range_key: 'all' });
     if (error) throw error;
 
     const rows = data || [];
     if (!rows.length) {
-      container.innerHTML = '<p class="muted">ยังไม่มีข้อมูลในช่วงนี้</p>';
+      container.innerHTML = '<p class="muted">ยังไม่มีข้อมูลในช่วง Challenge ปัจจุบัน</p>';
       return;
     }
 

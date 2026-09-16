@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="js/supabase.js?v=20260917-no-evidence"></script>
   <script defer src="js/auth.js?v=20260917-no-evidence"></script>
-  <script defer src="js/leaderboard.js?v=20260917-no-evidence"></script>
+  <script defer src="js/leaderboard.js?v=20260917-current-challenge"></script>
 </head>
 <body data-protected="true">
   <header class="app-header">
@@ -31,12 +31,7 @@
 
   <main class="app-shell">
     <section class="card">
-      <div class="filters">
-        <button class="button secondary active" data-range="today">Today</button>
-        <button class="button secondary" data-range="week">This Week</button>
-        <button class="button secondary" data-range="month">This Month</button>
-        <button class="button secondary" data-range="all">All Time</button>
-      </div>
+      <p class="muted">อันดับนี้คิดจากช่วงวันที่ของ Challenge ปัจจุบันที่ Admin กำหนด</p>
       <div id="leaderboardList" class="leaderboard-list"></div>
     </section>
   </main>

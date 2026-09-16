@@ -58,7 +58,7 @@ async function loadRunningInsights() {
 }
 
 async function loadLeaderboardPreview() {
-  const { data, error } = await sb.rpc('get_leaderboard', { range_key: 'month' });
+  const { data, error } = await sb.rpc('get_leaderboard', { range_key: 'all' });
   if (error) throw error;
 
   const container = document.querySelector('#leaderboardPreview');

@@ -122,6 +122,16 @@ textarea:focus {
   color: var(--ink);
 }
 
+.danger {
+  background: #fff0f0;
+  border-color: #ffd2cf;
+  color: #b42318;
+}
+
+.danger:hover {
+  background: #ffe3e0;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

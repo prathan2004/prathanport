@@ -51,6 +51,12 @@ with check (
   user_id = auth.uid()
   and status = 'pending'
   and public.is_active_member()
+  and exists (
+    select 1
+    from public.challenges c
+    where c.is_current_challenge = true
+      and run_date between c.start_date and c.end_date
+  )
 );
 
 create policy "running_records_update_own_pending_or_rejected"
@@ -64,6 +70,12 @@ using (
 with check (
   user_id = auth.uid()
   and status = 'pending'
+  and exists (
+    select 1
+    from public.challenges c
+    where c.is_current_challenge = true
+      and run_date between c.start_date and c.end_date
+  )
 );
 
 create policy "running_records_delete_own_pending_or_rejected"

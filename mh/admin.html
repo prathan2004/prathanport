@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="js/supabase.js?v=20260917-no-evidence"></script>
   <script defer src="js/auth.js?v=20260917-no-evidence"></script>
-  <script defer src="js/admin.js?v=20260917-no-evidence"></script>
+  <script defer src="js/admin.js?v=20260917-admin-run-current-challenge"></script>
 </head>
 <body data-protected="true" data-admin="true">
   <header class="app-header">
@@ -48,16 +48,41 @@
     </section>
 
     <section class="card">
-      <div class="section-heading"><div><p class="eyebrow">Challenge</p><h2>สร้าง Challenge</h2></div></div>
+      <div class="section-heading"><div><p class="eyebrow">Challenge</p><h2 id="challengeFormTitle">สร้าง Challenge</h2></div></div>
       <form id="challengeForm" class="form-grid">
+        <input id="challengeId" type="hidden">
         <label>ชื่อ Challenge<input id="challengeName" required></label>
         <label>เป้าหมาย (km)<input id="targetDistance" type="number" min="1" step="0.01" required></label>
         <label>วันเริ่ม<input id="startDate" type="date" required></label>
         <label>วันสิ้นสุด<input id="endDate" type="date" required></label>
+        <label>Status
+          <select id="challengeStatus">
+            <option value="draft">Draft</option>
+            <option value="active" selected>Active</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </label>
         <label class="span-2">รายละเอียด<input id="challengeDescription"></label>
-        <button class="button primary" type="submit">สร้าง Challenge</button>
+        <div class="actions compact">
+          <button id="challengeSubmitButton" class="button primary" type="submit">สร้าง Challenge</button>
+          <button id="challengeCancelButton" class="button secondary" type="button" hidden>ยกเลิก</button>
+        </div>
         <p id="adminMessage" class="message"></p>
       </form>
+    </section>
+
+    <section class="card">
+      <div class="section-heading"><div><p class="eyebrow">Manage</p><h2>Challenge ทั้งหมด</h2></div></div>
+      <div id="adminChallengeList" class="run-list"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-heading">
+        <div><p class="eyebrow">Running Records</p><h2>ข้อมูลการวิ่งทั้งหมด</h2></div>
+        <button id="clearAllRunsButton" class="button danger" type="button">เคลียร์ข้อมูลทั้งหมด</button>
+      </div>
+      <div id="adminRunList" class="run-list"></div>
     </section>
   </main>
 </body>
