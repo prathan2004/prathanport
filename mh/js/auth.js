@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (error) throw error;
         setMessage(authMessage, 'สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ');
         setTimeout(() => {
-          window.location.href = 'login.html';
+          window.location.href = 'index.html';
         }, 900);
       } catch (error) {
         setMessage(authMessage, error.message || 'สมัครสมาชิกไม่สำเร็จ', true);
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (logoutButton) {
     logoutButton.addEventListener('click', async () => {
       await sb.auth.signOut();
-      window.location.href = 'login.html';
+      window.location.href = 'index.html';
     });
   }
 
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         const { error } = await sb.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}${window.location.pathname.replace('login.html', '')}login.html`
+          redirectTo: `${window.location.origin}${window.location.pathname.replace(/(login|index)\.html$/, '')}index.html`
         });
         if (error) throw error;
         setMessage(authMessage, 'ส่งลิงก์รีเซ็ตรหัสผ่านแล้ว');
@@ -96,14 +96,14 @@ async function protectRoute() {
   try {
     const session = await getSession();
     if (!session) {
-      window.location.href = 'login.html';
+      window.location.href = 'index.html';
       return;
     }
 
     const profile = await getCurrentProfile();
     if (!profile || profile.status !== 'active') {
       await sb.auth.signOut();
-      window.location.href = 'login.html';
+      window.location.href = 'index.html';
       return;
     }
 
@@ -112,6 +112,6 @@ async function protectRoute() {
     }
   } catch (error) {
     console.error(error);
-    window.location.href = 'login.html';
+    window.location.href = 'index.html';
   }
 }

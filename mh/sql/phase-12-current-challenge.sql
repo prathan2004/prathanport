@@ -170,8 +170,86 @@ as $$
   left join ranked r on r.user_id = auth.uid();
 $$;
 
+create or replace function public.get_current_challenge_summary()
+returns table (
+  id uuid,
+  challenge_name text,
+  description text,
+  start_date date,
+  end_date date,
+  target_distance numeric,
+  status text
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    c.id,
+    c.challenge_name,
+    c.description,
+    c.start_date,
+    c.end_date,
+    c.target_distance,
+    c.status
+  from public.challenges c
+  where c.is_current_challenge = true
+  limit 1;
+$$;
+
+create or replace function public.get_public_leaderboard()
+returns table (
+  rank bigint,
+  display_name text,
+  total_runs bigint,
+  total_distance numeric,
+  average_pace numeric
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with current_challenge as (
+    select start_date, end_date
+    from public.challenges
+    where is_current_challenge = true
+    limit 1
+  ),
+  totals as (
+    select
+      rr.user_id,
+      count(*)::bigint as total_runs,
+      coalesce(sum(rr.distance_km), 0)::numeric(10,2) as total_distance,
+      round(avg(rr.pace), 2)::numeric(8,2) as average_pace
+    from public.running_records rr
+    cross join current_challenge c
+    where rr.status = 'approved'
+      and rr.run_date between c.start_date and c.end_date
+    group by rr.user_id
+  )
+  select
+    dense_rank() over (order by t.total_distance desc, t.total_runs asc) as rank,
+    p.display_name,
+    t.total_runs,
+    t.total_distance,
+    t.average_pace
+  from totals t
+  join public.profiles p on p.id = t.user_id
+  where p.status = 'active'
+  order by rank, p.display_name
+  limit 10;
+$$;
+
 revoke execute on function public.get_leaderboard(text) from public;
 revoke execute on function public.get_member_dashboard_summary() from public;
+revoke execute on function public.get_current_challenge_summary() from public;
+revoke execute on function public.get_public_leaderboard() from public;
 
 grant execute on function public.get_leaderboard(text) to authenticated;
 grant execute on function public.get_member_dashboard_summary() to authenticated;
+grant execute on function public.get_current_challenge_summary() to anon;
+grant execute on function public.get_current_challenge_summary() to authenticated;
+grant execute on function public.get_public_leaderboard() to anon;
+grant execute on function public.get_public_leaderboard() to authenticated;

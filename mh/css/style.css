@@ -61,6 +61,48 @@ textarea:focus {
   padding: 1rem;
 }
 
+.home-shell {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  margin: 0 auto;
+  max-width: 1120px;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.home-panel {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.home-panel h1 {
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  line-height: 1.08;
+  margin: 0;
+}
+
+.home-challenge-meta {
+  align-items: center;
+  background: rgba(33, 166, 122, 0.08);
+  border: 1px solid rgba(33, 166, 122, 0.18);
+  border-radius: 8px;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  padding: 0.85rem;
+}
+
+.home-challenge-meta span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.home-challenge-meta strong {
+  color: var(--mint-dark);
+  font-size: 1.35rem;
+}
+
 .hero-panel,
 .card {
   background: var(--card);
@@ -386,6 +428,12 @@ textarea:focus {
 @media (min-width: 760px) {
   .auth-card,
   .profile-form {
+    padding: 1.5rem;
+  }
+
+  .home-shell {
+    align-items: center;
+    grid-template-columns: minmax(0, 1.45fr) minmax(340px, 0.75fr);
     padding: 1.5rem;
   }
 
