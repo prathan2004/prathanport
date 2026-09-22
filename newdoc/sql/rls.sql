@@ -1,6 +1,7 @@
 alter table public.profiles enable row level security;
 alter table public.documents enable row level security;
 alter table public.signatures enable row level security;
+alter table public.pdf_workflows enable row level security;
 create policy "profiles_select_own" on public.profiles for select to authenticated using (user_id = (select auth.uid()));
 create policy "profiles_insert_own" on public.profiles for insert to authenticated with check (user_id = (select auth.uid()));
 create policy "profiles_update_own" on public.profiles for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
@@ -13,6 +14,10 @@ create policy "signatures_select_own" on public.signatures for select to authent
 create policy "signatures_insert_own" on public.signatures for insert to authenticated with check (user_id = (select auth.uid()));
 create policy "signatures_update_own" on public.signatures for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
 create policy "signatures_delete_own" on public.signatures for delete to authenticated using (user_id = (select auth.uid()));
+create policy "pdf_workflows_select_own" on public.pdf_workflows for select to authenticated using (user_id = (select auth.uid()));
+create policy "pdf_workflows_insert_own" on public.pdf_workflows for insert to authenticated with check (user_id = (select auth.uid()));
+create policy "pdf_workflows_update_own" on public.pdf_workflows for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+create policy "pdf_workflows_delete_own" on public.pdf_workflows for delete to authenticated using (user_id = (select auth.uid()));
 insert into storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
 values ('signatures','signatures',false,5242880,array['image/png','image/jpeg','image/webp']),
  ('documents','documents',false,20971520,array['application/pdf'])

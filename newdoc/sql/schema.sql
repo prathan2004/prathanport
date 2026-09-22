@@ -25,6 +25,12 @@ create table if not exists public.documents (
 );
 create index if not exists documents_user_created_idx on public.documents(user_id,created_at desc);
 create index if not exists signatures_user_idx on public.signatures(user_id);
+create table if not exists public.pdf_workflows (
+ id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade,
+ file_name text not null, source_path text not null, output_path text,
+ created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+);
+create index if not exists pdf_workflows_user_created_idx on public.pdf_workflows(user_id,created_at desc);
 create or replace function public.touch_updated_at() returns trigger language plpgsql set search_path = '' as $$
 begin new.updated_at = now(); return new; end $$;
 drop trigger if exists documents_updated_at on public.documents;
