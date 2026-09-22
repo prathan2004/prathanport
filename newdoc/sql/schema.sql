@@ -15,7 +15,10 @@ create table if not exists public.documents (
  subject text not null default '', recipient text not null default '', content text not null default '',
  signer_name text not null default '', signer_position text not null default '',
  status text not null default 'draft' check(status in ('draft','completed')),
- signature_id uuid, pdf_url text, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+ signature_id uuid, signature_width_mm smallint not null default 58 check(signature_width_mm between 30 and 80),
+ signature_align text not null default 'right' check(signature_align in ('left','center','right')),
+ signature_gap_mm smallint not null default 14 check(signature_gap_mm between 0 and 30),
+ pdf_url text, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
  constraint documents_signature_owner_fk foreign key(signature_id,user_id) references public.signatures(id,user_id) on delete set null (signature_id)
 );
 create index if not exists documents_user_created_idx on public.documents(user_id,created_at desc);

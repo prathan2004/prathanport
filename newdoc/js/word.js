@@ -1,6 +1,7 @@
 const DOCX_URL = 'https://esm.sh/docx@9.7.1';
 const MM_TO_TWIP = 56.6929;
 const twip = mm => Math.round(mm * MM_TO_TWIP);
+import { signatureLayout } from './signature-layout.js';
 
 async function pngBytes(url) {
   const response = await fetch(url);
@@ -13,7 +14,7 @@ async function pngBytes(url) {
   bitmap.close();
   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   if (!blob) throw new Error('แปลงรูปประกอบเอกสารไม่สำเร็จ');
-  return new Uint8Array(await blob.arrayBuffer());
+  return { data: new Uint8Array(await blob.arrayBuffer()), width: canvas.width, height: canvas.height };
 }
 
 function inlineRuns(node, TextRun, inherited = {}) {
@@ -64,6 +65,8 @@ export async function downloadWord(values) {
   const { Document, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, Packer, AlignmentType, BorderStyle, WidthType, TabStopType, LeaderType } = api;
   const garuda = await pngBytes(new URL('../assets/images/garuda.png', import.meta.url));
   const signature = values.signatureUrl ? await pngBytes(values.signatureUrl) : null;
+  const layout = signatureLayout(values);
+  const signAlignment = { left: AlignmentType.LEFT, center: AlignmentType.CENTER, right: AlignmentType.RIGHT }[layout.align];
   const run = (text, options = {}) => new TextRun({ text, ...options });
   const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
   const heading = new Table({
@@ -72,7 +75,7 @@ export async function downloadWord(values) {
     borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideVertical: noBorder, insideHorizontal: noBorder },
     margins: { top: 0, bottom: 0, left: 0, right: 0 },
     rows: [new TableRow({ children: [
-      new TableCell({ children: [new Paragraph({ children: [new ImageRun({ data: garuda, type: 'png', transformation: { width: 57, height: 57 } })] })] }),
+      new TableCell({ children: [new Paragraph({ children: [new ImageRun({ data: garuda.data, type: 'png', transformation: { width: 57, height: 57 } })] })] }),
       new TableCell({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [run('บันทึกข้อความ', { bold: true, size: 36 })], spacing: { after: 80 } })] }),
       new TableCell({ children: [new Paragraph('')] }),
     ] })],
@@ -91,12 +94,26 @@ export async function downloadWord(values) {
     new Paragraph({ children: [run(`เรียน  ${values.recipient || ''}`)], spacing: { before: 120, after: 150 } }),
     ...contentParagraphs(values.content, api),
   ];
-  if (signature) children.push(new Paragraph({ alignment: AlignmentType.RIGHT, children: [new ImageRun({ data: signature, type: 'png', transformation: { width: 180, height: 68 } })], spacing: { before: 340 } }));
-  children.push(
-    new Paragraph({ alignment: AlignmentType.RIGHT, children: [run(`ลงชื่อ  ${signature ? '' : '..............................................'}`)], spacing: { before: signature ? 0 : 340 } }),
-    new Paragraph({ alignment: AlignmentType.RIGHT, children: [run(`(${values.signer || ''})`)] }),
-    new Paragraph({ alignment: AlignmentType.RIGHT, children: [run(values.position || '')] }),
+  const signChildren = [];
+  if (signature) {
+    const width = Math.round(layout.width * 96 / 25.4);
+    const height = Math.min(Math.round(32 * 96 / 25.4), Math.max(1, Math.round(width * signature.height / signature.width)));
+    signChildren.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new ImageRun({ data: signature.data, type: 'png', transformation: { width, height } })], spacing: { before: twip(layout.gap) } }));
+  }
+  signChildren.push(
+    new Paragraph({ alignment: AlignmentType.CENTER, children: [run(`ลงชื่อ  ${signature ? '' : '..............................................'}`)], spacing: { before: signature ? 0 : twip(layout.gap) } }),
+    new Paragraph({ alignment: AlignmentType.CENTER, children: [run(`(${values.signer || ''})`)] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, children: [run(values.position || '')] }),
   );
+  const signWidth = twip(Math.max(75, layout.width));
+  children.push(new Table({
+    alignment: signAlignment,
+    width: { size: signWidth, type: WidthType.DXA },
+    columnWidths: [signWidth],
+    borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideVertical: noBorder, insideHorizontal: noBorder },
+    margins: { top: 0, bottom: 0, left: 0, right: 0 },
+    rows: [new TableRow({ children: [new TableCell({ children: signChildren })] })],
+  }));
   const doc = new Document({
     styles: { default: { document: { run: { font: 'TH Sarabun New', size: 32 }, paragraph: { spacing: { line: 285 } } } } },
     sections: [{ properties: { page: { size: { width: twip(210), height: twip(297) }, margin: { top: twip(25), bottom: twip(20), left: twip(30), right: twip(20) } } }, children }],
