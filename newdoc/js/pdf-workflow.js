@@ -12,6 +12,7 @@ if (user) {
     <button id="add-sign" type="button">วางลายเซ็น</button>
     <label class="span-all">ข้อความเกษียณ (ไม่บังคับ)<textarea id="endorsement" rows="5" placeholder="เรียน ...\nเพื่อโปรดพิจารณา"></textarea></label>
     <label>ขนาดตัวอักษร (pt)<input id="font-size" type="number" min="10" max="30" value="16"></label>
+    <label>สีตัวอักษร<select id="text-color"><option value="blue">สีน้ำเงิน</option><option value="black">สีดำ</option><option value="red">สีแดง</option></select></label>
     <button id="add-note" type="button">วางข้อความ</button>
     <p class="pdf-hint span-all">ลากรายการบนหน้ากระดาษเพื่อปรับตำแหน่ง แล้วเลือกคำสั่งส่งออก PDF</p>
     <div class="pdf-action-bar span-all"><button id="remove-mark" type="button" disabled>ลบรายการที่เลือก</button><button id="export" class="primary" type="button" disabled>ส่งออก PDF</button></div>
@@ -20,6 +21,7 @@ if (user) {
   const $ = id => document.getElementById(id);
   let records = [], signatures = [], active = null, sourceBytes = null, pdf = null, pdfjs = null, pageNumber = 1, marks = [], selected = null, renderToken = 0;
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+  const textColors = { blue: [22, 131, 219], black: [0, 0, 0], red: [220, 38, 38] };
   const niceError = error => error?.message || 'ทำรายการไม่สำเร็จ';
 
   async function loadList() {
@@ -85,10 +87,13 @@ if (user) {
         const image = document.createElement('img'); image.src = mark.url; image.alt = 'ลายเซ็น'; node.append(image);
       } else {
         node.style.fontSize = `${mark.size * $('pdf-canvas').width / mark.pageWidth}px`;
+        node.style.color = `rgb(${textColors[mark.color || 'blue'].join(',')})`;
         node.textContent = mark.text;
       }
       node.onpointerdown = event => {
-        event.preventDefault(); selected = mark; $('remove-mark').disabled = false; renderMarks();
+        event.preventDefault(); selected = mark; $('remove-mark').disabled = false;
+        if (mark.type === 'note') $('text-color').value = mark.color || 'blue';
+        renderMarks();
         const originX = event.clientX, originY = event.clientY, x = mark.x, y = mark.y;
         const move = moveEvent => {
           mark.x = clamp(x + (moveEvent.clientX - originX) / $('pdf-canvas').clientWidth, 0, 1 - mark.width);
@@ -147,10 +152,11 @@ if (user) {
     const value = $('endorsement').value.trim();
     if (!value) { toast('กรุณากรอกข้อความเกษียณ', true); return; }
     const page = await pdf.getPage(pageNumber), view = page.getViewport({ scale: 1 });
-    selected = { type: 'note', page: pageNumber, x: 0.08, y: 0.68, width: 0.78, size: clamp(Number($('font-size').value) || 16, 10, 30), pageWidth: view.width, text: value };
+    selected = { type: 'note', page: pageNumber, x: 0.08, y: 0.68, width: 0.78, size: clamp(Number($('font-size').value) || 16, 10, 30), pageWidth: view.width, text: value, color: $('text-color').value };
     marks.push(selected); $('remove-mark').disabled = false; renderMarks();
   };
   $('remove-mark').onclick = () => { marks = marks.filter(item => item !== selected); selected = null; $('remove-mark').disabled = true; renderMarks(); };
+  $('text-color').onchange = () => { if (selected?.type === 'note') { selected.color = $('text-color').value; renderMarks(); } };
   $('export').onclick = async () => {
     if (!active || !sourceBytes) return;
     const button = $('export'); busy(button, true);
@@ -182,7 +188,8 @@ if (user) {
             }
             lines.push(line);
           }
-          lines.forEach((line, index) => page.drawText(line || ' ', { x: mark.x * width, y: height - mark.y * height - mark.size * (index + 1) * 1.2, size: mark.size, font, color: rgb(22 / 255, 131 / 255, 219 / 255) }));
+          const [red, green, blue] = textColors[mark.color || 'blue'];
+          lines.forEach((line, index) => page.drawText(line || ' ', { x: mark.x * width, y: height - mark.y * height - mark.size * (index + 1) * 1.2, size: mark.size, font, color: rgb(red / 255, green / 255, blue / 255) }));
         }
       }
       const bytes = await output.save(), blob = new Blob([bytes], { type: 'application/pdf' });
