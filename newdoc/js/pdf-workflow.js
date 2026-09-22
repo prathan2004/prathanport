@@ -10,7 +10,7 @@ if (user) {
     <label class="span-all">ลายเซ็น<select id="signature"><option value="">เลือกลายเซ็น</option></select></label>
     <label>ความกว้างลายเซ็น (มม.)<input id="sign-width" type="number" min="15" max="80" value="40"></label>
     <button id="add-sign" type="button">วางลายเซ็น</button>
-    <label class="span-all">ข้อความเกษียณ<textarea id="endorsement" rows="5" placeholder="เรียน ...\nเพื่อโปรดพิจารณา"></textarea></label>
+    <label class="span-all">ข้อความเกษียณ (ไม่บังคับ)<textarea id="endorsement" rows="5" placeholder="เรียน ...\nเพื่อโปรดพิจารณา"></textarea></label>
     <label>ขนาดตัวอักษร (pt)<input id="font-size" type="number" min="10" max="30" value="16"></label>
     <button id="add-note" type="button">วางข้อความ</button>
     <p class="pdf-hint span-all">ลากรายการบนหน้ากระดาษเพื่อปรับตำแหน่ง แล้วเลือกคำสั่งส่งออก PDF</p>
@@ -182,7 +182,7 @@ if (user) {
             }
             lines.push(line);
           }
-          lines.forEach((line, index) => page.drawText(line || ' ', { x: mark.x * width, y: height - mark.y * height - mark.size * (index + 1) * 1.2, size: mark.size, font, color: rgb(0.08, 0.14, 0.17) }));
+          lines.forEach((line, index) => page.drawText(line || ' ', { x: mark.x * width, y: height - mark.y * height - mark.size * (index + 1) * 1.2, size: mark.size, font, color: rgb(22 / 255, 131 / 255, 219 / 255) }));
         }
       }
       const bytes = await output.save(), blob = new Blob([bytes], { type: 'application/pdf' });
