@@ -1,6 +1,7 @@
 import { db, signedFile } from './supabase.js';
 import { shell, escapeHtml, toast, busy } from './ui.js';
 import { generatePdf } from './pdf.js';
+import { downloadWord } from './word.js';
 const user=await shell('สร้างบันทึกข้อความ','document');
 if(user){
   const params=new URLSearchParams(location.search);let id=params.get('id'), dirty=false, saving=false, signatureUrl=null, profile={};
@@ -22,6 +23,11 @@ if(user){
   recipientLine.className='memo-recipient';
   memo.insertBefore(recipientLine,document.querySelector('#p-content'));
   const $=id=>document.getElementById(id),editor=$('editor');
+  const wordButton=document.createElement('button');
+  wordButton.id='word-button';
+  wordButton.type='button';
+  wordButton.textContent='ดาวน์โหลด Word';
+  $('pdf-button').after(wordButton);
   if(!window.DOMPurify){toast('โหลดระบบตรวจเนื้อหาไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต',true);editor.contentEditable='false'}
   const clean=html=>window.DOMPurify?DOMPurify.sanitize(html,{ALLOWED_TAGS:['p','div','br','b','strong','i','em','u','ul','ol','li','span'],ALLOWED_ATTR:['style'],FORBID_ATTR:['onerror','onclick']}):'';
   editor.innerHTML=clean(doc?.content||'');
@@ -37,6 +43,7 @@ if(user){
   $('preview-button').onclick=()=>{render();if(innerWidth<=840){const backdrop=$('preview-backdrop');backdrop.classList.add('open');backdrop.append(document.querySelector('.preview-column'))}else document.querySelector('.preview-column').scrollIntoView({behavior:'smooth'})};
   $('preview-backdrop').onclick=e=>{if(e.target!==e.currentTarget)return;e.currentTarget.classList.remove('open');document.querySelector('.editor-layout').append(e.currentTarget.querySelector('.preview-column'))};
   $('pdf-button').onclick=async()=>{const button=$('pdf-button');busy(button,true);try{const docId=await save('draft',true);render();const result=await generatePdf($('memo'),docId,user.id);const link=document.createElement('a');link.href=URL.createObjectURL(result.blob);link.download=result.fileName;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),60000);$('save-state').innerHTML=`PDF พร้อมแล้ว <a href="${escapeHtml(result.url)}" target="_blank" rel="noopener">เปิดดู / พิมพ์</a>`}catch(error){toast(error.message,true)}finally{busy(button,false)}};
+  wordButton.onclick=async()=>{busy(wordButton,true);try{await downloadWord({department:$('department').value,number:$('number').value,date:$('date').value,subject:$('subject').value,recipient:$('recipient').value,content:clean(editor.innerHTML),signer:$('signer').value,position:$('position').value,signatureUrl});toast('ดาวน์โหลดไฟล์ Word แล้ว')}catch(error){toast(error.message,true)}finally{busy(wordButton,false)}};
   setInterval(async()=>{if(dirty&&!saving){try{await save('draft',true)}catch(error){$('save-state').textContent=`บันทึกอัตโนมัติไม่สำเร็จ: ${error.message}`}}},30000);
   addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue=''}});
   await updateSignature();render();if(params.has('pdf'))toast('ตรวจสอบเอกสารแล้วกดสร้าง PDF');
