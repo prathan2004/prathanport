@@ -1,0 +1,17 @@
+import { db, signedFile } from './supabase.js';
+import { shell, escapeHtml, formatDate, toast } from './ui.js';
+const user=await shell('เอกสารของฉัน','documents');
+if(user){
+  document.querySelector('#page-content').innerHTML=`<div class="toolbar"><input id="search" type="search" placeholder="ค้นหาเรื่อง เลขที่ ผู้รับ หรือวันที่" aria-label="ค้นหาเอกสาร" style="max-width:360px"><a class="primary button" href="create-document.html">+ สร้างบันทึกข้อความ</a></div><div class="table-wrap"><table><thead><tr><th>เลขที่</th><th>วันที่</th><th>เรื่อง</th><th>สถานะ</th><th>สร้างเมื่อ</th><th>การจัดการ</th></tr></thead><tbody id="rows"></tbody></table></div>`;
+  let docs=[];
+  async function load(){const {data,error}=await db.from('documents').select('*').order('created_at',{ascending:false});if(error){toast(error.message,true);return}docs=data||[];render()}
+  function render(){const query=document.querySelector('#search').value.toLocaleLowerCase();const filtered=docs.filter(d=>[d.subject,d.document_number,d.recipient,d.document_date].some(v=>String(v||'').toLocaleLowerCase().includes(query)));const rows=document.querySelector('#rows');rows.innerHTML=filtered.map(d=>`<tr><td>${escapeHtml(d.document_number||'—')}</td><td>${formatDate(d.document_date)}</td><td>${escapeHtml(d.subject||'ยังไม่ระบุเรื่อง')}</td><td><span class="status ${d.status}">${d.status==='completed'?'สร้าง PDF แล้ว':'ฉบับร่าง'}</span></td><td>${formatDate(d.created_at)}</td><td><div class="actions"><a class="button" href="create-document.html?id=${encodeURIComponent(d.id)}">เปิด/แก้ไข</a><button data-action="copy" data-id="${d.id}">ทำสำเนา</button><button data-action="pdf" data-id="${d.id}">${d.pdf_url?'ดาวน์โหลด PDF':'สร้าง PDF'}</button><button class="danger" data-action="delete" data-id="${d.id}">ลบ</button></div></td></tr>`).join('')||'<tr><td colspan="6" class="empty">ไม่พบเอกสาร</td></tr>'}
+  document.querySelector('#search').oninput=render;
+  document.querySelector('#rows').onclick=async event=>{const button=event.target.closest('button[data-action]');if(!button)return;const doc=docs.find(x=>x.id===button.dataset.id);if(!doc)return;button.disabled=true;
+    try{if(button.dataset.action==='copy'){const {id,created_at,updated_at,pdf_url,...copy}=doc;const {error}=await db.from('documents').insert({...copy,subject:`สำเนา ${doc.subject}`,status:'draft',pdf_url:null});if(error)throw error;toast('ทำสำเนาเอกสารแล้ว');await load()}
+    if(button.dataset.action==='delete'){if(!confirm(`ลบเอกสารเรื่อง "${doc.subject}" หรือไม่?`))return;const {error}=await db.from('documents').delete().eq('id',doc.id);if(error)throw error;if(doc.pdf_url)await db.storage.from('documents').remove([doc.pdf_url]);toast('ลบเอกสารแล้ว');await load()}
+    if(button.dataset.action==='pdf'){if(doc.pdf_url){const url=await signedFile('documents',doc.pdf_url);window.open(url,'_blank','noopener')}else location.href=`create-document.html?id=${encodeURIComponent(doc.id)}&pdf=1`}}
+    catch(error){toast(error.message,true)}finally{button.disabled=false}
+  };
+  await load();
+}
