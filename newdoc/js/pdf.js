@@ -5,6 +5,7 @@ import { toast } from './ui.js';
 export async function generatePdf(element, documentId, userId) {
   if (!window.html2pdf) throw new Error('โหลดไลบรารี PDF ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต');
   await document.fonts.ready;
+  await Promise.all([...element.querySelectorAll('img:not([hidden])')].map(image => image.decode()));
   const wrapper=document.createElement('div');wrapper.style.cssText='position:fixed;left:-10000px;top:0;width:210mm;background:white';
   const clone=element.cloneNode(true); clone.style.boxShadow='none'; wrapper.append(clone);document.body.append(wrapper);
   const stamp=new Date().toISOString().slice(0,10).replaceAll('-','');const fileName=`memo_${stamp}_${documentId.slice(0,8)}.pdf`;
