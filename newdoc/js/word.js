@@ -1,6 +1,7 @@
 const DOCX_URL = 'https://esm.sh/docx@9.7.1';
 const MM_TO_TWIP = 56.6929;
 const twip = mm => Math.round(mm * MM_TO_TWIP);
+const emu = mm => Math.round(mm * 36000);
 import { signatureLayout } from './signature-layout.js';
 
 async function pngBytes(url) {
@@ -62,7 +63,7 @@ function contentParagraphs(html, api) {
 
 export async function downloadWord(values) {
   const api = await import(DOCX_URL);
-  const { Document, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, Packer, AlignmentType, BorderStyle, WidthType, TabStopType, LeaderType } = api;
+  const { Document, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, Packer, AlignmentType, BorderStyle, WidthType, TabStopType, LeaderType, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType } = api;
   const garuda = await pngBytes(new URL('../assets/images/garuda.png', import.meta.url));
   const signature = values.signatureUrl ? await pngBytes(values.signatureUrl) : null;
   const layout = signatureLayout(values);
@@ -95,17 +96,32 @@ export async function downloadWord(values) {
     ...contentParagraphs(values.content, api),
   ];
   const signChildren = [];
+  const signWidthMm = 75;
+  const lineChildren = [];
   if (signature) {
     const width = Math.round(layout.width * 96 / 25.4);
-    const height = Math.min(Math.round(32 * 96 / 25.4), Math.max(1, Math.round(width * signature.height / signature.width)));
-    signChildren.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new ImageRun({ data: signature.data, type: 'png', transformation: { width, height } })], spacing: { before: twip(layout.gap) } }));
+    const height = Math.min(Math.round(18 * 96 / 25.4), Math.max(1, Math.round(width * signature.height / signature.width)));
+    const heightMm = height * 25.4 / 96;
+    lineChildren.push(new ImageRun({
+      data: signature.data,
+      type: 'png',
+      transformation: { width, height },
+      floating: {
+        horizontalPosition: { relative: HorizontalPositionRelativeFrom.COLUMN, offset: emu((signWidthMm - layout.width) / 2 + layout.x) },
+        verticalPosition: { relative: VerticalPositionRelativeFrom.PARAGRAPH, offset: emu(19 - heightMm + layout.y) },
+        allowOverlap: true,
+        layoutInCell: true,
+        wrap: { type: TextWrappingType.NONE },
+      },
+    }));
   }
+  lineChildren.push(run(`ลงชื่อ  ${signature ? '' : '..............................................'}`));
   signChildren.push(
-    new Paragraph({ alignment: AlignmentType.CENTER, children: [run(`ลงชื่อ  ${signature ? '' : '..............................................'}`)], spacing: { before: signature ? 0 : twip(layout.gap) } }),
+    new Paragraph({ alignment: AlignmentType.CENTER, children: lineChildren, spacing: { before: twip(layout.gap), line: twip(21) } }),
     new Paragraph({ alignment: AlignmentType.CENTER, children: [run(`(${values.signer || ''})`)] }),
     new Paragraph({ alignment: AlignmentType.CENTER, children: [run(values.position || '')] }),
   );
-  const signWidth = twip(Math.max(75, layout.width));
+  const signWidth = twip(signWidthMm);
   children.push(new Table({
     alignment: signAlignment,
     width: { size: signWidth, type: WidthType.DXA },

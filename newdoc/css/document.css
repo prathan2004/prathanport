@@ -41,5 +41,6 @@
 .memo-sign[data-align="left"]{margin-left:0;margin-right:auto}
 .memo-sign[data-align="center"]{margin-left:auto;margin-right:auto}
 .memo-sign[data-align="right"]{margin-left:auto;margin-right:0}
-.memo-sign img{width:var(--signature-width,58mm);height:auto;max-height:32mm}
+.memo-sign-line{position:relative;min-height:21mm;display:flex;align-items:flex-end;justify-content:center}
+.memo-sign-line img{position:absolute;left:50%;bottom:2mm;width:var(--signature-width,40mm);height:auto;max-height:18mm;object-fit:contain;margin:0;transform:translate(calc(-50% + var(--signature-x,0mm)),var(--signature-y,0mm));pointer-events:none}
 @media(max-width:700px){.signature-controls{grid-template-columns:1fr}}
