@@ -13,7 +13,6 @@ if (user) {
     <label class="span-all">ข้อความเกษียณ (ไม่บังคับ)<textarea id="endorsement" rows="5" placeholder="เรียน ...\nเพื่อโปรดพิจารณา"></textarea></label>
     <label>ขนาดตัวอักษร (pt)<input id="font-size" type="number" min="10" max="30" value="16"></label>
     <label>สีตัวอักษร<select id="text-color"><option value="blue">สีน้ำเงิน</option><option value="black">สีดำ</option><option value="red">สีแดง</option></select></label>
-    <label>ความกว้างข้อความ (% ของหน้า)<input id="note-width" type="number" min="15" max="90" value="45"></label>
     <button id="add-note" type="button">วางข้อความ</button>
     <p class="pdf-hint span-all">ลากรายการบนหน้ากระดาษเพื่อปรับตำแหน่ง แล้วเลือกคำสั่งส่งออก PDF</p>
     <div class="pdf-action-bar span-all"><button id="remove-mark" type="button" disabled>ลบรายการที่เลือก</button><button id="export" class="primary" type="button" disabled>ส่งออก PDF</button></div>
@@ -95,10 +94,7 @@ if (user) {
         event.preventDefault(); selected = mark; $('remove-mark').disabled = false;
         layer.querySelectorAll('.pdf-mark.selected').forEach(item => item.classList.remove('selected'));
         node.classList.add('selected');
-        if (mark.type === 'note') {
-          $('text-color').value = mark.color || 'blue';
-          $('note-width').value = Math.round(mark.width * 100);
-        }
+        if (mark.type === 'note') $('text-color').value = mark.color || 'blue';
         node.setPointerCapture(event.pointerId);
         const originX = event.clientX, originY = event.clientY, x = mark.x, y = mark.y;
         const move = moveEvent => {
@@ -162,12 +158,19 @@ if (user) {
     const value = $('endorsement').value.trim();
     if (!value) { toast('กรุณากรอกข้อความเกษียณ', true); return; }
     const page = await pdf.getPage(pageNumber), view = page.getViewport({ scale: 1 });
-    selected = { type: 'note', page: pageNumber, x: 0.08, y: 0.68, width: clamp(Number($('note-width').value) || 45, 15, 90) / 100, size: clamp(Number($('font-size').value) || 16, 10, 30), pageWidth: view.width, text: value, color: $('text-color').value };
+    const size = clamp(Number($('font-size').value) || 16, 10, 30);
+    const canvas = $('pdf-canvas');
+    const fontSize = size * canvas.width / view.width;
+    await document.fonts.load(`${fontSize}px "TH Sarabun New"`);
+    const context = canvas.getContext('2d');
+    context.font = `${fontSize}px "TH Sarabun New"`;
+    const measured = Math.max(...value.split('\n').map(line => context.measureText(line).width));
+    const width = clamp((measured * 1.05 + 8) / canvas.width, 0.04, 0.9);
+    selected = { type: 'note', page: pageNumber, x: 0.08, y: 0.68, width, size, pageWidth: view.width, text: value, color: $('text-color').value };
     marks.push(selected); $('remove-mark').disabled = false; renderMarks();
   };
   $('remove-mark').onclick = () => { marks = marks.filter(item => item !== selected); selected = null; $('remove-mark').disabled = true; renderMarks(); };
   $('text-color').onchange = () => { if (selected?.type === 'note') { selected.color = $('text-color').value; renderMarks(); } };
-  $('note-width').onchange = () => { if (selected?.type === 'note') { selected.width = clamp(Number($('note-width').value) || 45, 15, 90) / 100; selected.x = Math.min(selected.x, 1 - selected.width); renderMarks(); } };
   $('export').onclick = async () => {
     if (!active || !sourceBytes) return;
     const button = $('export'); busy(button, true);
