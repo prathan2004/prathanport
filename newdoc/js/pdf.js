@@ -18,7 +18,7 @@ export async function generatePdf(element, documentId, userId) {
   const worker=window.html2pdf().set({margin:0,filename:fileName,image:{type:'jpeg',quality:.97},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css'],avoid:['.memo-sign']}}).from(clone);
     const pdf=await worker.toPdf().get('pdf');
     const count=pdf.internal.getNumberOfPages();
-    if(count>1) for(let page=1;page<=count;page++){pdf.setPage(page);pdf.setFontSize(9);pdf.setTextColor(110);pdf.text(`${page} / ${count}`,185,287)}
+    if(count>1) for(let page=1;page<=count;page++){pdf.setPage(page);pdf.setFontSize(16);pdf.setTextColor(110);pdf.text(`${page} / ${count}`,185,287)}
     const blob=pdf.output('blob');
     const path=`${userId}/${documentId}/${fileName}`;
     const {error:uploadError}=await db.storage.from('documents').upload(path,blob,{contentType:'application/pdf',upsert:true});if(uploadError)throw uploadError;

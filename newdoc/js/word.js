@@ -68,16 +68,17 @@ export async function downloadWord(values) {
   const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
   const heading = new Table({
     width: { size: twip(160), type: WidthType.DXA },
-    columnWidths: [twip(20), twip(140)],
+    columnWidths: [twip(20), twip(120), twip(20)],
     borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideVertical: noBorder, insideHorizontal: noBorder },
     margins: { top: 0, bottom: 0, left: 0, right: 0 },
     rows: [new TableRow({ children: [
       new TableCell({ children: [new Paragraph({ children: [new ImageRun({ data: garuda, type: 'png', transformation: { width: 57, height: 57 } })] })] }),
-      new TableCell({ children: [new Paragraph({ children: [run('บันทึกข้อความ', { bold: true, size: 58 })], spacing: { after: 80 } })] }),
+      new TableCell({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [run('บันทึกข้อความ', { bold: true, size: 36 })], spacing: { after: 80 } })] }),
+      new TableCell({ children: [new Paragraph('')] }),
     ] })],
   });
   const metadata = (parts, stops = []) => new Paragraph({
-    children: parts.flatMap(([label, value]) => [run(label, { bold: true, size: 40 }), run(` ${value || ''}\t`)]),
+    children: parts.flatMap(([label, value]) => [run(label, { bold: true, size: 32 }), run(` ${value || ''}\t`)]),
     tabStops: stops.length ? stops : [{ type: TabStopType.RIGHT, position: twip(160), leader: LeaderType.DOT }],
     spacing: { after: 70 },
   });
