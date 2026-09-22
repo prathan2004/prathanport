@@ -1,7 +1,6 @@
 const DOCX_URL = 'https://esm.sh/docx@9.7.1';
 const MM_TO_TWIP = 56.6929;
 const twip = mm => Math.round(mm * MM_TO_TWIP);
-const emu = mm => Math.round(mm * 36000);
 import { signatureLayout } from './signature-layout.js';
 
 async function pngBytes(url) {
@@ -45,7 +44,7 @@ function contentParagraphs(html, api) {
       children: runs.length ? runs : [new TextRun('')],
       alignment: alignment[node.style?.textAlign] || AlignmentType.LEFT,
       indent: indent ? { firstLine: twip(25) } : { left: twip(8) },
-      spacing: { after: 170, line: 285 },
+      spacing: { after: twip(3), line: 370 },
       widowControl: true,
     }));
   };
@@ -63,7 +62,7 @@ function contentParagraphs(html, api) {
 
 export async function downloadWord(values) {
   const api = await import(DOCX_URL);
-  const { Document, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, Packer, AlignmentType, BorderStyle, WidthType, TabStopType, LeaderType, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType } = api;
+  const { Document, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, Packer, AlignmentType, BorderStyle, WidthType, TabStopType, LeaderType } = api;
   const garuda = await pngBytes(new URL('../assets/images/garuda.png', import.meta.url));
   const signature = values.signatureUrl ? await pngBytes(values.signatureUrl) : null;
   const layout = signatureLayout(values);
@@ -97,27 +96,20 @@ export async function downloadWord(values) {
   ];
   const signChildren = [];
   const signWidthMm = 75;
-  const lineChildren = [];
   if (signature) {
     const width = Math.round(layout.width * 96 / 25.4);
     const height = Math.min(Math.round(18 * 96 / 25.4), Math.max(1, Math.round(width * signature.height / signature.width)));
     const heightMm = height * 25.4 / 96;
-    lineChildren.push(new ImageRun({
-      data: signature.data,
-      type: 'png',
-      transformation: { width, height },
-      floating: {
-        horizontalPosition: { relative: HorizontalPositionRelativeFrom.COLUMN, offset: emu((signWidthMm - layout.width) / 2 + layout.x) },
-        verticalPosition: { relative: VerticalPositionRelativeFrom.PARAGRAPH, offset: emu(19 - heightMm + layout.y) },
-        allowOverlap: true,
-        layoutInCell: true,
-        wrap: { type: TextWrappingType.NONE },
-      },
+    const topSpace = Math.max(0, 19 - heightMm + layout.y);
+    const bottomSpace = Math.max(0, 19 - heightMm - topSpace);
+    signChildren.push(new Paragraph({
+      children: [run('\t'), new ImageRun({ data: signature.data, type: 'png', transformation: { width, height } })],
+      tabStops: [{ type: TabStopType.CENTER, position: twip(signWidthMm / 2 + layout.x) }],
+      spacing: { before: twip(layout.gap + topSpace), after: twip(bottomSpace) },
     }));
   }
-  lineChildren.push(run(`ลงชื่อ  ${signature ? '' : '..............................................'}`));
   signChildren.push(
-    new Paragraph({ alignment: AlignmentType.CENTER, children: lineChildren, spacing: { before: twip(layout.gap), line: twip(21) } }),
+    new Paragraph({ alignment: AlignmentType.CENTER, children: [run('ลงชื่อ  ..............................................')], spacing: { before: signature ? 0 : twip(layout.gap), after: 0 } }),
     new Paragraph({ alignment: AlignmentType.CENTER, children: [run(`(${values.signer || ''})`)] }),
     new Paragraph({ alignment: AlignmentType.CENTER, children: [run(values.position || '')] }),
   );
@@ -131,7 +123,7 @@ export async function downloadWord(values) {
     rows: [new TableRow({ children: [new TableCell({ children: signChildren })] })],
   }));
   const doc = new Document({
-    styles: { default: { document: { run: { font: 'TH Sarabun New', size: 32 }, paragraph: { spacing: { line: 285 } } } } },
+    styles: { default: { document: { run: { font: 'TH Sarabun New', size: 32 }, paragraph: { spacing: { after: 0, line: 370 } } } } },
     sections: [{ properties: { page: { size: { width: twip(210), height: twip(297) }, margin: { top: twip(25), bottom: twip(20), left: twip(30), right: twip(20) } } }, children }],
   });
   const blob = await Packer.toBlob(doc);

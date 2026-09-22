@@ -3,9 +3,16 @@ import { shell, escapeHtml, toast, busy } from './ui.js';
 import { generatePdf } from './pdf.js';
 import { downloadWord } from './word.js';
 import { signatureLayout } from './signature-layout.js';
+import { missingLayoutColumn, saveDocumentRecord } from './document-store.js';
 const user=await shell('สร้างบันทึกข้อความ','document');
 if(user){
-  const params=new URLSearchParams(location.search);let id=params.get('id'), dirty=false, saving=false, signatureUrl=null, profile={};
+  const params=new URLSearchParams(location.search);let id=params.get('id'), dirty=false, saving=false, saveInFlight=null, changeVersion=0, signatureUrl=null, profile={};
+  const imageColumns=await db.from('documents').select('signature_image_x_mm,signature_image_y_mm').limit(0);
+  const layoutColumns=await db.from('documents').select('signature_width_mm,signature_align,signature_gap_mm').limit(0);
+  if(imageColumns.error&&!missingLayoutColumn(imageColumns.error))toast(imageColumns.error.message,true);
+  if(layoutColumns.error&&!missingLayoutColumn(layoutColumns.error))toast(layoutColumns.error.message,true);
+  let supportsImageColumns=!imageColumns.error, supportsLayoutColumns=!layoutColumns.error;
+  const layoutKey=documentId=>`memo-signature-layout:${user.id}:${documentId}`;
   const [{data:profileData},{data:signatures}]=await Promise.all([db.from('profiles').select('*').eq('user_id',user.id).maybeSingle(),db.from('signatures').select('*').order('created_at',{ascending:false})]);profile=profileData||{};
   let doc=null;
   if(id){const {data,error}=await db.from('documents').select('*').eq('id',id).maybeSingle();if(error||!data){toast(error?.message||'ไม่พบเอกสาร',true);id=null}else doc=data}
@@ -27,13 +34,16 @@ if(user){
   signLine.classList.add('memo-sign-line');
   signLine.prepend(document.querySelector('#p-signature'));
   const $=id=>document.getElementById(id),editor=$('editor');
-  const initialSignatureLayout=signatureLayout(doc||{});
+  let localLayout={};
+  if(id)try{localLayout=JSON.parse(localStorage.getItem(layoutKey(id))||'{}')}catch{localLayout={}}
+  const initialSignatureLayout=signatureLayout({...doc,...localLayout});
   $('signature').closest('label').insertAdjacentHTML('afterend',`<div class="signature-controls span-2"><label>ขนาดภาพลายเซ็น <output id="signature-width-value">${initialSignatureLayout.width} มม.</output><input id="signature-width" type="range" min="15" max="70" step="1" value="${initialSignatureLayout.width}"></label><label>เลื่อนภาพซ้าย/ขวา <output id="signature-x-value">${initialSignatureLayout.x} มม.</output><input id="signature-x" type="range" min="-20" max="20" step="1" value="${initialSignatureLayout.x}"></label><label>เลื่อนภาพขึ้น/ลง <output id="signature-y-value">${initialSignatureLayout.y} มม.</output><input id="signature-y" type="range" min="-10" max="10" step="1" value="${initialSignatureLayout.y}"></label><label>ตำแหน่งชุดลงชื่อ<select id="signature-align"><option value="left">ซ้าย</option><option value="center">กึ่งกลาง</option><option value="right">ขวา</option></select></label><label>ระยะก่อนชุดลงชื่อ <output id="signature-gap-value">${initialSignatureLayout.gap} มม.</output><input id="signature-gap" type="range" min="0" max="30" step="1" value="${initialSignatureLayout.gap}"></label></div>`);
   $('signature-align').value=initialSignatureLayout.align;
   const wordButton=document.createElement('button');
   wordButton.id='word-button';
   wordButton.type='button';
   wordButton.textContent='ดาวน์โหลด Word';
+  wordButton.title='ไฟล์ Word ต้องใช้ฟอนต์ TH Sarabun New บนเครื่องที่เปิดเอกสาร';
   $('pdf-button').after(wordButton);
   if(!window.DOMPurify){toast('โหลดระบบตรวจเนื้อหาไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต',true);editor.contentEditable='false'}
   const clean=html=>window.DOMPurify?DOMPurify.sanitize(html,{ALLOWED_TAGS:['p','div','br','b','strong','i','em','u','ul','ol','li','span'],ALLOWED_ATTR:['style'],FORBID_ATTR:['onerror','onclick']}):'';
@@ -41,11 +51,39 @@ if(user){
   function selectedSignatureLayout(){return signatureLayout({signature_width_mm:$('signature-width').value,signature_align:$('signature-align').value,signature_gap_mm:$('signature-gap').value,signature_image_x_mm:$('signature-x').value,signature_image_y_mm:$('signature-y').value})}
   function render(){const map={department:'p-department',number:'p-number',subject:'p-subject',recipient:'p-recipient',signer:'p-signer',position:'p-position'};for(const [field,target] of Object.entries(map))$(target).textContent=$(field).value||' ';const date=$('date').value;$('p-date').textContent=date?new Intl.DateTimeFormat('th-TH',{day:'numeric',month:'long',year:'numeric'}).format(new Date(`${date}T12:00:00`)):' ';$('p-content').innerHTML=clean(editor.innerHTML);const layout=selectedSignatureLayout();const sign=$('p-signature').closest('.memo-sign');sign.dataset.align=layout.align;sign.style.setProperty('--signature-width',`${layout.width}mm`);sign.style.setProperty('--signature-gap',`${layout.gap}mm`);sign.style.setProperty('--signature-x',`${layout.x}mm`);sign.style.setProperty('--signature-y',`${layout.y}mm`);$('signature-width-value').value=`${layout.width} มม.`;$('signature-gap-value').value=`${layout.gap} มม.`;$('signature-x-value').value=`${layout.x} มม.`;$('signature-y-value').value=`${layout.y} มม.`;const img=$('p-signature');img.hidden=!signatureUrl;if(signatureUrl)img.src=signatureUrl}
   async function updateSignature(){signatureUrl=null;const selected=(signatures||[]).find(s=>s.id===$('signature').value);if(selected)try{signatureUrl=await signedFile('signatures',selected.signature_url)}catch(error){toast(error.message,true)}render()}
-  document.querySelectorAll('.editor-panel input,.editor-panel select').forEach(el=>el.addEventListener('input',()=>{dirty=true;render()}));editor.addEventListener('input',()=>{dirty=true;render()});$('signature').addEventListener('change',updateSignature);
-  $('rich-toolbar').addEventListener('mousedown',event=>event.preventDefault());$('rich-toolbar').addEventListener('click',event=>{const btn=event.target.closest('button[data-cmd]');if(!btn)return;editor.focus();document.execCommand(btn.dataset.cmd,false,null);dirty=true;render()});
-  async function save(status='draft',silent=false){if(saving)return id;if(!window.DOMPurify)throw new Error('ระบบตรวจเนื้อหายังไม่พร้อม');const required=[['department','ส่วนราชการ'],['date','วันที่'],['subject','ชื่อเรื่อง'],['recipient','ผู้รับ']];for(const [field,name] of required)if(!$(field).value.trim())throw new Error(`กรุณาระบุ${name}`);if(!editor.textContent.trim())throw new Error('กรุณาระบุเนื้อหา');saving=true;busy($('save-button'),true);$('save-state').textContent='กำลังบันทึก...';
-    try{const layout=selectedSignatureLayout();const values={user_id:user.id,department:$('department').value.trim(),document_number:$('number').value.trim(),document_date:$('date').value,subject:$('subject').value.trim(),recipient:$('recipient').value.trim(),content:clean(editor.innerHTML),signer_name:$('signer').value.trim(),signer_position:$('position').value.trim(),signature_id:$('signature').value||null,signature_width_mm:layout.width,signature_align:layout.align,signature_gap_mm:layout.gap,signature_image_x_mm:layout.x,signature_image_y_mm:layout.y,status};const query=id?db.from('documents').update(values).eq('id',id):db.from('documents').insert(values);const {data,error}=await query.select('id').single();if(error)throw error;id=data.id;history.replaceState({},'',`create-document.html?id=${encodeURIComponent(id)}`);dirty=false;$('save-state').textContent=silent?'บันทึกอัตโนมัติแล้ว':'บันทึกเอกสารแล้ว';if(!silent)toast('บันทึกเอกสารเรียบร้อยแล้ว');return id}
-    finally{saving=false;busy($('save-button'),false)}
+  const changed=()=>{changeVersion++;dirty=true;render()};
+  document.querySelectorAll('.editor-panel input,.editor-panel select').forEach(el=>el.addEventListener('input',changed));
+  editor.addEventListener('input',changed);
+  $('signature').addEventListener('change',updateSignature);
+  $('rich-toolbar').addEventListener('mousedown',event=>event.preventDefault());$('rich-toolbar').addEventListener('click',event=>{const btn=event.target.closest('button[data-cmd]');if(!btn)return;editor.focus();document.execCommand(btn.dataset.cmd,false,null);changed()});
+  async function save(status='draft',silent=false){
+    if(saveInFlight)return saveInFlight.then(()=>save(status,silent));
+    if(!window.DOMPurify)throw new Error('ระบบตรวจเนื้อหายังไม่พร้อม');
+    const required=[['department','ส่วนราชการ'],['date','วันที่'],['subject','ชื่อเรื่อง'],['recipient','ผู้รับ']];
+    for(const [field,name] of required)if(!$(field).value.trim())throw new Error(`กรุณาระบุ${name}`);
+    if(!editor.textContent.trim())throw new Error('กรุณาระบุเนื้อหา');
+    const savedVersion=changeVersion;
+    const layout=selectedSignatureLayout();
+    const core={user_id:user.id,department:$('department').value.trim(),document_number:$('number').value.trim(),document_date:$('date').value,subject:$('subject').value.trim(),recipient:$('recipient').value.trim(),content:clean(editor.innerHTML),signer_name:$('signer').value.trim(),signer_position:$('position').value.trim(),signature_id:$('signature').value||null,status};
+    saving=true;busy($('save-button'),true);$('save-state').textContent='กำลังบันทึก...';
+    const task=(async()=>{
+      const result=await saveDocumentRecord(db,{id,core,layout,supportsLayoutColumns,supportsImageColumns});
+      id=result.id;
+      supportsLayoutColumns=result.supportsLayoutColumns;
+      supportsImageColumns=result.supportsImageColumns;
+      history.replaceState({},'',`create-document.html?id=${encodeURIComponent(id)}`);
+      try{
+        if(supportsLayoutColumns&&supportsImageColumns)localStorage.removeItem(layoutKey(id));
+        else localStorage.setItem(layoutKey(id),JSON.stringify({signature_width_mm:layout.width,signature_align:layout.align,signature_gap_mm:layout.gap,signature_image_x_mm:layout.x,signature_image_y_mm:layout.y}));
+      }catch{toast('บันทึกเอกสารแล้ว แต่เบราว์เซอร์ไม่สามารถเก็บตำแหน่งลายเซ็นไว้ได้',true)}
+      if(savedVersion===changeVersion)dirty=false;
+      const localOnly=!(supportsLayoutColumns&&supportsImageColumns);
+      $('save-state').textContent=localOnly?'บันทึกเอกสารแล้ว (ค่าจัดวางลายเซ็นเก็บในเครื่องนี้)'+(dirty?' มีการแก้ไขที่ยังไม่บันทึก':''):(silent?'บันทึกอัตโนมัติแล้ว':'บันทึกเอกสารแล้ว');
+      if(!silent)toast(localOnly?'บันทึกเอกสารแล้ว; กรุณารัน SQL migration เพื่อซิงก์ตำแหน่งลายเซ็น':'บันทึกเอกสารเรียบร้อยแล้ว');
+      return id;
+    })();
+    saveInFlight=task;
+    try{return await task}finally{if(saveInFlight===task)saveInFlight=null;saving=false;busy($('save-button'),false)}
   }
   $('save-button').onclick=async()=>{try{await save()}catch(error){toast(error.message,true);$('save-state').textContent='บันทึกไม่สำเร็จ'}};
   $('preview-button').onclick=()=>{render();document.querySelector('.preview-column').scrollIntoView({behavior:'smooth',block:'start'})};
