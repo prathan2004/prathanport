@@ -23,11 +23,14 @@ npx netlify dev
 1. เลือกโฟลเดอร์ `banmae` เป็น Base directory ของ Site
 2. ไม่ต้องกำหนด Build command
 3. Publish directory ใช้ `.` และ Functions directory ใช้ `netlify/functions` ตาม `netlify.toml`
-4. Deploy แล้วทดสอบ `/.netlify/functions/water-level` ก่อนเปิดหน้า Dashboard
+4. Deploy ผ่าน Git integration หรือ Netlify CLI (`netlify deploy --prod`) เพื่อให้ Functions ถูก deploy ด้วย การลากเฉพาะไฟล์ static ไปวางอาจไม่มี Function
+5. เปิด `https://ชื่อไซต์.netlify.app/.netlify/functions/mae-khan-water-level` และตรวจว่าผลลัพธ์เป็น JSON ก่อนเปิดหน้า Dashboard
+
+รองรับทั้งการตั้ง Base directory เป็น `banmae` และการ deploy repository `prathanport` จาก root โดยมี wrapper ชื่อเดียวกันใน `netlify/functions` เพื่อไม่ชนกับ Function ของโปรเจกต์ weather
 
 ## Data sources and parser
 
-ตั้งค่า URL และรหัสสถานีใน `netlify/functions/config.js` ปัจจุบัน P.71A อ้างอิงหน้ารายงานของสถาบันสารสนเทศทรัพยากรน้ำ/กรมชลประทาน และตำแหน่งสถานีอ้างอิงเอกสารประวัติสถานีของศูนย์อุทกวิทยาและบริหารน้ำภาคเหนือตอนบน
+ตั้งค่า URL และรหัสสถานีใน `netlify/functions/config.js` ปัจจุบัน Function ใช้รายงาน JSON ระดับน้ำรายชั่วโมงของศูนย์อุทกวิทยาชลประทานภาคเหนือตอนบนเป็นแหล่งหลัก และใช้หน้ารายงานของสถาบันสารสนเทศทรัพยากรน้ำเป็น fallback ตำแหน่ง P.71A อ้างอิงเอกสารประวัติสถานีของกรมชลประทาน
 
 Parser ใน `water-level.js` จะจับคู่คอลัมน์จากชื่อหัวตารางก่อนอ่านค่า หากหัวตารางต้นทางเปลี่ยนหรือไม่สามารถยืนยันคอลัมน์ได้ ระบบจะคืน `null` แทนการเดาค่า เมื่อแก้ parser ให้เก็บ HTML ตัวอย่างจากต้นทาง ตรวจชื่อคอลัมน์จริง และเพิ่ม pattern เฉพาะที่ผ่านการทดสอบแล้ว
 

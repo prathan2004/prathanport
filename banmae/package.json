@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check js/app.js && node --check js/map.js && node --check js/water.js && node --check js/chart.js && node --check netlify/functions/water-level.js"
+    "check": "node --check js/app.js && node --check js/map.js && node --check js/water.js && node --check js/chart.js && node --check netlify/functions/water-level.js && node --check netlify/functions/mae-khan-water-level.js"
   }
 }

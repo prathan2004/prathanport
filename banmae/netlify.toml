@@ -4,7 +4,7 @@
 
 [[redirects]]
   from = "/api/water-level"
-  to = "/.netlify/functions/water-level"
+  to = "/.netlify/functions/mae-khan-water-level"
   status = 200
 
 [[headers]]

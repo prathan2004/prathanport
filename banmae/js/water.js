@@ -1,7 +1,7 @@
 export const EMPTY_WATER_DATA = Object.freeze({
   station: "P.71A", river: "แม่ขาน", waterLevel: null, criticalLevel: null,
   flowRate: null, observedAt: null, fetchedAt: null, source: null,
-  history: [], quality: "UNVERIFIED", error: null
+  history: [], quality: "UNVERIFIED", error: null, diagnostics: []
 });
 
 export function normalizeWaterData(payload = {}) {
@@ -32,7 +32,18 @@ export function deriveWaterState(data) {
 }
 
 export async function fetchWaterData() {
-  const response = await fetch("/.netlify/functions/water-level", { headers: { Accept: "application/json" }, cache: "no-store" });
+  const response = await fetch("/.netlify/functions/mae-khan-water-level", { headers: { Accept: "application/json" }, cache: "no-store" });
+  if (response.status === 404) {
+    const error = new Error("ไม่พบ Netlify Function");
+    error.code = "FUNCTION_NOT_DEPLOYED";
+    throw error;
+  }
   if (!response.ok) throw new Error(`Water API returned ${response.status}`);
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    const error = new Error("Netlify Function ไม่ได้ตอบกลับเป็น JSON");
+    error.code = "FUNCTION_NOT_DEPLOYED";
+    throw error;
+  }
   return normalizeWaterData(await response.json());
 }

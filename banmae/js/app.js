@@ -2,18 +2,18 @@ import { initMap, invalidateMapSize } from "./map.js";
 import { EMPTY_WATER_DATA, fetchWaterData, deriveWaterState } from "./water.js";
 import { renderWaterChart } from "./chart.js";
 
-const fmtNumber = value => value === null ? "ยังไม่มีข้อมูล" : `${value.toFixed(2)} เมตร`;
+const fmtNumber = value => value === null ? "ไม่มีค่ารายงานล่าสุด" : `${value.toFixed(2)} เมตร`;
 const fmtTime = value => value ? new Date(value).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }) : "ยังไม่มีข้อมูล";
 let currentData = EMPTY_WATER_DATA;
 
 function render(data) {
   currentData = data; const state = deriveWaterState(data);
   document.querySelector("#water-level").textContent = fmtNumber(data.waterLevel);
-  document.querySelector("#critical-level").textContent = fmtNumber(data.criticalLevel);
-  document.querySelector("#critical-distance").textContent = state.distance === null ? "ยังไม่มีข้อมูล" : `${state.distance.toFixed(2)} เมตร`;
+  document.querySelector("#critical-level").textContent = data.criticalLevel === null ? "ยังไม่มีเกณฑ์ที่ยืนยัน" : fmtNumber(data.criticalLevel);
+  document.querySelector("#critical-distance").textContent = state.distance === null ? "คำนวณไม่ได้" : `${state.distance.toFixed(2)} เมตร`;
   document.querySelector("#observed-at").textContent = fmtTime(data.observedAt);
   document.querySelector("#fetched-at").textContent = data.fetchedAt ? `ระบบดึงข้อมูล ${fmtTime(data.fetchedAt)}` : "ระบบยังไม่ได้ดึงข้อมูล";
-  const trend = state.changePerHour === null ? ["ยังไม่มีข้อมูล", "ต้องมีข้อมูลย้อนหลัง"] : state.changePerHour > 1 ? ["↑ เพิ่มขึ้น", `+${state.changePerHour.toFixed(0)} ซม./ชม.`] : state.changePerHour < -1 ? ["↓ ลดลง", `${state.changePerHour.toFixed(0)} ซม./ชม.`] : ["→ ทรงตัว", `${state.changePerHour.toFixed(0)} ซม./ชม.`];
+  const trend = state.changePerHour === null ? ["คำนวณไม่ได้", "ไม่มีข้อมูลย้อนหลังเพียงพอ"] : state.changePerHour > 1 ? ["↑ เพิ่มขึ้น", `+${state.changePerHour.toFixed(0)} ซม./ชม.`] : state.changePerHour < -1 ? ["↓ ลดลง", `${state.changePerHour.toFixed(0)} ซม./ชม.`] : ["→ ทรงตัว", `${state.changePerHour.toFixed(0)} ซม./ชม.`];
   document.querySelector("#water-trend").textContent = trend[0]; document.querySelector("#trend-rate").textContent = trend[1];
   const badge = document.querySelector("#quality-badge"); badge.className = `quality-badge ${state.quality.toLowerCase()}`; badge.innerHTML = `<span></span> ${state.quality}`;
   const alert = document.querySelector("#data-alert");
@@ -25,7 +25,7 @@ function render(data) {
 
 async function refresh() {
   const button = document.querySelector("#refresh-button"); button.classList.add("loading"); button.disabled = true;
-  try { render(await fetchWaterData()); } catch { render({ ...EMPTY_WATER_DATA, fetchedAt: new Date().toISOString(), quality: "OFFLINE", error: "SOURCE_UNAVAILABLE" }); }
+  try { render(await fetchWaterData()); } catch (error) { render({ ...EMPTY_WATER_DATA, fetchedAt: new Date().toISOString(), quality: "OFFLINE", error: error.code || "FUNCTION_REQUEST_FAILED" }); const alert = document.querySelector("#data-alert"); if (error.code === "FUNCTION_NOT_DEPLOYED") alert.textContent = "ไม่พบ Netlify Function · ตั้ง Base directory เป็น banmae แล้ว Deploy ใหม่ผ่าน Git หรือ Netlify CLI"; }
   finally { button.classList.remove("loading"); button.disabled = false; }
 }
 
