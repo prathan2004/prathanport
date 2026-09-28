@@ -42,7 +42,7 @@ Official Water Data
         ↓
 Netlify Function: netlify/functions/water-level.mjs
         ↓
-/api/water-level?station=P.1&hours=24
+/.netlify/functions/water-level?station=P.1&hours=24
         ↓
 Frontend
 ```
@@ -79,15 +79,16 @@ Function จะตรวจชนิดข้อมูล เลือกค่�
 
 ## Deploy บน Netlify
 
-เว็บนี้ต้องใช้ Netlify Function จึงควร deploy โดยเชื่อม GitHub repository หรือใช้ Netlify CLI ไม่ควรลากเฉพาะโฟลเดอร์ `weather` เข้า Netlify Drop เพราะ Function อยู่ภายนอก Publish directory
+เว็บนี้เป็นส่วนหนึ่งของ `prathanport` และเปิดผ่าน `/weather/` จึงต้อง deploy repository ทั้งหมด ไม่ควร deploy เฉพาะโฟลเดอร์ `weather`
 
-1. Push ทั้ง `weather`, `netlify/functions/water-level.mjs` และ `weather/netlify.toml` ขึ้น repository
-2. สร้าง Netlify Site แล้วเชื่อม repository `prathanport`
-3. ตั้ง Base directory เป็นค่าว่าง เพื่อใช้ root ของ repository
-4. ตั้ง Package directory เป็น `weather`
-5. เว้น Build command ว่าง
-6. ค่า Publish directory และ Functions directory จะอ่านจาก `weather/netlify.toml`
-7. กด Deploy แล้วตรวจว่าเมนู Cloud compute > Functions มี Function ชื่อ `water-level`
+1. Push repository `prathanport` ทั้งหมดขึ้น GitHub
+2. สร้างหรือแก้ Netlify Site ให้เชื่อม repository `prathanport`
+3. ตั้ง Base directory เป็นค่าว่าง
+4. ตั้ง Package directory เป็นค่าว่าง
+5. ตั้ง Build command เป็นค่าว่าง
+6. ตั้ง Publish directory เป็น `.` หรือปล่อยให้ root `netlify.toml` กำหนด
+7. Deploy แล้วเปิด Weather Monitor ที่ `https://YOUR-SITE.netlify.app/weather/`
+8. ตรวจว่าเมนู Cloud compute > Functions มี Function ชื่อ `water-level`
 
 หลัง deploy ให้เปิด URL ต่อไปนี้โดยเปลี่ยนชื่อโดเมนเป็นของคุณ:
 
@@ -95,7 +96,7 @@ Function จะตรวจชนิดข้อมูล เลือกค่�
 https://YOUR-SITE.netlify.app/.netlify/functions/water-level?station=P.1&hours=24
 ```
 
-ถ้า Function ถูก deploy สำเร็จ URL จะคืน JSON ที่มี `"station":"P.1"` และ `"available":true` จากนั้น `/api/water-level` จะทำงานผ่าน redirect ที่กำหนดไว้
+ถ้า Function ถูก deploy สำเร็จ URL จะคืน JSON ที่มี `"station":"P.1"` และ `"available":true` หน้า `/weather/` จะเรียก Function URL นี้โดยตรง
 
 ข้อมูลอากาศ, Radar และรายงาน P.1 ไม่ต้องใช้ secret key ส่วน Water Monitoring เรียกผ่าน Netlify Function เพื่อหลีกเลี่ยงปัญหา CORS และรวมการตรวจรูปแบบข้อมูลไว้ฝั่ง server
 

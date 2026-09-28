@@ -3,6 +3,7 @@
 const WEATHER_CONFIG = {
   weatherEndpoint: "https://api.open-meteo.com/v1/forecast",
   radarEndpoint: "https://api.rainviewer.com/public/weather-maps.json",
+  waterEndpoint: "/.netlify/functions/water-level",
   refreshInterval: 5 * 60 * 1000,
   defaultLocation: { name: "จังหวัดเชียงใหม่", latitude: 18.7883, longitude: 98.9853 }
 };
@@ -450,7 +451,8 @@ async function loadWaterData(hours = 24) {
   refreshButton.disabled = true;
   dom.waterMessage.textContent = "กำลังตรวจสอบข้อมูลจากระบบกลาง...";
   try {
-    const response = await fetch(`/api/water-level?station=P.1&hours=${hours}`, { cache: "no-store" });
+    const parameters = new URLSearchParams({ station: "P.1", hours });
+    const response = await fetch(`${WEATHER_CONFIG.waterEndpoint}?${parameters}`, { cache: "no-store" });
     const data = await response.json();
     if (!response.ok && !data.station) throw new Error(data.error || `Water API HTTP ${response.status}`);
     appState.waterData = data;

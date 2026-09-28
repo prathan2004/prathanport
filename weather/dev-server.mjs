@@ -16,7 +16,7 @@ const contentTypes = {
 http.createServer(async (request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
 
-  if (pathname === "/api/water-level") {
+  if (pathname === "/api/water-level" || pathname === "/.netlify/functions/water-level") {
     const apiResponse = await waterLevelHandler(new Request(`http://localhost:${port}${request.url}`));
     response.writeHead(apiResponse.status, Object.fromEntries(apiResponse.headers));
     response.end(Buffer.from(await apiResponse.arrayBuffer()));
