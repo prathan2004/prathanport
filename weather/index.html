@@ -74,12 +74,52 @@
         </div>
       </section>
 
+      <section class="water-panel" id="waterPanel">
+        <div class="water-heading">
+          <div>
+            <span>แม่น้ำปิง</span>
+            <h2>สถานี P.1 สะพานนวรัฐ</h2>
+          </div>
+          <span class="water-status status-unknown" id="waterStatus">รอข้อมูล</span>
+        </div>
+        <div class="water-primary">
+          <div><small>ระดับน้ำปัจจุบัน</small><strong id="waterLevel">ไม่มีข้อมูล</strong></div>
+          <div class="trend trend-unknown" id="waterTrend"><b>—</b><span>ไม่มีข้อมูล</span></div>
+        </div>
+        <div class="water-grid">
+          <div><span>ระดับตลิ่ง</span><strong id="bankLevel">3.70 เมตร</strong></div>
+          <div><span>ต่ำกว่าตลิ่ง</span><strong id="belowBank">ไม่มีข้อมูล</strong></div>
+          <div><span>อัตราการไหล</span><strong id="flowRate">ไม่มีข้อมูล</strong></div>
+          <div><span>อัปเดตล่าสุด</span><strong id="waterUpdatedAt">ไม่มีข้อมูล</strong></div>
+        </div>
+        <div class="water-source" id="waterMessage">รอเชื่อมต่อ Public API ที่ได้รับการยืนยัน</div>
+        <button class="water-refresh" id="waterRefreshButton" type="button">
+          <svg viewBox="0 0 24 24"><path d="M20 11a8.1 8.1 0 1 0 2 5.3M20 4v7h-7"/></svg>
+          อัปเดตข้อมูลน้ำ
+        </button>
+      </section>
+
+      <section class="water-chart-section">
+        <div class="section-heading"><span>ระดับน้ำปิงย้อนหลัง</span><small>สถานี P.1</small></div>
+        <div class="chart-ranges" role="group" aria-label="ช่วงเวลาของกราฟระดับน้ำ">
+          <button data-water-hours="6">6 ชม.</button>
+          <button data-water-hours="12">12 ชม.</button>
+          <button class="active" data-water-hours="24">24 ชม.</button>
+          <button data-water-hours="48">48 ชม.</button>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="waterLevelChart" aria-label="กราฟระดับน้ำปิง"></canvas>
+          <div class="chart-empty" id="waterChartEmpty">ยังไม่มีข้อมูลย้อนหลังจากแหล่งข้อมูลทางการ</div>
+        </div>
+      </section>
+
       <section class="layers-section">
         <div class="section-heading"><span>ชั้นข้อมูล</span><small>เปิด / ปิด</small></div>
         <label class="layer-toggle"><span><i class="swatch cloud"></i>กลุ่มเมฆ</span><input type="checkbox" data-layer="cloud"><b></b></label>
         <label class="layer-toggle"><span><i class="swatch rain"></i>ฝน</span><input type="checkbox" data-layer="rain" checked><b></b></label>
         <label class="layer-toggle"><span><i class="swatch radar"></i>Radar</span><input type="checkbox" data-layer="radar"><b></b></label>
         <label class="layer-toggle"><span><i class="swatch satellite"></i>Satellite</span><input type="checkbox" data-layer="satellite"><b></b></label>
+        <label class="layer-toggle"><span><i class="swatch water"></i>สถานีระดับน้ำ</span><input type="checkbox" data-layer="water-stations" checked><b></b></label>
       </section>
 
       <section class="legend-section">
@@ -114,6 +154,7 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

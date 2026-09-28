@@ -7,6 +7,24 @@ const WEATHER_CONFIG = {
   defaultLocation: { name: "จังหวัดเชียงใหม่", latitude: 18.7883, longitude: 98.9853 }
 };
 
+const WATER_THRESHOLDS = {
+  normal: null,
+  watch: null,
+  warning: null,
+  critical: null
+};
+
+const WATER_STATIONS = {
+  "P.1": {
+    station: "P.1",
+    name: "สะพานนวรัฐ",
+    river: "แม่น้ำปิง",
+    latitude: 18.786111,
+    longitude: 99.0075,
+    bankLevel: 3.7
+  }
+};
+
 const DISTRICTS = [
   "เมืองเชียงใหม่", "จอมทอง", "แม่แจ่ม", "เชียงดาว", "ดอยสะเก็ด", "แม่แตง",
   "แม่ริม", "สะเมิง", "ฝาง", "แม่อาย", "พร้าว", "สันป่าตอง", "สันกำแพง",
@@ -25,7 +43,9 @@ const WEATHER_CODES = {
 const appState = {
   map: null, districtLayer: null, selectedLayer: null, userMarker: null,
   weatherCache: new Map(), radarFrames: [], radarHost: "", radarLayer: null,
-  radarAnimation: null, currentLocation: WEATHER_CONFIG.defaultLocation
+  radarAnimation: null, currentLocation: WEATHER_CONFIG.defaultLocation,
+  waterStationLayer: null, waterStationMarker: null, waterData: null,
+  waterChart: null, waterHours: 24
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -38,6 +58,13 @@ const dom = {
   playButton: $("#playButton"), loadingOverlay: $("#loadingOverlay"), toast: $("#toast")
 };
 
+Object.assign(dom, {
+  waterLevel: $("#waterLevel"), bankLevel: $("#bankLevel"), belowBank: $("#belowBank"),
+  flowRate: $("#flowRate"), waterTrend: $("#waterTrend"), waterStatus: $("#waterStatus"),
+  waterUpdatedAt: $("#waterUpdatedAt"), waterMessage: $("#waterMessage"),
+  waterChartEmpty: $("#waterChartEmpty")
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
   populateDistricts();
   initializeMap();
@@ -46,7 +73,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   setInterval(updateClock, 1000);
   setInterval(refreshAllData, WEATHER_CONFIG.refreshInterval);
   await loadDistrictGeoJSON();
-  await Promise.allSettled([loadWeather(), loadRadar()]);
+  initializeWaterStationLayer();
+  initializeWaterChart();
+  await Promise.allSettled([loadWeather(), loadRadar(), loadWaterData()]);
 });
 
 function initializeMap() {
@@ -114,6 +143,15 @@ function bindEvents() {
   });
   document.querySelectorAll("[data-layer]").forEach((input) => {
     input.addEventListener("change", () => toggleWeatherLayer(input.dataset.layer, input.checked));
+  });
+  $("#waterRefreshButton").addEventListener("click", () => loadWaterData(appState.waterHours));
+  document.querySelectorAll("[data-water-hours]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll("[data-water-hours]").forEach((item) => item.classList.remove("active"));
+      button.classList.add("active");
+      appState.waterHours = Number(button.dataset.waterHours);
+      loadWaterData(appState.waterHours);
+    });
   });
 }
 
@@ -270,6 +308,11 @@ function updateRadarFrame(frameIndex) {
 }
 
 function toggleWeatherLayer(type, enabled) {
+  if (type === "water-stations") {
+    if (enabled) appState.waterStationLayer?.addTo(appState.map);
+    else if (appState.waterStationLayer) appState.map.removeLayer(appState.waterStationLayer);
+    return;
+  }
   if (type === "rain" || type === "radar") {
     if (enabled && appState.radarLayer) appState.radarLayer.addTo(appState.map);
     if (!isRadarEnabled() && appState.radarLayer) appState.map.removeLayer(appState.radarLayer);
@@ -347,8 +390,162 @@ function locateUser() {
 
 async function refreshAllData() {
   appState.weatherCache.clear();
-  await Promise.allSettled([loadWeather(appState.currentLocation, true), loadRadar()]);
+  await Promise.allSettled([
+    loadWeather(appState.currentLocation, true),
+    loadRadar(),
+    loadWaterData(appState.waterHours)
+  ]);
   showToast(`อัปเดตข้อมูลล่าสุด ${formatTime(new Date())} น.`);
+}
+
+function initializeWaterStationLayer() {
+  const station = WATER_STATIONS["P.1"];
+  const icon = L.divIcon({
+    className: "",
+    html: '<div class="water-station-marker" aria-hidden="true">≈</div>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -18]
+  });
+  appState.waterStationMarker = L.marker([station.latitude, station.longitude], {
+    icon,
+    title: `สถานี ${station.station} ${station.name}`
+  });
+  appState.waterStationLayer = L.layerGroup([appState.waterStationMarker]).addTo(appState.map);
+  updateWaterMarkerPopup(null);
+}
+
+function initializeWaterChart() {
+  const context = $("#waterLevelChart").getContext("2d");
+  appState.waterChart = new Chart(context, {
+    type: "line",
+    data: { datasets: [] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { labels: { color: "#9cb8c3", boxWidth: 10, font: { family: "Prompt", size: 9 } } },
+        tooltip: { titleFont: { family: "Prompt" }, bodyFont: { family: "Prompt" } }
+      },
+      scales: {
+        x: {
+          type: "category",
+          ticks: { color: "#71929f", maxTicksLimit: 6, font: { family: "Prompt", size: 8 } },
+          grid: { color: "rgba(151,203,220,.08)" },
+          title: { display: true, text: "เวลา", color: "#71929f", font: { family: "Prompt", size: 9 } }
+        },
+        y: {
+          ticks: { color: "#71929f", font: { family: "Prompt", size: 8 } },
+          grid: { color: "rgba(151,203,220,.08)" },
+          title: { display: true, text: "ระดับน้ำ (เมตร)", color: "#71929f", font: { family: "Prompt", size: 9 } }
+        }
+      }
+    }
+  });
+}
+
+async function loadWaterData(hours = 24) {
+  const refreshButton = $("#waterRefreshButton");
+  refreshButton.disabled = true;
+  dom.waterMessage.textContent = "กำลังตรวจสอบข้อมูลจากระบบกลาง...";
+  try {
+    const response = await fetch(`/api/water-level?station=P.1&hours=${hours}`, { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok && !data.station) throw new Error(data.error || `Water API HTTP ${response.status}`);
+    appState.waterData = data;
+    updateWaterPanel(data);
+    updateWaterMarkerPopup(data);
+    updateWaterChart(data);
+  } catch (error) {
+    const unavailable = {
+      ...WATER_STATIONS["P.1"], waterLevel: null, flowRate: null,
+      differenceToBank: null, trend: "unavailable", status: "unknown",
+      updatedAt: null, history: [], available: false,
+      message: "ไม่สามารถเชื่อมต่อ Water API ของระบบได้"
+    };
+    appState.waterData = unavailable;
+    updateWaterPanel(unavailable);
+    updateWaterMarkerPopup(unavailable);
+    updateWaterChart(unavailable);
+    console.error(error);
+  } finally {
+    refreshButton.disabled = false;
+  }
+}
+
+function updateWaterPanel(data) {
+  const displayNumber = (value, suffix, digits = 2) => value === null || value === undefined
+    ? "ไม่มีข้อมูล"
+    : `${Number(value).toFixed(digits)} ${suffix}`;
+  dom.waterLevel.textContent = displayNumber(data.waterLevel, "เมตร");
+  dom.bankLevel.textContent = displayNumber(data.bankLevel, "เมตร");
+  dom.belowBank.textContent = displayNumber(data.differenceToBank, "เมตร");
+  dom.flowRate.textContent = displayNumber(data.flowRate, "m³/s");
+  dom.waterUpdatedAt.textContent = data.updatedAt ? `${formatTime(new Date(data.updatedAt))} น.` : "ไม่มีข้อมูล";
+  dom.waterMessage.textContent = data.message || "ข้อมูลจากศูนย์อุทกวิทยาชลประทานภาคเหนือตอนบน";
+
+  const trendConfig = {
+    rising: { arrow: "↑", label: "เพิ่มขึ้น", className: "trend-up" },
+    stable: { arrow: "→", label: "ทรงตัว", className: "trend-stable" },
+    falling: { arrow: "↓", label: "ลดลง", className: "trend-down" },
+    unavailable: { arrow: "—", label: "ไม่มีข้อมูล", className: "trend-unknown" }
+  }[data.trend] || { arrow: "—", label: "ไม่มีข้อมูล", className: "trend-unknown" };
+  dom.waterTrend.className = `trend ${trendConfig.className}`;
+  dom.waterTrend.querySelector("b").textContent = trendConfig.arrow;
+  dom.waterTrend.querySelector("span").textContent = trendConfig.label;
+
+  const statusConfig = {
+    normal: ["ปกติ", "status-normal"], watch: ["เฝ้าระวัง", "status-watch"],
+    warning: ["เสี่ยงสูง", "status-warning"], critical: ["วิกฤต", "status-critical"],
+    unknown: ["รอเกณฑ์ทางการ", "status-unknown"]
+  }[data.status] || ["รอเกณฑ์ทางการ", "status-unknown"];
+  dom.waterStatus.textContent = statusConfig[0];
+  dom.waterStatus.className = `water-status ${statusConfig[1]}`;
+}
+
+function updateWaterMarkerPopup(data) {
+  if (!appState.waterStationMarker) return;
+  const station = data || WATER_STATIONS["P.1"];
+  const show = (value, suffix, digits = 2) => value === null || value === undefined ? "ไม่มีข้อมูล" : `${Number(value).toFixed(digits)} ${suffix}`;
+  const trends = { rising: "↑ เพิ่มขึ้น", stable: "→ ทรงตัว", falling: "↓ ลดลง", unavailable: "— ไม่มีข้อมูล" };
+  appState.waterStationMarker.bindPopup(`
+    <div class="water-popup">
+      <strong>สถานี P.1 สะพานนวรัฐ</strong>
+      <small>แม่น้ำปิง · อำเภอเมืองเชียงใหม่</small><br>
+      ระดับน้ำ: ${show(station.waterLevel, "m")}<br>
+      อัตราการไหล: ${show(station.flowRate, "m³/s")}<br>
+      แนวโน้ม: ${trends[station.trend] || "— ไม่มีข้อมูล"}<br>
+      อัปเดตล่าสุด: ${station.updatedAt ? `${formatTime(new Date(station.updatedAt))} น.` : "ไม่มีข้อมูล"}
+    </div>
+  `);
+}
+
+function updateWaterChart(data) {
+  const history = Array.isArray(data.history) ? data.history : [];
+  dom.waterChartEmpty.hidden = history.length > 0;
+  const labels = history.map((row) => formatTime(new Date(row.recordedAt)));
+  const datasets = [{
+    label: "ระดับน้ำจริง",
+    data: history.map((row) => row.waterLevel),
+    borderColor: "#30c8df", backgroundColor: "rgba(48,200,223,.12)",
+    borderWidth: 2, pointRadius: 0, tension: .25, fill: true
+  }];
+  if (data.bankLevel !== null && data.bankLevel !== undefined) {
+    datasets.push({
+      label: "ระดับตลิ่ง", data: labels.map(() => data.bankLevel),
+      borderColor: "#ffb45d", borderWidth: 1.5, pointRadius: 0, borderDash: [5, 4], fill: false
+    });
+  }
+  if (WATER_THRESHOLDS.warning !== null) {
+    datasets.push({
+      label: "ระดับเตือนภัย", data: labels.map(() => WATER_THRESHOLDS.warning),
+      borderColor: "#ff6570", borderWidth: 1.5, pointRadius: 0, borderDash: [3, 3], fill: false
+    });
+  }
+  appState.waterChart.data.labels = labels;
+  appState.waterChart.data.datasets = datasets;
+  appState.waterChart.update();
 }
 
 function updateClock() {

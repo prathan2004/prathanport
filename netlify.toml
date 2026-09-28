@@ -8,3 +8,8 @@
   from = "/run/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
+
+[[redirects]]
+  from = "/api/water-level"
+  to = "/.netlify/functions/water-level"
+  status = 200

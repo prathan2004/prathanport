@@ -33,6 +33,50 @@ node dev-server.mjs
 
 Radar timeline โหลด metadata และ tile ล่าสุดจาก RainViewer โดยตรง ถ้า API ใดใช้งานไม่ได้ แผนที่และขอบเขตอำเภอยังใช้งานได้ และหน้าจอจะแสดงว่าไม่มีข้อมูลแทนการสร้างค่าขึ้นเอง
 
+## Ping River Monitoring
+
+หน้า Dashboard มี Card, Marker และกราฟสำหรับสถานี P.1 สะพานนวรัฐ พิกัดและระดับตลิ่ง 3.70 เมตรอ้างอิงข้อมูลสถานีของกรมชลประทาน ข้อมูลสดเรียกผ่าน:
+
+```text
+Official Water Data
+        ↓
+Netlify Function: netlify/functions/water-level.mjs
+        ↓
+/api/water-level?station=P.1&hours=24
+        ↓
+Frontend
+```
+
+จากการตรวจสอบยังไม่พบเอกสาร Public API ของกรมชลประทานสำหรับข้อมูลสดสถานี P.1 ระบบจึงไม่ scrape เว็บไซต์และไม่สร้างค่าจำลอง เมื่อยังไม่เชื่อมแหล่งข้อมูล Card และกราฟจะแสดงว่าไม่มีข้อมูล ส่วนระดับตลิ่งและ metadata สถานียังแสดงจากเอกสารทางการ
+
+เมื่อตรวจสอบและได้รับอนุญาตให้ใช้ API ทางการแล้ว ให้ตั้ง Environment Variable ชื่อ `WATER_DATA_URL` ใน Netlify โดย endpoint ดังกล่าวต้องคืน JSON ที่ normalize แล้ว:
+
+```json
+{
+  "station": "P.1",
+  "waterLevel": 1.25,
+  "bankLevel": 3.7,
+  "flowRate": 82.4,
+  "trend": "stable",
+  "updatedAt": "2026-09-28T10:00:00+07:00",
+  "history": [
+    {
+      "waterLevel": 1.24,
+      "flowRate": 81.9,
+      "recordedAt": "2026-09-28T09:00:00+07:00"
+    }
+  ]
+}
+```
+
+Function จะตรวจชนิดข้อมูล คำนวณระยะต่ำกว่าตลิ่ง และคำนวณแนวโน้มจากสองค่าล่าสุดหากต้นทางไม่ได้ส่ง trend มาให้ แต่จะไม่คำนวณสถานะเตือนภัยจนกว่าจะมี threshold ที่ยืนยันจากแหล่งทางการ
+
+กำหนดเกณฑ์ที่ผ่านการยืนยันใน `WATER_THRESHOLDS` ทั้งใน frontend และ Function ปัจจุบันทุกค่าเป็น `null` เพื่อป้องกันการแสดงคำเตือนที่ไม่มีแหล่งอ้างอิง
+
+## Supabase Historical Data
+
+ไฟล์ `sql/water_levels.sql` เตรียมตาราง `water_levels` พร้อม index และ RLS สำหรับเก็บข้อมูลย้อนหลัง การอ่านเปิดสำหรับหน้า Dashboard แต่การเขียนต้องทำผ่าน Serverless Function ที่เก็บ `SUPABASE_SERVICE_ROLE_KEY` ไว้ฝั่ง server เท่านั้น ห้ามนำ service role key ไปไว้ใน `app.js`
+
 ## Deploy บน Netlify
 
 1. Push โฟลเดอร์ `weather` ขึ้น repository
@@ -41,7 +85,7 @@ Radar timeline โหลด metadata และ tile ล่าสุดจาก 
 4. ตั้ง Publish directory เป็น `weather`
 5. เว้น Build command ว่าง แล้วกด Deploy
 
-เว็บชุดนี้เรียก API ที่ไม่ต้องใช้ secret key จึงยังไม่จำเป็นต้องตั้ง Environment Variable หรือ Netlify Function
+ข้อมูลอากาศและ Radar ไม่ต้องใช้ secret key ส่วน Water Monitoring ใช้ Netlify Function อยู่แล้ว หากเชื่อม provider ทางการภายหลังให้ตั้ง `WATER_DATA_URL` ใน Netlify Environment Variables แล้ว deploy ใหม่
 
 ## หมายเหตุสำหรับ Production
 
