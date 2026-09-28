@@ -1,0 +1,9 @@
+{
+  "name": "mae-khan-flood-monitor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check js/app.js && node --check js/map.js && node --check js/water.js && node --check js/chart.js && node --check netlify/functions/water-level.js"
+  }
+}
