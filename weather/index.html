@@ -99,20 +99,6 @@
         </button>
       </section>
 
-      <section class="water-chart-section">
-        <div class="section-heading"><span>ระดับน้ำปิงย้อนหลัง</span><small>สถานี P.1</small></div>
-        <div class="chart-ranges" role="group" aria-label="ช่วงเวลาของกราฟระดับน้ำ">
-          <button data-water-hours="6">6 ชม.</button>
-          <button data-water-hours="12">12 ชม.</button>
-          <button class="active" data-water-hours="24">24 ชม.</button>
-          <button data-water-hours="48">48 ชม.</button>
-        </div>
-        <div class="chart-wrap">
-          <canvas id="waterLevelChart" aria-label="กราฟระดับน้ำปิง"></canvas>
-          <div class="chart-empty" id="waterChartEmpty">ยังไม่มีข้อมูลย้อนหลังจากแหล่งข้อมูลทางการ</div>
-        </div>
-      </section>
-
       <section class="layers-section">
         <div class="section-heading"><span>ชั้นข้อมูล</span><small>เปิด / ปิด</small></div>
         <label class="layer-toggle"><span><i class="swatch cloud"></i>กลุ่มเมฆ</span><input type="checkbox" data-layer="cloud"><b></b></label>
@@ -154,7 +140,6 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

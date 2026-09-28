@@ -8,13 +8,6 @@ const WEATHER_CONFIG = {
   defaultLocation: { name: "จังหวัดเชียงใหม่", latitude: 18.7883, longitude: 98.9853 }
 };
 
-const WATER_THRESHOLDS = {
-  normal: null,
-  watch: null,
-  warning: null,
-  critical: null
-};
-
 const WATER_STATIONS = {
   "P.1": {
     station: "P.1",
@@ -45,8 +38,7 @@ const appState = {
   map: null, districtLayer: null, selectedLayer: null, userMarker: null,
   weatherCache: new Map(), radarFrames: [], radarHost: "", radarLayer: null,
   radarAnimation: null, currentLocation: WEATHER_CONFIG.defaultLocation,
-  waterStationLayer: null, waterStationMarker: null, waterData: null,
-  waterChart: null, waterHours: 24
+  waterStationLayer: null, waterStationMarker: null, waterData: null
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -62,8 +54,7 @@ const dom = {
 Object.assign(dom, {
   waterLevel: $("#waterLevel"), bankLevel: $("#bankLevel"), belowBank: $("#belowBank"),
   flowRate: $("#flowRate"), waterTrend: $("#waterTrend"), waterStatus: $("#waterStatus"),
-  waterUpdatedAt: $("#waterUpdatedAt"), waterMessage: $("#waterMessage"),
-  waterChartEmpty: $("#waterChartEmpty")
+  waterUpdatedAt: $("#waterUpdatedAt"), waterMessage: $("#waterMessage")
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -75,7 +66,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   setInterval(refreshAllData, WEATHER_CONFIG.refreshInterval);
   await loadDistrictGeoJSON();
   initializeWaterStationLayer();
-  initializeWaterChart();
   await Promise.allSettled([loadWeather(), loadRadar(), loadWaterData()]);
 });
 
@@ -145,15 +135,7 @@ function bindEvents() {
   document.querySelectorAll("[data-layer]").forEach((input) => {
     input.addEventListener("change", () => toggleWeatherLayer(input.dataset.layer, input.checked));
   });
-  $("#waterRefreshButton").addEventListener("click", () => loadWaterData(appState.waterHours));
-  document.querySelectorAll("[data-water-hours]").forEach((button) => {
-    button.addEventListener("click", () => {
-      document.querySelectorAll("[data-water-hours]").forEach((item) => item.classList.remove("active"));
-      button.classList.add("active");
-      appState.waterHours = Number(button.dataset.waterHours);
-      loadWaterData(appState.waterHours);
-    });
-  });
+  $("#waterRefreshButton").addEventListener("click", () => loadWaterData());
 }
 
 function selectDistrictByName(name) {
@@ -394,7 +376,7 @@ async function refreshAllData() {
   await Promise.allSettled([
     loadWeather(appState.currentLocation, true),
     loadRadar(),
-    loadWaterData(appState.waterHours)
+    loadWaterData()
   ]);
   showToast(`อัปเดตข้อมูลล่าสุด ${formatTime(new Date())} น.`);
 }
@@ -416,49 +398,18 @@ function initializeWaterStationLayer() {
   updateWaterMarkerPopup(null);
 }
 
-function initializeWaterChart() {
-  const context = $("#waterLevelChart").getContext("2d");
-  appState.waterChart = new Chart(context, {
-    type: "line",
-    data: { datasets: [] },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: "index", intersect: false },
-      plugins: {
-        legend: { labels: { color: "#9cb8c3", boxWidth: 10, font: { family: "Prompt", size: 9 } } },
-        tooltip: { titleFont: { family: "Prompt" }, bodyFont: { family: "Prompt" } }
-      },
-      scales: {
-        x: {
-          type: "category",
-          ticks: { color: "#71929f", maxTicksLimit: 6, font: { family: "Prompt", size: 8 } },
-          grid: { color: "rgba(151,203,220,.08)" },
-          title: { display: true, text: "เวลา", color: "#71929f", font: { family: "Prompt", size: 9 } }
-        },
-        y: {
-          ticks: { color: "#71929f", font: { family: "Prompt", size: 8 } },
-          grid: { color: "rgba(151,203,220,.08)" },
-          title: { display: true, text: "ระดับน้ำ (เมตร)", color: "#71929f", font: { family: "Prompt", size: 9 } }
-        }
-      }
-    }
-  });
-}
-
-async function loadWaterData(hours = 24) {
+async function loadWaterData() {
   const refreshButton = $("#waterRefreshButton");
   refreshButton.disabled = true;
   dom.waterMessage.textContent = "กำลังตรวจสอบข้อมูลจากระบบกลาง...";
   try {
-    const parameters = new URLSearchParams({ station: "P.1", hours });
+    const parameters = new URLSearchParams({ station: "P.1", hours: "24" });
     const response = await fetch(`${WEATHER_CONFIG.waterEndpoint}?${parameters}`, { cache: "no-store" });
     const data = await response.json();
     if (!response.ok && !data.station) throw new Error(data.error || `Water API HTTP ${response.status}`);
     appState.waterData = data;
     updateWaterPanel(data);
     updateWaterMarkerPopup(data);
-    updateWaterChart(data);
   } catch (error) {
     const unavailable = {
       ...WATER_STATIONS["P.1"], waterLevel: null, flowRate: null,
@@ -469,7 +420,6 @@ async function loadWaterData(hours = 24) {
     appState.waterData = unavailable;
     updateWaterPanel(unavailable);
     updateWaterMarkerPopup(unavailable);
-    updateWaterChart(unavailable);
     console.error(error);
   } finally {
     refreshButton.disabled = false;
@@ -521,33 +471,6 @@ function updateWaterMarkerPopup(data) {
       อัปเดตล่าสุด: ${station.updatedAt ? `${formatTime(new Date(station.updatedAt))} น.` : "ไม่มีข้อมูล"}
     </div>
   `);
-}
-
-function updateWaterChart(data) {
-  const history = Array.isArray(data.history) ? data.history : [];
-  dom.waterChartEmpty.hidden = history.length > 0;
-  const labels = history.map((row) => formatTime(new Date(row.recordedAt)));
-  const datasets = [{
-    label: "ระดับน้ำจริง",
-    data: history.map((row) => row.waterLevel),
-    borderColor: "#30c8df", backgroundColor: "rgba(48,200,223,.12)",
-    borderWidth: 2, pointRadius: 0, tension: .25, fill: true
-  }];
-  if (data.bankLevel !== null && data.bankLevel !== undefined) {
-    datasets.push({
-      label: "ระดับตลิ่ง", data: labels.map(() => data.bankLevel),
-      borderColor: "#ffb45d", borderWidth: 1.5, pointRadius: 0, borderDash: [5, 4], fill: false
-    });
-  }
-  if (WATER_THRESHOLDS.warning !== null) {
-    datasets.push({
-      label: "ระดับเตือนภัย", data: labels.map(() => WATER_THRESHOLDS.warning),
-      borderColor: "#ff6570", borderWidth: 1.5, pointRadius: 0, borderDash: [3, 3], fill: false
-    });
-  }
-  appState.waterChart.data.labels = labels;
-  appState.waterChart.data.datasets = datasets;
-  appState.waterChart.update();
 }
 
 function updateClock() {

@@ -36,7 +36,7 @@ svg { width: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-l
 .app-shell { display: grid; grid-template-columns: 330px 1fr; height: calc(100vh - 82px); }
 .sidebar { z-index: 700; overflow-y: auto; background: var(--panel); border-right: 1px solid var(--line); scrollbar-width: thin; scrollbar-color: #31556a transparent; }
 .control-section, .weather-panel, .layers-section, .legend-section { padding: 18px 20px; border-bottom: 1px solid var(--line); }
-.water-panel, .water-chart-section { padding: 18px 20px; border-bottom: 1px solid var(--line); }
+.water-panel { padding: 18px 20px; border-bottom: 1px solid var(--line); }
 .section-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 12px; font-weight: 500; }
 .section-heading small { color: var(--muted); font-size: 10px; font-weight: 400; }
 .search-box { position: relative; }
@@ -97,11 +97,6 @@ select option { background: #0b2638; }
 .water-source { margin-top: 13px; color: #789aa7; font-size: 9px; line-height: 1.5; }
 .water-refresh { width: 100%; height: 35px; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 7px; color: #bfeef3; background: #0b3042; border: 1px solid #24576b; border-radius: 3px; font-size: 10px; }
 .water-refresh:hover { border-color: var(--cyan); }.water-refresh svg { width: 14px; }
-.chart-ranges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; margin-bottom: 10px; }
-.chart-ranges button { height: 27px; color: var(--muted); background: #0b2638; border: 1px solid var(--line); font-size: 9px; }
-.chart-ranges button.active { color: #06202c; background: var(--cyan); border-color: var(--cyan); font-weight: 600; }
-.chart-wrap { position: relative; height: 190px; }
-.chart-empty { position: absolute; inset: 0; display: grid; place-items: center; padding: 20px; color: #789aa7; background: rgba(7, 29, 43, .76); text-align: center; font-size: 10px; }
 .water-station-marker { width: 30px; height: 30px; display: grid; place-items: center; color: #05202c; background: #55d6e5; border: 3px solid #e8fdff; border-radius: 50%; box-shadow: 0 0 0 5px rgba(38,190,211,.2), 0 5px 14px rgba(0,0,0,.4); font-size: 15px; }
 .water-popup { min-width: 190px; color: #17313d; font-family: "Prompt", sans-serif; font-size: 11px; line-height: 1.65; }
 .water-popup strong { display: block; font-size: 13px; }.water-popup small { color: #58717b; }
@@ -162,7 +157,7 @@ input[type="range"] { width: 100%; height: 4px; margin: 0; accent-color: var(--c
   .map-stage { height: 100%; }
   .sidebar { position: absolute; z-index: 800; left: 0; right: 0; bottom: 0; height: 42vh; border: 0; border-top: 1px solid #275469; border-radius: 8px 8px 0 0; box-shadow: 0 -10px 35px rgba(0,0,0,.35); }
   .sheet-handle { display: block; width: 38px; height: 4px; margin: 8px auto 0; border-radius: 3px; background: #45687a; }
-  .control-section, .weather-panel, .water-panel, .water-chart-section, .layers-section, .legend-section { padding: 14px 16px; }
+  .control-section, .weather-panel, .water-panel, .layers-section, .legend-section { padding: 14px 16px; }
   .timeline-panel { left: 10px; right: 10px; bottom: calc(42vh + 10px); padding: 10px; }
   .timeline-head strong { font-size: 10px; }.range-buttons button { padding: 4px 5px; }
   .map-corner-info { top: 10px; right: 10px; }
