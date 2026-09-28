@@ -25,6 +25,7 @@ svg { width: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-l
 .brand h1 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: 0; }
 .brand p { margin: 2px 0 0; color: var(--muted); font-size: 11px; }
 .demo-badge { margin-left: 10px; padding: 5px 9px; font-size: 10px; color: #ffd373; background: rgba(255, 190, 61, .1); border: 1px solid rgba(255, 190, 61, .32); border-radius: 3px; white-space: nowrap; }
+.demo-badge.live-data { color: #77e8b1; background: rgba(57, 217, 138, .1); border-color: rgba(57, 217, 138, .32); }
 .status-strip { gap: 18px; font-size: 11px; color: var(--muted); }
 .status-strip strong { color: var(--text); font-size: 16px; font-weight: 500; }
 .live-dot { display: flex; align-items: center; gap: 7px; }
