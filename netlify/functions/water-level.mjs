@@ -1,3 +1,5 @@
+const OFFICIAL_HOURLY_URL = "https://hydro1.ddns.net/main/information_4/houly/water_today_json.php";
+
 const STATIONS = {
   "P.1": {
     station: "P.1",
@@ -6,11 +8,10 @@ const STATIONS = {
     district: "อำเภอเมืองเชียงใหม่",
     latitude: 18.786111,
     longitude: 99.0075,
-    bankLevel: 3.7,
     source: {
       agency: "ศูนย์อุทกวิทยาชลประทานภาคเหนือตอนบน กรมชลประทาน",
-      stationReference: "https://water.rid.go.th/hyd/download/book2012/assets/basic-html/page218.html",
-      hourlyReport: "https://www.hydro-1.net/Data/HD-04/houly/hourly_level.php"
+      reportPage: "https://hydro-1.net/Data/HD-04/houly/hourly_level.php",
+      stationReference: "https://water.rid.go.th/hyd/download/book2012/assets/basic-html/page218.html"
     }
   }
 };
@@ -31,23 +32,10 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
 });
 
 const numberOrNull = (value) => {
+  if (value === null || value === undefined || value === "") return null;
   const number = Number(value);
-  return value === null || value === undefined || value === "" || !Number.isFinite(number) ? null : number;
+  return Number.isFinite(number) ? number : null;
 };
-
-function normalizeHistory(history) {
-  if (!Array.isArray(history)) return [];
-  return history.flatMap((row) => {
-    const waterLevel = numberOrNull(row.waterLevel ?? row.water_level);
-    const recordedAt = row.recordedAt ?? row.recorded_at;
-    if (waterLevel === null || !recordedAt || Number.isNaN(Date.parse(recordedAt))) return [];
-    return [{
-      waterLevel,
-      flowRate: numberOrNull(row.flowRate ?? row.flow_rate),
-      recordedAt: new Date(recordedAt).toISOString()
-    }];
-  }).sort((a, b) => Date.parse(a.recordedAt) - Date.parse(b.recordedAt));
-}
 
 function calculateTrend(history) {
   if (history.length < 2) return "unavailable";
@@ -65,73 +53,101 @@ function calculateStatus(waterLevel) {
   return "unknown";
 }
 
+function extractHistory(payload, requestedHours) {
+  const baseDate = payload.date_day_use || payload.date_today;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(baseDate || "")) return [];
+  const baseTime = Date.parse(`${baseDate}T00:00:00+07:00`);
+  const history = [];
+
+  for (let day = 3; day >= 1; day -= 1) {
+    const dayOffset = day - 1;
+    for (let hour = 1; hour <= 24; hour += 1) {
+      const suffix = `day${day}_2`;
+      const waterLevel = numberOrNull(payload[`level${hour}_${suffix}`]);
+      if (waterLevel === null) continue;
+      history.push({
+        waterLevel,
+        flowRate: numberOrNull(payload[`dischg${hour}_${suffix}`]),
+        recordedAt: new Date(baseTime - dayOffset * 86400000 + hour * 3600000).toISOString()
+      });
+    }
+  }
+
+  history.sort((a, b) => Date.parse(a.recordedAt) - Date.parse(b.recordedAt));
+  return history.slice(-requestedHours);
+}
+
+async function fetchOfficialP1(hours) {
+  const upstream = new URL(OFFICIAL_HOURLY_URL);
+  upstream.searchParams.set("station_id1", "P.67");
+  upstream.searchParams.set("station_id2", "P.1");
+  upstream.searchParams.set("date", "");
+  const response = await fetch(upstream, {
+    headers: {
+      Accept: "application/json, text/javascript, */*; q=0.01",
+      Referer: STATIONS["P.1"].source.reportPage,
+      "User-Agent": "Chiang-Mai-Rain-Monitor/1.0"
+    },
+    signal: AbortSignal.timeout(12000)
+  });
+  if (!response.ok) throw new Error(`Official water source HTTP ${response.status}`);
+
+  const body = (await response.text()).trim();
+  const jsonText = body.startsWith("[") ? body : body.slice(body.indexOf("(" ) + 1, body.lastIndexOf(")"));
+  const rows = JSON.parse(jsonText);
+  const payload = rows.find((row) => row.station_id2 === "P.1");
+  if (!payload) throw new Error("Official response does not contain station P.1");
+
+  const history = extractHistory(payload, hours);
+  const latest = history.at(-1);
+  const bankLevel = numberOrNull(payload.level_limit2_day1) ?? numberOrNull(payload.level_limit2_day2);
+  return { payload, history, latest, bankLevel };
+}
+
 export default async (request) => {
   const url = new URL(request.url);
   const stationCode = url.searchParams.get("station") || "P.1";
   const station = STATIONS[stationCode];
   if (!station) return json({ error: "ไม่พบสถานีที่ระบุ" }, 404);
-
-  const officialDataUrl = process.env.WATER_DATA_URL;
-  if (!officialDataUrl) {
-    return json({
-      ...station,
-      waterLevel: null,
-      flowRate: null,
-      differenceToBank: null,
-      trend: "unavailable",
-      status: "unknown",
-      updatedAt: null,
-      thresholds: WATER_THRESHOLDS,
-      history: [],
-      available: false,
-      message: "ยังไม่ได้กำหนด Public API ทางการที่มีเอกสารยืนยัน"
-    });
-  }
+  const requestedHours = Math.min(48, Math.max(6, Number(url.searchParams.get("hours")) || 24));
 
   try {
-    // WATER_DATA_URL ต้องเป็น endpoint ฝั่ง server ที่ได้รับอนุญาตและคืน schema ตาม README
-    const upstream = new URL(officialDataUrl);
-    upstream.searchParams.set("station", stationCode);
-    upstream.searchParams.set("hours", url.searchParams.get("hours") || "24");
-    const response = await fetch(upstream, { headers: { Accept: "application/json" } });
-    if (!response.ok) throw new Error(`Official source HTTP ${response.status}`);
-    const payload = await response.json();
-    const history = normalizeHistory(payload.history);
-    const waterLevel = numberOrNull(payload.waterLevel);
-    const flowRate = numberOrNull(payload.flowRate);
-    const bankLevel = numberOrNull(payload.bankLevel) ?? station.bankLevel;
-    const updatedAt = payload.updatedAt && !Number.isNaN(Date.parse(payload.updatedAt))
-      ? new Date(payload.updatedAt).toISOString()
-      : history.at(-1)?.recordedAt || null;
-
+    const { history, latest, bankLevel } = await fetchOfficialP1(requestedHours);
+    const waterLevel = latest?.waterLevel ?? null;
+    const flowRate = latest?.flowRate ?? null;
     return json({
       ...station,
       waterLevel,
       bankLevel,
-      differenceToBank: waterLevel === null ? null : Number((bankLevel - waterLevel).toFixed(2)),
+      differenceToBank: waterLevel === null || bankLevel === null
+        ? null
+        : Number((bankLevel - waterLevel).toFixed(2)),
       flowRate,
-      trend: ["rising", "stable", "falling"].includes(payload.trend) ? payload.trend : calculateTrend(history),
+      trend: calculateTrend(history),
       status: calculateStatus(waterLevel),
-      updatedAt,
+      updatedAt: latest?.recordedAt || null,
       thresholds: WATER_THRESHOLDS,
       history,
       available: waterLevel !== null,
-      message: waterLevel === null ? "แหล่งข้อมูลไม่มีค่าระดับน้ำล่าสุด" : null
+      message: waterLevel === null
+        ? "รายงานทางการยังไม่มีค่าระดับน้ำล่าสุด"
+        : "ข้อมูลจากรายงานระดับน้ำรายชั่วโมง กรมชลประทาน"
     });
   } catch (error) {
-    console.error("water-level upstream error", error);
+    console.error("P.1 official source error", error);
     return json({
       ...station,
       waterLevel: null,
-      flowRate: null,
+      bankLevel: 3.7,
       differenceToBank: null,
+      flowRate: null,
       trend: "unavailable",
       status: "unknown",
       updatedAt: null,
       thresholds: WATER_THRESHOLDS,
       history: [],
       available: false,
-      message: "ไม่สามารถเชื่อมต่อแหล่งข้อมูลระดับน้ำทางการได้"
+      message: "ไม่สามารถอ่านรายงานระดับน้ำ P.1 จากกรมชลประทานได้ในขณะนี้"
     }, 502);
   }
 };

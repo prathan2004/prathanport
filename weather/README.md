@@ -47,9 +47,9 @@ Netlify Function: netlify/functions/water-level.mjs
 Frontend
 ```
 
-จากการตรวจสอบยังไม่พบเอกสาร Public API ของกรมชลประทานสำหรับข้อมูลสดสถานี P.1 ระบบจึงไม่ scrape เว็บไซต์และไม่สร้างค่าจำลอง เมื่อยังไม่เชื่อมแหล่งข้อมูล Card และกราฟจะแสดงว่าไม่มีข้อมูล ส่วนระดับตลิ่งและ metadata สถานียังแสดงจากเอกสารทางการ
+หน้า `hourly_level.php` ของหน่วยงานเรียกข้อมูล P.1 ในรูปแบบ JSON/JSONP อยู่แล้ว Netlify Function จึงเรียก URL เดียวกับหน้ารายงานด้วยพารามิเตอร์ `station_id1=P.67` และ `station_id2=P.1` แล้วแปลงเป็น schema ของ Dashboard ผู้ใช้ไม่ต้องตั้ง Environment Variable เพิ่ม
 
-เมื่อตรวจสอบและได้รับอนุญาตให้ใช้ API ทางการแล้ว ให้ตั้ง Environment Variable ชื่อ `WATER_DATA_URL` ใน Netlify โดย endpoint ดังกล่าวต้องคืน JSON ที่ normalize แล้ว:
+Function คืน JSON ที่ normalize แล้วในรูปแบบ:
 
 ```json
 {
@@ -69,7 +69,7 @@ Frontend
 }
 ```
 
-Function จะตรวจชนิดข้อมูล คำนวณระยะต่ำกว่าตลิ่ง และคำนวณแนวโน้มจากสองค่าล่าสุดหากต้นทางไม่ได้ส่ง trend มาให้ แต่จะไม่คำนวณสถานะเตือนภัยจนกว่าจะมี threshold ที่ยืนยันจากแหล่งทางการ
+Function จะตรวจชนิดข้อมูล เลือกค่ารายชั่วโมงล่าสุด สร้างประวัติสูงสุด 48 ชั่วโมง คำนวณระยะต่ำกว่าตลิ่ง และคำนวณแนวโน้มจากสองค่าล่าสุด แต่จะไม่คำนวณสถานะเตือนภัยจนกว่าจะมี threshold ที่ยืนยันจากแหล่งทางการ หากเว็บต้นทางไม่พร้อมใช้งาน Dashboard จะแสดงว่าไม่มีข้อมูลแทนการใช้ค่าจำลอง
 
 กำหนดเกณฑ์ที่ผ่านการยืนยันใน `WATER_THRESHOLDS` ทั้งใน frontend และ Function ปัจจุบันทุกค่าเป็น `null` เพื่อป้องกันการแสดงคำเตือนที่ไม่มีแหล่งอ้างอิง
 
@@ -85,7 +85,7 @@ Function จะตรวจชนิดข้อมูล คำนวณระ�
 4. ตั้ง Publish directory เป็น `weather`
 5. เว้น Build command ว่าง แล้วกด Deploy
 
-ข้อมูลอากาศและ Radar ไม่ต้องใช้ secret key ส่วน Water Monitoring ใช้ Netlify Function อยู่แล้ว หากเชื่อม provider ทางการภายหลังให้ตั้ง `WATER_DATA_URL` ใน Netlify Environment Variables แล้ว deploy ใหม่
+ข้อมูลอากาศ, Radar และรายงาน P.1 ไม่ต้องใช้ secret key ส่วน Water Monitoring เรียกผ่าน Netlify Function เพื่อหลีกเลี่ยงปัญหา CORS และรวมการตรวจรูปแบบข้อมูลไว้ฝั่ง server
 
 ## หมายเหตุสำหรับ Production
 
