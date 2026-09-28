@@ -1,0 +1,32 @@
+{
+  "type": "FeatureCollection",
+  "name": "chiangmai_districts_demo",
+  "notice": "Simplified demo geometry for UI prototyping; replace with official administrative boundaries for production.",
+  "features": [
+    {"type":"Feature","properties":{"name_th":"เชียงดาว","demo_rain":8},"geometry":{"type":"Polygon","coordinates":[[[98.72,19.20],[99.10,19.20],[99.10,19.58],[98.72,19.58],[98.72,19.20]]]}},
+    {"type":"Feature","properties":{"name_th":"เวียงแหง","demo_rain":3},"geometry":{"type":"Polygon","coordinates":[[[98.42,19.42],[98.72,19.42],[98.72,19.73],[98.42,19.73],[98.42,19.42]]]}},
+    {"type":"Feature","properties":{"name_th":"ฝาง","demo_rain":18},"geometry":{"type":"Polygon","coordinates":[[[99.02,19.70],[99.36,19.70],[99.36,20.00],[99.02,20.00],[99.02,19.70]]]}},
+    {"type":"Feature","properties":{"name_th":"แม่อาย","demo_rain":22},"geometry":{"type":"Polygon","coordinates":[[[99.36,19.72],[99.65,19.72],[99.65,20.03],[99.36,20.03],[99.36,19.72]]]}},
+    {"type":"Feature","properties":{"name_th":"ไชยปราการ","demo_rain":11},"geometry":{"type":"Polygon","coordinates":[[[99.10,19.46],[99.42,19.46],[99.42,19.72],[99.10,19.72],[99.10,19.46]]]}},
+    {"type":"Feature","properties":{"name_th":"พร้าว","demo_rain":6},"geometry":{"type":"Polygon","coordinates":[[[99.10,19.05],[99.50,19.05],[99.50,19.43],[99.10,19.43],[99.10,19.05]]]}},
+    {"type":"Feature","properties":{"name_th":"แม่แตง","demo_rain":15},"geometry":{"type":"Polygon","coordinates":[[[98.65,18.98],[99.06,18.98],[99.06,19.27],[98.65,19.27],[98.65,18.98]]]}},
+    {"type":"Feature","properties":{"name_th":"กัลยาณิวัฒนา","demo_rain":25},"geometry":{"type":"Polygon","coordinates":[[[98.25,18.94],[98.58,18.94],[98.58,19.22],[98.25,19.22],[98.25,18.94]]]}},
+    {"type":"Feature","properties":{"name_th":"แม่แจ่ม","demo_rain":12},"geometry":{"type":"Polygon","coordinates":[[[98.15,18.35],[98.58,18.35],[98.58,18.92],[98.15,18.92],[98.15,18.35]]]}},
+    {"type":"Feature","properties":{"name_th":"สะเมิง","demo_rain":17},"geometry":{"type":"Polygon","coordinates":[[[98.55,18.65],[98.78,18.65],[98.78,18.94],[98.55,18.94],[98.55,18.65]]]}},
+    {"type":"Feature","properties":{"name_th":"แม่ริม","demo_rain":7},"geometry":{"type":"Polygon","coordinates":[[[98.78,18.88],[98.99,18.88],[98.99,19.07],[98.78,19.07],[98.78,18.88]]]}},
+    {"type":"Feature","properties":{"name_th":"สันทราย","demo_rain":9},"geometry":{"type":"Polygon","coordinates":[[[98.99,18.88],[99.18,18.88],[99.18,19.05],[98.99,19.05],[98.99,18.88]]]}},
+    {"type":"Feature","properties":{"name_th":"ดอยสะเก็ด","demo_rain":13},"geometry":{"type":"Polygon","coordinates":[[[99.16,18.78],[99.45,18.78],[99.45,19.05],[99.16,19.05],[99.16,18.78]]]}},
+    {"type":"Feature","properties":{"name_th":"เมืองเชียงใหม่","demo_rain":5},"geometry":{"type":"Polygon","coordinates":[[[98.86,18.71],[99.02,18.71],[99.02,18.88],[98.86,18.88],[98.86,18.71]]]}},
+    {"type":"Feature","properties":{"name_th":"สันกำแพง","demo_rain":10},"geometry":{"type":"Polygon","coordinates":[[[99.02,18.66],[99.25,18.66],[99.25,18.82],[99.02,18.82],[99.02,18.66]]]}},
+    {"type":"Feature","properties":{"name_th":"แม่ออน","demo_rain":24},"geometry":{"type":"Polygon","coordinates":[[[99.25,18.60],[99.52,18.60],[99.52,18.83],[99.25,18.83],[99.25,18.60]]]}},
+    {"type":"Feature","properties":{"name_th":"สารภี","demo_rain":4},"geometry":{"type":"Polygon","coordinates":[[[98.93,18.57],[99.08,18.57],[99.08,18.71],[98.93,18.71],[98.93,18.57]]]}},
+    {"type":"Feature","properties":{"name_th":"หางดง","demo_rain":14},"geometry":{"type":"Polygon","coordinates":[[[98.72,18.55],[98.93,18.55],[98.93,18.74],[98.72,18.74],[98.72,18.55]]]}},
+    {"type":"Feature","properties":{"name_th":"สันป่าตอง","demo_rain":8},"geometry":{"type":"Polygon","coordinates":[[[98.75,18.38],[98.98,18.38],[98.98,18.57],[98.75,18.57],[98.75,18.38]]]}},
+    {"type":"Feature","properties":{"name_th":"แม่วาง","demo_rain":20},"geometry":{"type":"Polygon","coordinates":[[[98.55,18.38],[98.75,18.38],[98.75,18.62],[98.55,18.62],[98.55,18.38]]]}},
+    {"type":"Feature","properties":{"name_th":"ดอยหล่อ","demo_rain":2},"geometry":{"type":"Polygon","coordinates":[[[98.68,18.25],[98.91,18.25],[98.91,18.40],[98.68,18.40],[98.68,18.25]]]}},
+    {"type":"Feature","properties":{"name_th":"จอมทอง","demo_rain":19},"geometry":{"type":"Polygon","coordinates":[[[98.43,18.10],[98.75,18.10],[98.75,18.35],[98.43,18.35],[98.43,18.10]]]}},
+    {"type":"Feature","properties":{"name_th":"ฮอด","demo_rain":6},"geometry":{"type":"Polygon","coordinates":[[[98.35,17.75],[98.78,17.75],[98.78,18.10],[98.35,18.10],[98.35,17.75]]]}},
+    {"type":"Feature","properties":{"name_th":"ดอยเต่า","demo_rain":3},"geometry":{"type":"Polygon","coordinates":[[[98.53,17.55],[98.88,17.55],[98.88,17.79],[98.53,17.79],[98.53,17.55]]]}},
+    {"type":"Feature","properties":{"name_th":"อมก๋อย","demo_rain":27},"geometry":{"type":"Polygon","coordinates":[[[98.05,17.20],[98.65,17.20],[98.65,17.75],[98.05,17.75],[98.05,17.20]]]}}
+  ]
+}

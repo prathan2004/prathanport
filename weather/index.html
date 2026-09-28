@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071827">
+  <title>Chiang Mai Rain & Cloud Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M6.5 18.5a4.5 4.5 0 0 1-.6-8.96A6.5 6.5 0 0 1 18.4 8a5 5 0 0 1 .1 10H6.5Z"/><path d="m8 21 1.5-2.5M13 21l1.5-2.5M18 21l1.5-2.5"/></svg>
+      </div>
+      <div>
+        <h1>เชียงใหม่ Rain Monitor</h1>
+        <p>ติดตามกลุ่มเมฆและฝน จังหวัดเชียงใหม่</p>
+      </div>
+      <span class="demo-badge">ข้อมูลตัวอย่าง (Demo)</span>
+    </div>
+    <div class="status-strip">
+      <span id="currentDate">--</span>
+      <strong id="currentTime">--:--:--</strong>
+      <span class="live-dot"><i></i> ระบบพร้อมใช้งาน</span>
+      <button class="icon-button" id="refreshButton" title="อัปเดตข้อมูล" aria-label="อัปเดตข้อมูล">
+        <svg viewBox="0 0 24 24"><path d="M20 11a8.1 8.1 0 1 0 2 5.3M20 4v7h-7"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <section class="control-section">
+        <div class="section-heading"><span>ค้นหาพื้นที่</span><small>25 อำเภอ</small></div>
+        <div class="search-box">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input id="districtSearch" type="search" placeholder="ค้นหาอำเภอ" autocomplete="off">
+          <div id="searchResults" class="search-results" hidden></div>
+        </div>
+        <select id="districtSelect" aria-label="เลือกอำเภอ"><option value="">เลือกอำเภอ</option></select>
+        <div class="button-row">
+          <button class="primary-button" id="viewProvinceButton">
+            <svg viewBox="0 0 24 24"><path d="M3 6.5 9 3l6 3.5L21 3v14.5L15 21l-6-3.5L3 21V6.5Z"/><path d="M9 3v14.5M15 6.5V21"/></svg>
+            ดูทั้งจังหวัด
+          </button>
+          <button class="secondary-button" id="locateButton">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 2V5M12 19v3M2 12h3M19 12h3"/></svg>
+            ตำแหน่งฉัน
+          </button>
+        </div>
+        <p class="message" id="locationMessage" aria-live="polite"></p>
+      </section>
+
+      <section class="weather-panel" id="weatherPanel">
+        <div class="panel-title">
+          <div><span>สภาพอากาศปัจจุบัน</span><h2 id="districtName">จังหวัดเชียงใหม่</h2></div>
+          <div class="weather-icon" id="weatherIcon" aria-hidden="true">☔</div>
+        </div>
+        <div class="rain-summary">
+          <div><small>สถานการณ์ฝน</small><strong id="rainStatus">มีฝนบางพื้นที่</strong></div>
+          <div class="temperature"><strong id="temperature">28°</strong><span>C</span></div>
+        </div>
+        <div class="weather-grid">
+          <div><span>ปริมาณฝน</span><strong id="rainfall">4.8 มม.</strong></div>
+          <div><span>ความชื้น</span><strong id="humidity">78%</strong></div>
+          <div><span>ความเร็วลม</span><strong id="windSpeed">7 กม./ชม.</strong></div>
+          <div><span>อัปเดตล่าสุด</span><strong id="updatedAt">--:-- น.</strong></div>
+        </div>
+      </section>
+
+      <section class="layers-section">
+        <div class="section-heading"><span>ชั้นข้อมูล</span><small>เปิด / ปิด</small></div>
+        <label class="layer-toggle"><span><i class="swatch cloud"></i>กลุ่มเมฆ</span><input type="checkbox" data-layer="cloud"><b></b></label>
+        <label class="layer-toggle"><span><i class="swatch rain"></i>ฝน</span><input type="checkbox" data-layer="rain" checked><b></b></label>
+        <label class="layer-toggle"><span><i class="swatch radar"></i>Radar</span><input type="checkbox" data-layer="radar"><b></b></label>
+        <label class="layer-toggle"><span><i class="swatch satellite"></i>Satellite</span><input type="checkbox" data-layer="satellite"><b></b></label>
+      </section>
+
+      <section class="legend-section">
+        <div class="section-heading"><span>ระดับความเข้มฝน</span><small>Demo</small></div>
+        <div class="legend-bar"></div>
+        <div class="legend-labels"><span>เล็กน้อย</span><span>ปานกลาง</span><span>หนัก</span><span>หนักมาก</span></div>
+      </section>
+    </aside>
+
+    <section class="map-stage">
+      <div id="map" aria-label="แผนที่จังหวัดเชียงใหม่"></div>
+      <div class="map-corner-info"><span>CHIANG MAI</span><strong>18.7883° N, 98.9853° E</strong></div>
+      <div class="loading-overlay" id="loadingOverlay" hidden><span class="spinner"></span>กำลังโหลดข้อมูลสภาพอากาศ...</div>
+      <div class="toast" id="toast" role="status" hidden></div>
+
+      <div class="timeline-panel">
+        <div class="timeline-head">
+          <div><span class="pulse"></span><strong>ภาพเคลื่อนไหวกลุ่มฝน</strong><small id="frameLabel">ปัจจุบัน</small></div>
+          <div class="range-buttons" role="group" aria-label="ช่วงเวลา">
+            <button data-offset="-120">2 ชม.</button><button data-offset="-60">1 ชม.</button><button class="active" data-offset="0">ปัจจุบัน</button>
+          </div>
+        </div>
+        <div class="timeline-controls">
+          <button class="play-button" id="playButton" title="เล่นภาพเคลื่อนไหว" aria-label="เล่นภาพเคลื่อนไหว">
+            <svg class="play-icon" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></svg>
+            <svg class="pause-icon" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>
+          </button>
+          <div class="slider-wrap"><input id="timeSlider" type="range" min="0" max="12" value="12"><div class="timeline-ticks" id="timelineTicks"></div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>
