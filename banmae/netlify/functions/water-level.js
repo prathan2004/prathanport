@@ -52,7 +52,7 @@ export function parseHourlyPayload(rows, fetchedAt, requestedHours = 48) {
       const waterLevel = numberOrNull(payload[`level${hour}_${suffix}`]);
       if (waterLevel === null) continue;
       const observedAt = bangkokDateAt(baseDate, dayOffset, hour);
-      if (!observedAt) continue;
+      if (!observedAt || Date.parse(observedAt) > Date.parse(fetchedAt)) continue;
       history.push({ waterLevel, flowRate: numberOrNull(payload[`dischg${hour}_${suffix}`]), observedAt });
     }
   }
@@ -83,7 +83,7 @@ function unwrapJson(text) {
 
 async function fetchHourlyReport(fetchedAt) {
   const url = new URL(source.hourlyJsonUrl);
-  url.searchParams.set("station_id1", source.stationCode);
+  url.searchParams.set("station_id1", source.companionStationCode);
   url.searchParams.set("station_id2", source.stationCode);
   url.searchParams.set("date", "");
   const response = await fetch(url, {

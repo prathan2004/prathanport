@@ -1,6 +1,7 @@
 export const DATA_SOURCES = {
   p71a: {
     stationCode: "P.71A",
+    companionStationCode: "P.71",
     river: "แม่ขาน",
     sourceName: "ศูนย์อุทกวิทยาชลประทานภาคเหนือตอนบน กรมชลประทาน",
     hourlyJsonUrl: "https://hydro1.ddns.net/main/information_4/houly/water_today_json.php",
