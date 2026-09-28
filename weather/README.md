@@ -79,11 +79,23 @@ Function จะตรวจชนิดข้อมูล เลือกค่�
 
 ## Deploy บน Netlify
 
-1. Push โฟลเดอร์ `weather` ขึ้น repository
+เว็บนี้ต้องใช้ Netlify Function จึงควร deploy โดยเชื่อม GitHub repository หรือใช้ Netlify CLI ไม่ควรลากเฉพาะโฟลเดอร์ `weather` เข้า Netlify Drop เพราะ Function อยู่ภายนอก Publish directory
+
+1. Push ทั้ง `weather`, `netlify/functions/water-level.mjs` และ `weather/netlify.toml` ขึ้น repository
 2. สร้าง Netlify Site แล้วเชื่อม repository `prathanport`
-3. ตั้ง Package directory เป็น `weather`
-4. ตั้ง Publish directory เป็น `weather`
-5. เว้น Build command ว่าง แล้วกด Deploy
+3. ตั้ง Base directory เป็นค่าว่าง เพื่อใช้ root ของ repository
+4. ตั้ง Package directory เป็น `weather`
+5. เว้น Build command ว่าง
+6. ค่า Publish directory และ Functions directory จะอ่านจาก `weather/netlify.toml`
+7. กด Deploy แล้วตรวจว่าเมนู Cloud compute > Functions มี Function ชื่อ `water-level`
+
+หลัง deploy ให้เปิด URL ต่อไปนี้โดยเปลี่ยนชื่อโดเมนเป็นของคุณ:
+
+```text
+https://YOUR-SITE.netlify.app/.netlify/functions/water-level?station=P.1&hours=24
+```
+
+ถ้า Function ถูก deploy สำเร็จ URL จะคืน JSON ที่มี `"station":"P.1"` และ `"available":true` จากนั้น `/api/water-level` จะทำงานผ่าน redirect ที่กำหนดไว้
 
 ข้อมูลอากาศ, Radar และรายงาน P.1 ไม่ต้องใช้ secret key ส่วน Water Monitoring เรียกผ่าน Netlify Function เพื่อหลีกเลี่ยงปัญหา CORS และรวมการตรวจรูปแบบข้อมูลไว้ฝั่ง server
 

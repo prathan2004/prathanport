@@ -1,0 +1,12 @@
+[build]
+  publish = "/weather"
+
+[functions]
+  directory = "/netlify/functions"
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/water-level"
+  to = "/.netlify/functions/water-level"
+  status = 200
+
