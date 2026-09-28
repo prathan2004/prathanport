@@ -6,7 +6,7 @@
 
 `Official source -> Netlify Function -> HTML table parser -> JSON -> Vanilla JS dashboard`
 
-หน้าแผนที่แยกจาก API ระดับน้ำ จึงยังเปิดใช้งานและอ่าน GeoJSON ได้เมื่อเว็บไซต์ต้นทางหรือ Function ขัดข้อง Function cache ผลลัพธ์ 5 นาที และแยก `observedAt` ออกจาก `fetchedAt` เสมอ
+หน้าหลักแสดงกราฟระดับน้ำสองสถานี โดย P.71A ใช้ข้อมูลรายชั่วโมงจากกรมชลประทาน ส่วน TA061016 บ้านท่าเดื่อใช้ API สาธารณะของระบบโทรมาตรกรมทรัพยากรน้ำ Function cache ผลลัพธ์เป็นเวลา 5 นาที และแยก `observedAt` ออกจาก `fetchedAt` เสมอ
 
 ## Run locally
 
@@ -33,6 +33,8 @@ npx netlify dev
 ตั้งค่า URL และรหัสสถานีใน `netlify/functions/config.js` ปัจจุบัน Function ใช้รายงาน JSON ระดับน้ำรายชั่วโมงของศูนย์อุทกวิทยาชลประทานภาคเหนือตอนบนเป็นแหล่งหลัก และใช้หน้ารายงานของสถาบันสารสนเทศทรัพยากรน้ำเป็น fallback ตำแหน่ง P.71A อ้างอิงเอกสารประวัติสถานีของกรมชลประทาน
 
 Parser ใน `water-level.js` จะจับคู่คอลัมน์จากชื่อหัวตารางก่อนอ่านค่า หากหัวตารางต้นทางเปลี่ยนหรือไม่สามารถยืนยันคอลัมน์ได้ ระบบจะคืน `null` แทนการเดาค่า เมื่อแก้ parser ให้เก็บ HTML ตัวอย่างจากต้นทาง ตรวจชื่อคอลัมน์จริง และเพิ่ม pattern เฉพาะที่ผ่านการทดสอบแล้ว
+
+ข้อมูลบ้านท่าเดื่ออยู่ใน `tha-duea-water-level.js` และดึงจาก endpoint `public/station/getByCode/TA061016` ของเว็บไซต์ telemetry.dwr.go.th โดยแปลง `stationCurrentData` และ `wlChart.past` ให้เป็น JSON schema กลางของหน้าเว็บ
 
 ## Add a station
 

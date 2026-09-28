@@ -47,3 +47,15 @@ export async function fetchWaterData() {
   }
   return normalizeWaterData(await response.json());
 }
+
+export async function fetchThaDueaData() {
+  const response = await fetch("/.netlify/functions/tha-duea-water-level", { headers: { Accept: "application/json" }, cache: "no-store" });
+  if (!response.ok) throw new Error(`Tha Duea API returned ${response.status}`);
+  const data = normalizeWaterData(await response.json());
+  return {
+    ...data,
+    warningLevel: Number.isFinite(Number(data.warningLevel)) ? Number(data.warningLevel) : null,
+    watchLevel: Number.isFinite(Number(data.watchLevel)) ? Number(data.watchLevel) : null,
+    archived: false
+  };
+}
