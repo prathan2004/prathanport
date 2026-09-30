@@ -110,7 +110,7 @@
             <textarea id="qrReaderText" class="field mt-3 min-h-[120px] resize-y bg-white text-sm" readonly></textarea>
             <div class="mt-3 flex flex-col gap-2 sm:flex-row">
               <button id="copyQrResultButton" class="primary">คัดลอก</button>
-              <a id="openQrResultLink" class="secondary hidden text-center" target="_blank" rel="noopener noreferrer">เปิดลิงก์</a>
+              <a id="openQrResultLink" class="secondary hidden break-all text-center text-sky underline decoration-sky/40 underline-offset-4" target="_blank" rel="noopener noreferrer"></a>
             </div>
           </div>
         </div>
@@ -633,19 +633,25 @@
       }
 
       function showResult(decodedText) {
+        const cleanText = decodedText.trim();
         resultText.value = decodedText;
         result.classList.remove('hidden');
         status.textContent = 'อ่าน QR Code สำเร็จ';
 
         try {
-          const url = new URL(decodedText);
+          const urlText = /^www\./i.test(cleanText) ? `https://${cleanText}` : cleanText;
+          const url = new URL(urlText);
           if (url.protocol === 'http:' || url.protocol === 'https:') {
             resultLink.href = url.href;
+            resultLink.textContent = `เปิดเว็บไซต์: ${url.href}`;
+            resultLink.setAttribute('aria-label', `เปิดเว็บไซต์ ${url.href} ในแท็บใหม่`);
             resultLink.classList.remove('hidden');
           } else {
+            resultLink.removeAttribute('href');
             resultLink.classList.add('hidden');
           }
         } catch (error) {
+          resultLink.removeAttribute('href');
           resultLink.classList.add('hidden');
         }
       }
