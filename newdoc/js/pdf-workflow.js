@@ -12,8 +12,10 @@ if (user) {
     <button id="add-sign" type="button">วางลายเซ็น</button>
     <label class="span-all">ข้อความเกษียณ (ไม่บังคับ)<textarea id="endorsement" rows="5" placeholder="เรียน ...\nเพื่อโปรดพิจารณา"></textarea></label>
     <label>ขนาดตัวอักษร (pt)<input id="font-size" type="number" min="10" max="30" value="16"></label>
-    <label>สีตัวอักษร<select id="text-color"><option value="blue">สีน้ำเงิน</option><option value="black">สีดำ</option><option value="red">สีแดง</option></select></label>
+    <label>สีตัวอักษร<select id="text-color"><option value="black">สีดำ</option><option value="blue">สีน้ำเงิน</option><option value="red">สีแดง</option></select></label>
     <button id="add-note" type="button">วางข้อความ</button>
+    <label>ขนาดสัญลักษณ์ (pt)<input id="symbol-size" type="number" min="10" max="48" value="22"></label>
+    <div class="symbol-actions"><button id="add-check" type="button" aria-label="วางเครื่องหมายถูก">✓</button><button id="add-cross" type="button" aria-label="วางเครื่องหมายกากบาท">✕</button></div>
     <p class="pdf-hint span-all">ลากรายการบนหน้ากระดาษเพื่อปรับตำแหน่ง แล้วเลือกคำสั่งส่งออก PDF</p>
     <div class="pdf-action-bar span-all"><button id="remove-mark" type="button" disabled>ลบรายการที่เลือก</button><button id="export" class="primary" type="button" disabled>ส่งออก PDF</button></div>
   </section><section class="pdf-stage"><div class="pdf-stage-head"><strong id="current-name">ยังไม่ได้เปิดไฟล์</strong><div class="row"><button id="previous" type="button" aria-label="หน้าก่อน" disabled>‹</button><span id="page-count">0 / 0</span><button id="next" type="button" aria-label="หน้าถัดไป" disabled>›</button></div></div><div class="pdf-scroll"><div id="pdf-page" class="pdf-page" hidden><canvas id="pdf-canvas"></canvas><div id="mark-layer"></div></div></div></section></div>
@@ -22,7 +24,22 @@ if (user) {
   let records = [], signatures = [], active = null, sourceBytes = null, pdf = null, pdfjs = null, pageNumber = 1, marks = [], selected = null, renderToken = 0;
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const textColors = { blue: [22, 131, 219], black: [0, 0, 0], red: [220, 38, 38] };
+  const NOTE_LINE_HEIGHT = 1.15;
+  const NOTE_BASELINE = 0.82;
   const niceError = error => error?.message || 'ทำรายการไม่สำเร็จ';
+  const wrapNoteText = (text, measure, maxWidth) => {
+    const lines = [];
+    const segmenter = new Intl.Segmenter('th', { granularity: 'word' });
+    for (const paragraph of text.split('\n')) {
+      let line = '';
+      for (const { segment } of segmenter.segment(paragraph)) {
+        if (line && measure(line + segment) > maxWidth) { lines.push(line); line = segment.trimStart(); }
+        else line += segment;
+      }
+      lines.push(line);
+    }
+    return lines;
+  };
 
   async function loadList() {
     const { data, error } = await db.from('pdf_workflows').select('*').order('created_at', { ascending: false });
@@ -79,28 +96,38 @@ if (user) {
     const layer = $('mark-layer'); layer.replaceChildren();
     for (const mark of marks.filter(item => item.page === pageNumber)) {
       const node = document.createElement('div');
-      node.className = `pdf-mark ${mark.type === 'signature' ? 'signature' : ''} ${selected === mark ? 'selected' : ''}`;
+      node.className = `pdf-mark ${mark.type === 'signature' ? 'signature' : ''} ${mark.type === 'symbol' ? 'symbol' : ''} ${selected === mark ? 'selected' : ''}`;
       node.style.left = `${mark.x * 100}%`; node.style.top = `${mark.y * 100}%`;
       node.style.width = `${mark.width * 100}%`;
       if (mark.type === 'signature') {
         node.style.height = `${mark.height * 100}%`;
         const image = document.createElement('img'); image.src = mark.url; image.alt = 'ลายเซ็น'; node.append(image);
+      } else if (mark.type === 'symbol') {
+        node.style.height = `${mark.height * 100}%`;
+        node.style.fontSize = `${mark.size * $('pdf-canvas').width / mark.pageWidth}px`;
+        node.style.color = `rgb(${textColors[mark.color || 'black'].join(',')})`;
+        node.textContent = mark.symbol === 'check' ? '✓' : '✕';
       } else {
         node.style.fontSize = `${mark.size * $('pdf-canvas').width / mark.pageWidth}px`;
+        node.style.lineHeight = NOTE_LINE_HEIGHT;
         node.style.color = `rgb(${textColors[mark.color || 'blue'].join(',')})`;
-        node.textContent = mark.text;
+        node.replaceChildren(...(mark.lines || [mark.text]).map(line => {
+          const item = document.createElement('div');
+          item.textContent = line || ' ';
+          return item;
+        }));
       }
       node.onpointerdown = event => {
         event.preventDefault(); selected = mark; $('remove-mark').disabled = false;
         layer.querySelectorAll('.pdf-mark.selected').forEach(item => item.classList.remove('selected'));
         node.classList.add('selected');
-        if (mark.type === 'note') $('text-color').value = mark.color || 'blue';
+        if (mark.type === 'note' || mark.type === 'symbol') $('text-color').value = mark.color || 'black';
         node.setPointerCapture(event.pointerId);
         const originX = event.clientX, originY = event.clientY, x = mark.x, y = mark.y;
         const move = moveEvent => {
           const pageRect = $('pdf-page').getBoundingClientRect();
           mark.x = clamp(x + (moveEvent.clientX - originX) / pageRect.width, 0, 1 - mark.width);
-          mark.y = clamp(y + (moveEvent.clientY - originY) / pageRect.height, 0, Math.max(0, 1 - node.getBoundingClientRect().height / pageRect.height));
+          mark.y = clamp(y + (moveEvent.clientY - originY) / pageRect.height, 0, Math.max(0, 1 - (mark.height || node.getBoundingClientRect().height / pageRect.height)));
           node.style.left = `${mark.x * 100}%`;
           node.style.top = `${mark.y * 100}%`;
         };
@@ -166,11 +193,23 @@ if (user) {
     context.font = `${fontSize}px "TH Sarabun New"`;
     const measured = Math.max(...value.split('\n').map(line => context.measureText(line).width));
     const width = clamp((measured * 1.05 + 8) / canvas.width, 0.04, 0.9);
-    selected = { type: 'note', page: pageNumber, x: 0.08, y: 0.68, width, size, pageWidth: view.width, text: value, color: $('text-color').value };
+    const lines = wrapNoteText(value, text => context.measureText(text).width, width * canvas.width);
+    selected = { type: 'note', page: pageNumber, x: 0.08, y: 0.68, width, size, pageWidth: view.width, text: value, lines, color: $('text-color').value };
     marks.push(selected); $('remove-mark').disabled = false; renderMarks();
   };
+  async function addSymbol(symbol) {
+    if (!pdf) { toast('กรุณาเปิดไฟล์ PDF ก่อน', true); return; }
+    const page = await pdf.getPage(pageNumber), view = page.getViewport({ scale: 1 });
+    const size = clamp(Number($('symbol-size').value) || 22, 10, 48);
+    const width = size * 72 / 72 / view.width;
+    const height = size * 72 / 72 / view.height;
+    selected = { type: 'symbol', symbol, page: pageNumber, x: 0.08, y: 0.58, width, height, size, pageWidth: view.width, color: $('text-color').value };
+    marks.push(selected); $('remove-mark').disabled = false; renderMarks();
+  }
+  $('add-check').onclick = () => addSymbol('check');
+  $('add-cross').onclick = () => addSymbol('cross');
   $('remove-mark').onclick = () => { marks = marks.filter(item => item !== selected); selected = null; $('remove-mark').disabled = true; renderMarks(); };
-  $('text-color').onchange = () => { if (selected?.type === 'note') { selected.color = $('text-color').value; renderMarks(); } };
+  $('text-color').onchange = () => { if (selected?.type === 'note' || selected?.type === 'symbol') { selected.color = $('text-color').value; renderMarks(); } };
   $('export').onclick = async () => {
     if (!active || !sourceBytes) return;
     const button = $('export'); busy(button, true);
@@ -191,19 +230,29 @@ if (user) {
             imageCache.set(mark.path, await output.embedPng(await (await fetch(canvas.toDataURL('image/png'))).arrayBuffer()));
           }
           page.drawImage(imageCache.get(mark.path), { x: mark.x * width, y: height - (mark.y + mark.height) * height, width: mark.width * width, height: mark.height * height });
-        } else {
-          const lines = [];
-          const segmenter = new Intl.Segmenter('th', { granularity: 'word' });
-          for (const paragraph of mark.text.split('\n')) {
-            let line = '';
-            for (const { segment } of segmenter.segment(paragraph)) {
-              if (line && font.widthOfTextAtSize(line + segment, mark.size) > mark.width * width) { lines.push(line); line = segment.trimStart(); }
-              else line += segment;
-            }
-            lines.push(line);
+        } else if (mark.type === 'symbol') {
+          const [red, green, blue] = textColors[mark.color || 'black'];
+          const color = rgb(red / 255, green / 255, blue / 255);
+          const x = mark.x * width, y = height - (mark.y + mark.height) * height;
+          const markWidth = mark.width * width, markHeight = mark.height * height;
+          const thickness = Math.max(1.2, mark.size * 0.09);
+          if (mark.symbol === 'check') {
+            page.drawLine({ start: { x: x + markWidth * 0.12, y: y + markHeight * 0.45 }, end: { x: x + markWidth * 0.40, y: y + markHeight * 0.16 }, thickness, color });
+            page.drawLine({ start: { x: x + markWidth * 0.40, y: y + markHeight * 0.16 }, end: { x: x + markWidth * 0.88, y: y + markHeight * 0.84 }, thickness, color });
+          } else {
+            page.drawLine({ start: { x: x + markWidth * 0.16, y: y + markHeight * 0.16 }, end: { x: x + markWidth * 0.84, y: y + markHeight * 0.84 }, thickness, color });
+            page.drawLine({ start: { x: x + markWidth * 0.84, y: y + markHeight * 0.16 }, end: { x: x + markWidth * 0.16, y: y + markHeight * 0.84 }, thickness, color });
           }
+        } else {
+          const lines = mark.lines || wrapNoteText(mark.text, text => font.widthOfTextAtSize(text, mark.size), mark.width * width);
           const [red, green, blue] = textColors[mark.color || 'blue'];
-          lines.forEach((line, index) => page.drawText(line || ' ', { x: mark.x * width, y: height - mark.y * height - mark.size * (index + 1) * 1.2, size: mark.size, font, color: rgb(red / 255, green / 255, blue / 255) }));
+          lines.forEach((line, index) => page.drawText(line || ' ', {
+            x: mark.x * width,
+            y: height - mark.y * height - mark.size * NOTE_BASELINE - mark.size * NOTE_LINE_HEIGHT * index,
+            size: mark.size,
+            font,
+            color: rgb(red / 255, green / 255, blue / 255)
+          }));
         }
       }
       const bytes = await output.save(), blob = new Blob([bytes], { type: 'application/pdf' });

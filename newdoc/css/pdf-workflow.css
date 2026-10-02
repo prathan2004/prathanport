@@ -2,3 +2,5 @@
 .pdf-mark,.pdf-mark.signature{border:0;background:transparent;padding:0}
 .pdf-mark{color:#1683db}
 .pdf-mark.selected{outline:0}
+.pdf-mark.symbol{display:grid;place-items:center;font-family:Arial,sans-serif;font-weight:700;line-height:1}
+.symbol-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-self:end}.symbol-actions button{font-family:Arial,sans-serif;font-size:1.35rem;font-weight:700}
