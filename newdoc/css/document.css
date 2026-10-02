@@ -28,6 +28,8 @@
 .editor-panel .form-grid label{min-width:0}
 .editor-panel .form-grid .span-2{grid-column:1/-1}
 .rich-editor{min-height:260px}
+.html-editor{min-height:260px;font-family:Consolas,"Courier New",monospace;font-size:.92rem;line-height:1.45;resize:vertical;border-top-left-radius:0;border-top-right-radius:0}
+.rich-toolbar button.active{background:#d8ece8;color:#0f5f56}
 .preview-column{display:block;min-width:0}
 .paper-scroll{padding:20px;overflow:auto}
 @media(max-width:840px){.preview-column{display:block}.preview-backdrop{display:none!important}.paper-scroll{max-height:none}.memo-page{zoom:1}}

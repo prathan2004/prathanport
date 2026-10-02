@@ -1,21 +1,29 @@
 import { db, signedFile } from './supabase.js';
 import { toast } from './ui.js';
 
-// Capture the preview without its screen-only A4 minimum height or offscreen wrapper.
 export async function generatePdf(element, documentId, userId) {
   if (!window.html2pdf) throw new Error('โหลดไลบรารี PDF ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต');
   await document.fonts.ready;
   await Promise.all([...element.querySelectorAll('img:not([hidden])')].map(image => image.decode()));
   const clone=element.cloneNode(true);
   clone.style.width='210mm';
-  clone.style.minHeight='0';
-  clone.style.height='auto';
   clone.style.margin='0';
   clone.style.boxShadow='none';
   clone.style.breakAfter='auto';
   clone.style.pageBreakAfter='auto';
+  const host=document.createElement('div');
+  host.style.position='fixed';
+  host.style.left='-10000px';
+  host.style.top='0';
+  host.style.width='210mm';
+  host.style.background='#fff';
+  host.style.pointerEvents='none';
+  host.append(clone);
+  document.body.append(host);
   const stamp=new Date().toISOString().slice(0,10).replaceAll('-','');const fileName=`memo_${stamp}_${documentId.slice(0,8)}.pdf`;
-  const worker=window.html2pdf().set({margin:0,filename:fileName,image:{type:'jpeg',quality:.97},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollY:0},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css'],avoid:['.memo-sign']}}).from(clone);
+  try{
+  await Promise.all([...clone.querySelectorAll('img:not([hidden])')].map(image => image.decode()));
+  const worker=window.html2pdf().set({margin:0,filename:fileName,image:{type:'jpeg',quality:.97},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',scrollX:0,scrollY:0,windowWidth:clone.scrollWidth,windowHeight:clone.scrollHeight},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css'],avoid:['.memo-sign']}}).from(clone);
     const pdf=await worker.toPdf().get('pdf');
     const count=pdf.internal.getNumberOfPages();
     if(count>1) for(let page=1;page<=count;page++){pdf.setPage(page);pdf.setFontSize(16);pdf.setTextColor(110);pdf.text(`${page} / ${count}`,185,287)}
@@ -26,4 +34,7 @@ export async function generatePdf(element, documentId, userId) {
     toast('สร้าง PDF สำเร็จ');
     const url=await signedFile('documents',path);
     return {blob,url,fileName,path};
+  }finally{
+    host.remove();
+  }
 }
