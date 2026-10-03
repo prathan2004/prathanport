@@ -63,7 +63,7 @@ create table if not exists public.running_records (
   user_id uuid not null references public.profiles(id) on delete cascade,
   run_date date not null,
   distance_km numeric(8,2) not null,
-  duration_minutes integer not null,
+  duration_minutes numeric(12,6) not null,
   pace numeric(8,2) generated always as (round(duration_minutes::numeric / nullif(distance_km, 0), 2)) stored,
   note text,
   status text not null default 'pending',

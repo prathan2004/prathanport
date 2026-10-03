@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="js/supabase.js?v=20260917-no-evidence"></script>
   <script defer src="js/auth.js?v=20260917-no-evidence"></script>
-  <script defer src="js/running.js?v=20260917-current-challenge"></script>
+  <script defer src="js/running.js?v=20261003-minutes-seconds"></script>
 </head>
 <body data-protected="true">
   <header class="app-header">
@@ -40,8 +40,8 @@
         <input id="distanceKm" type="number" min="0.01" step="0.01" required>
       </label>
       <label>
-        เวลา (นาที)
-        <input id="durationMinutes" type="number" min="1" step="1" required>
+        เวลา (นาที.วินาที)
+        <input id="durationMinutes" type="text" inputmode="decimal" pattern="[0-9]+([.:][0-5][0-9])?" maxlength="12" placeholder="45.20" title="เช่น 45.20 คือ 45 นาที 20 วินาที โดยวินาทีต้องอยู่ระหว่าง 00–59" required>
       </label>
       <label>
         Pace

@@ -36,6 +36,20 @@ This project is planned as a static frontend connected directly to Supabase.
 
 - [Phase 3 Schema SQL](sql/phase-03-schema.sql)
 - [Phase 4 RLS SQL](sql/phase-04-rls.sql)
+- [Minutes and Seconds Migration](sql/phase-13-run-duration.sql)
+
+## Running Time Input
+
+Run `sql/phase-13-run-duration.sql` in the Supabase SQL Editor before deploying
+the updated running form. It preserves existing records and changes the duration
+column from integer minutes to decimal minutes. The generated pace is rebuilt
+in the same transaction; external dependencies will block the migration instead
+of being removed with CASCADE.
+
+The form accepts `45.20` or `45:20` for 45 minutes 20 seconds, or `45` for 45
+minutes. Seconds require two digits between 00 and 59. Stored duration remains
+decimal minutes (45.333333 for 45.20), so existing pace and leaderboard queries
+continue using the same unit. No historical duration values are reinterpreted.
 
 ## Planned Stack
 

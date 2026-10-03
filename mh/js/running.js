@@ -1,3 +1,12 @@
+function parseRunDuration(value) {
+  const match = /^(\d+)(?:[.:]([0-5]\d))?$/.exec(String(value).trim());
+  if (!match) return null;
+  const seconds = Number(match[1]) * 60 + Number(match[2] || 0);
+  const minutes = seconds / 60;
+  return Number.isSafeInteger(seconds) && minutes > 0 && minutes < 1000000
+    ? minutes : null;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const runForm = document.querySelector('#runForm');
   const historyList = document.querySelector('#historyList');
@@ -30,7 +39,9 @@ async function bindRunForm(runForm) {
 
   function updatePace() {
     const distance = Number(distanceKm.value);
-    const duration = Number(durationMinutes.value);
+    const duration = parseRunDuration(durationMinutes.value);
+    durationMinutes.setCustomValidity(duration === null && durationMinutes.value
+      ? 'กรุณากรอกเวลาเป็น นาที.วินาที เช่น 45.20 และวินาทีต้องอยู่ระหว่าง 00–59' : '');
     pacePreview.value = distance > 0 && duration > 0 ? formatPace(duration / distance) : '-';
   }
 
@@ -42,7 +53,7 @@ async function bindRunForm(runForm) {
     setMessage(runMessage, 'กำลังบันทึก...');
 
     const distance = Number(distanceKm.value);
-    const duration = Number(durationMinutes.value);
+    const duration = parseRunDuration(durationMinutes.value);
 
     if (!currentChallenge) {
       setMessage(runMessage, 'ยังไม่มี Challenge ปัจจุบัน ไม่สามารถส่งผลวิ่งได้', true);
@@ -56,8 +67,8 @@ async function bindRunForm(runForm) {
       setMessage(runMessage, 'วันที่วิ่งต้องอยู่ในช่วง Challenge ปัจจุบัน', true);
       return;
     }
-    if (!distance || distance <= 0 || !duration || duration <= 0) {
-      setMessage(runMessage, 'ระยะทางและเวลาต้องมากกว่า 0', true);
+    if (!Number.isFinite(distance) || distance <= 0 || duration === null) {
+      setMessage(runMessage, 'ระยะทางต้องมากกว่า 0 และเวลาต้องเป็น นาที.วินาที เช่น 45.20 (วินาที 00–59)', true);
       return;
     }
 
