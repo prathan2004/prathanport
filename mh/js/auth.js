@@ -77,14 +77,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      if (!document.querySelector('#email').reportValidity()) return;
+      resetPasswordButton.disabled = true;
+      setMessage(authMessage, 'กำลังส่งลิงก์ตั้งรหัสผ่านใหม่...');
+
       try {
         const { error } = await sb.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}${window.location.pathname.replace(/(login|index)\.html$/, '')}index.html`
+          redirectTo: new URL('reset-password.html', window.location.href).href
         });
         if (error) throw error;
-        setMessage(authMessage, 'ส่งลิงก์รีเซ็ตรหัสผ่านแล้ว');
+        setMessage(authMessage, 'หากอีเมลนี้มีบัญชีอยู่ ระบบจะส่งลิงก์ตั้งรหัสผ่านใหม่ให้ กรุณาตรวจสอบกล่องจดหมายและจดหมายขยะ');
       } catch (error) {
         setMessage(authMessage, error.message || 'ส่งลิงก์รีเซ็ตไม่สำเร็จ', true);
+      } finally {
+        resetPasswordButton.disabled = false;
       }
     });
   }

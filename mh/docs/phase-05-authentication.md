@@ -76,6 +76,27 @@ https://your-github-username.github.io/**
 
 ## How Auth Works
 
+### Password Recovery
+
+Add the deployed `mh/reset-password.html` URL to Supabase Dashboard >
+Authentication > URL Configuration > Redirect URLs. For example:
+`https://your-domain/mh/reset-password.html`. Set Site URL to the deployed app URL.
+For local testing, also allow the local reset-password URL.
+
+In Authentication > Email Templates > Reset Password, keep the link pointing to
+`{{ .ConfirmationURL }}` so Supabase verifies the token before redirecting.
+Configure an email provider/SMTP for delivery to real users; inspect Auth logs
+and email delivery settings if messages do not arrive.
+
+The home page sends a recovery email via `resetPasswordForEmail`. The link opens
+`reset-password.html`, which validates the session and saves the new password
+with `updateUser`. After success the local session is signed out. Invalid or
+expired links display an error and a link back to request another email.
+
+Test using an existing account: request an email, open its link, enter matching
+passwords (at least 8 characters), save, and log in with the new password.
+Also test mismatching passwords, expired links, and failed email requests.
+
 Registration:
 
 ```text

@@ -5,9 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>เข้าสู่ระบบ | MH Running App</title>
   <link rel="stylesheet" href="css/style.css">
+  <script>
+    const recoveryParams = new URLSearchParams(window.location.hash.slice(1));
+    if (recoveryParams.get('type') === 'recovery' || recoveryParams.has('error')) {
+      window.location.replace('reset-password.html' + window.location.search + window.location.hash);
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="js/supabase.js?v=20260917-no-evidence"></script>
-  <script defer src="js/auth.js?v=20260917-home-login"></script>
+  <script defer src="js/auth.js?v=20261003-password-reset"></script>
   <script defer src="js/home.js?v=20260917-home-leaderboard"></script>
 </head>
 <body>
@@ -47,7 +53,7 @@
       </label>
       <button class="button primary" type="submit">เข้าสู่ระบบ</button>
       <button id="resetPasswordButton" class="button ghost" type="button">ลืมรหัสผ่าน</button>
-      <p id="authMessage" class="message"></p>
+      <p id="authMessage" class="message" role="status" aria-live="polite"></p>
       <p class="muted">ยังไม่มีบัญชี? <a href="register.html">สมัครสมาชิก</a></p>
     </form>
   </main>
