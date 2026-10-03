@@ -76,26 +76,27 @@ https://your-github-username.github.io/**
 
 ## How Auth Works
 
-### Password Recovery
+### Password Management
 
-Add the deployed `mh/reset-password.html` URL to Supabase Dashboard >
-Authentication > URL Configuration > Redirect URLs. For example:
-`https://your-domain/mh/reset-password.html`. Set Site URL to the deployed app URL.
-For local testing, also allow the local reset-password URL.
+Email password recovery has been removed. Members change their own password in
+Profile using `sb.auth.updateUser`. Admins use the password button beside each
+member in Admin, including inactive members and other admins.
 
-In Authentication > Email Templates > Reset Password, keep the link pointing to
-`{{ .ConfirmationURL }}` so Supabase verifies the token before redirecting.
-Configure an email provider/SMTP for delivery to real users; inspect Auth logs
-and email delivery settings if messages do not arrive.
+The admin action calls `/.netlify/functions/mh-admin-password`. The server
+validates the bearer token with Supabase, reads the caller's profile, and requires
+`role = admin` and `status = active` before updating the target Auth account.
+Passwords are never stored in profiles or returned by the endpoint.
 
-The home page sends a recovery email via `resetPasswordForEmail`. The link opens
-`reset-password.html`, which validates the session and saves the new password
-with `updateUser`. After success the local session is signed out. Invalid or
-expired links display an error and a link back to request another email.
+Before deploying, set the Netlify environment variable `MH_SUPABASE_SECRET_KEY`
+to a Supabase secret key or legacy service_role key from this same project.
+Give it Functions scope and redeploy. Do not put this key in HTML, browser JS,
+or the repository. `MH_SUPABASE_URL` is optional and defaults to the existing
+project URL. No SMTP configuration is required for these password actions.
 
-Test using an existing account: request an email, open its link, enter matching
-passwords (at least 8 characters), save, and log in with the new password.
-Also test mismatching passwords, expired links, and failed email requests.
+Deploy both the `mh` files and `netlify/functions/mh-admin-password.mjs`.
+Test setting a member password in Admin, logging in as that member, changing it
+in Profile, and logging in again. Test rejection of non-admin and inactive-admin
+tokens. Run `node --test mh/tests/admin-password.test.mjs` for server checks.
 
 Registration:
 

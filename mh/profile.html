@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="js/supabase.js?v=20260917-no-evidence"></script>
   <script defer src="js/auth.js?v=20260917-no-evidence"></script>
-  <script defer src="js/profile.js?v=20260917-no-evidence"></script>
+  <script defer src="js/profile.js?v=20261003-password"></script>
 </head>
 <body data-protected="true">
   <header class="app-header">
@@ -54,6 +54,13 @@
       </label>
       <button class="button primary" type="submit">บันทึกข้อมูล</button>
       <p id="profileMessage" class="message"></p>
+    </form>
+    <form id="passwordForm" class="card profile-form">
+      <h2>เปลี่ยนรหัสผ่าน</h2>
+      <label>รหัสผ่านใหม่<input id="profilePassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+      <label>ยืนยันรหัสผ่านใหม่<input id="profilePasswordConfirm" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+      <button class="button primary" type="submit">บันทึกรหัสผ่านใหม่</button>
+      <p id="passwordMessage" class="message" role="status" aria-live="polite"></p>
     </form>
   </main>
 </body>

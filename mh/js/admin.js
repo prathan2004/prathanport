@@ -1,10 +1,12 @@
 let adminChallenges = [];
 let adminRuns = [];
+let adminMembers = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     bindChallengeForm();
     bindAdminRunActions();
+    bindAdminPasswordForm();
     await loadAdminDashboard();
   } catch (error) {
     const message = document.querySelector('#adminMessage');
@@ -28,19 +30,74 @@ async function loadAdminMembers() {
     .order('display_name');
   if (error) throw error;
 
+  adminMembers = data || [];
   document.querySelector('#adminMemberCount').textContent = (data || []).length;
   document.querySelector('#adminMembers').innerHTML = (data || []).map(member => `
     <div class="leaderboard-item">
       <span class="rank">${member.role === 'admin' ? 'A' : 'M'}</span>
       <span>${escapeHtml(member.display_name)}<small>${escapeHtml(member.email)}</small></span>
+      <div class="actions compact member-actions">
+      <button class="button secondary" type="button" data-password-member="${member.id}">แก้ไขรหัสผ่าน</button>
       <button class="button secondary" data-toggle-member="${member.id}" data-status="${member.status}">
         ${member.status === 'active' ? 'ระงับ' : 'เปิดใช้'}
       </button>
+      </div>
     </div>
   `).join('');
 
   document.querySelectorAll('[data-toggle-member]').forEach(button => {
     button.addEventListener('click', () => toggleMemberStatus(button.dataset.toggleMember, button.dataset.status));
+  });
+  document.querySelectorAll('[data-password-member]').forEach(button => {
+    button.addEventListener('click', () => {
+      const member = adminMembers.find(item => item.id === button.dataset.passwordMember);
+      const form = document.querySelector('#adminPasswordForm');
+      form.reset();
+      form.dataset.memberId = member.id;
+      document.querySelector('#adminPasswordMember').textContent = `${member.display_name} (${member.email})`;
+      setMessage(document.querySelector('#adminPasswordMessage'), '');
+      document.querySelector('#adminPasswordDialog').showModal();
+    });
+  });
+}
+
+function bindAdminPasswordForm() {
+  const dialog = document.querySelector('#adminPasswordDialog');
+  const form = document.querySelector('#adminPasswordForm');
+  let saving = false;
+  dialog.addEventListener('cancel', event => { if (saving) event.preventDefault(); });
+  dialog.addEventListener('close', () => { form.reset(); delete form.dataset.memberId; });
+  document.querySelector('#adminPasswordCancel').addEventListener('click', () => dialog.close());
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (saving) return;
+    const message = document.querySelector('#adminPasswordMessage');
+    const password = document.querySelector('#adminPassword').value;
+    if (password !== document.querySelector('#adminPasswordConfirm').value) {
+      setMessage(message, 'รหัสผ่านทั้งสองช่องไม่ตรงกัน', true);
+      return;
+    }
+    saving = true;
+    form.querySelectorAll('button').forEach(button => { button.disabled = true; });
+    setMessage(message, 'กำลังบันทึกรหัสผ่าน...');
+    try {
+      const session = await getSession();
+      if (!session) throw new Error('กรุณาเข้าสู่ระบบใหม่');
+      const response = await fetch('/.netlify/functions/mh-admin-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ userId: form.dataset.memberId, password })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'เปลี่ยนรหัสผ่านไม่สำเร็จ');
+      form.reset();
+      setMessage(message, 'เปลี่ยนรหัสผ่านสำเร็จแล้ว');
+    } catch (error) {
+      setMessage(message, error.message || 'เปลี่ยนรหัสผ่านไม่สำเร็จ', true);
+    } finally {
+      saving = false;
+      form.querySelectorAll('button').forEach(button => { button.disabled = false; });
+    }
   });
 }
 

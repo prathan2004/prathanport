@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="js/supabase.js?v=20260917-no-evidence"></script>
   <script defer src="js/auth.js?v=20260917-no-evidence"></script>
-  <script defer src="js/admin.js?v=20260917-admin-run-current-challenge"></script>
+  <script defer src="js/admin.js?v=20261003-password"></script>
 </head>
 <body data-protected="true" data-admin="true">
   <header class="app-header">
@@ -85,5 +85,18 @@
       <div id="adminRunList" class="run-list"></div>
     </section>
   </main>
+  <dialog id="adminPasswordDialog">
+    <form id="adminPasswordForm" class="profile-form">
+      <h2>แก้ไขรหัสผ่านสมาชิก</h2>
+      <p id="adminPasswordMember"></p>
+      <label>รหัสผ่านใหม่<input id="adminPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+      <label>ยืนยันรหัสผ่านใหม่<input id="adminPasswordConfirm" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></label>
+      <div class="actions">
+        <button id="adminPasswordSave" class="button primary" type="submit">บันทึกรหัสผ่านใหม่</button>
+        <button id="adminPasswordCancel" class="button secondary" type="button">ยกเลิก</button>
+      </div>
+      <p id="adminPasswordMessage" class="message" role="status" aria-live="polite"></p>
+    </form>
+  </dialog>
 </body>
 </html>

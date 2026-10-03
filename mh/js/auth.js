@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.querySelector('#loginForm');
   const registerForm = document.querySelector('#registerForm');
   const logoutButton = document.querySelector('#logoutButton');
-  const resetPasswordButton = document.querySelector('#resetPasswordButton');
   const authMessage = document.querySelector('#authMessage');
 
   protectRoute();
@@ -69,31 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (resetPasswordButton) {
-    resetPasswordButton.addEventListener('click', async () => {
-      const email = document.querySelector('#email').value.trim();
-      if (!email) {
-        setMessage(authMessage, 'กรุณากรอกอีเมลก่อน', true);
-        return;
-      }
-
-      if (!document.querySelector('#email').reportValidity()) return;
-      resetPasswordButton.disabled = true;
-      setMessage(authMessage, 'กำลังส่งลิงก์ตั้งรหัสผ่านใหม่...');
-
-      try {
-        const { error } = await sb.auth.resetPasswordForEmail(email, {
-          redirectTo: new URL('reset-password.html', window.location.href).href
-        });
-        if (error) throw error;
-        setMessage(authMessage, 'หากอีเมลนี้มีบัญชีอยู่ ระบบจะส่งลิงก์ตั้งรหัสผ่านใหม่ให้ กรุณาตรวจสอบกล่องจดหมายและจดหมายขยะ');
-      } catch (error) {
-        setMessage(authMessage, error.message || 'ส่งลิงก์รีเซ็ตไม่สำเร็จ', true);
-      } finally {
-        resetPasswordButton.disabled = false;
-      }
-    });
-  }
 });
 
 async function protectRoute() {

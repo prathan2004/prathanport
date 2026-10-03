@@ -385,6 +385,23 @@ textarea:focus {
   padding: 1rem;
 }
 
+#adminPasswordDialog {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  width: min(440px, calc(100% - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  color: var(--ink);
+}
+
+#adminPasswordDialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+#adminPasswordMember, #adminMembers span { overflow-wrap: anywhere; min-width: 0; }
+.member-actions { justify-content: flex-end; }
+@media (max-width: 600px) {
+  #adminMembers .leaderboard-item { grid-template-columns: auto minmax(0, 1fr); }
+  #adminMembers .member-actions { grid-column: 1 / -1; }
+}
+
 .form-grid {
   display: grid;
   gap: 1rem;

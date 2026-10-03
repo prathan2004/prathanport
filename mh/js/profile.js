@@ -2,6 +2,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   const profileForm = document.querySelector('#profileForm');
   const profileMessage = document.querySelector('#profileMessage');
   let profile = null;
+  const passwordForm = document.querySelector('#passwordForm');
+  passwordForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const message = document.querySelector('#passwordMessage');
+    const password = document.querySelector('#profilePassword').value;
+    if (!profile || profile.status !== 'active') {
+      setMessage(message, 'กรุณาเข้าสู่ระบบใหม่', true);
+      return;
+    }
+    if (password !== document.querySelector('#profilePasswordConfirm').value) {
+      setMessage(message, 'รหัสผ่านทั้งสองช่องไม่ตรงกัน', true);
+      return;
+    }
+    const button = passwordForm.querySelector('button');
+    button.disabled = true;
+    setMessage(message, 'กำลังบันทึกรหัสผ่าน...');
+    try {
+      const { error } = await sb.auth.updateUser({ password });
+      if (error) throw error;
+      passwordForm.reset();
+      setMessage(message, 'เปลี่ยนรหัสผ่านสำเร็จแล้ว');
+    } catch (error) {
+      setMessage(message, error.message || 'เปลี่ยนรหัสผ่านไม่สำเร็จ', true);
+    } finally {
+      button.disabled = false;
+    }
+  });
 
   try {
     profile = await getCurrentProfile();
