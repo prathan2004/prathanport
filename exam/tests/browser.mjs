@@ -1,0 +1,50 @@
+import {chromium} from '@playwright/test';
+import {PDFDocument} from 'pdf-lib';
+import assert from 'node:assert/strict';
+import {mkdir,readFile} from 'node:fs/promises';
+const browser=await chromium.launch({headless:true,channel:'msedge'});
+try {
+  const page=await browser.newPage({viewport:{width:1440,height:1000}});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(process.env.EXAM_TEST_URL || 'http://localhost:5173');
+  await page.getByRole('button',{name:'จัดการรายวิชา',exact:true}).click();
+  await page.getByRole('button',{name:'เพิ่มรายวิชา',exact:true}).click();
+  await page.getByLabel('ชื่อรายวิชา',{exact:true}).fill('คณิตศาสตร์');
+  await page.getByLabel('รหัสวิชา',{exact:true}).fill('ค101');
+  await page.getByLabel('ห้องเรียน',{exact:true}).fill('ม.1/1');
+  await page.getByRole('button',{name:'บันทึก',exact:true}).click();
+  await page.locator('[data-view="students"]').click();
+  await page.getByRole('button',{name:'เพิ่มนักเรียน',exact:true}).click();
+  await page.getByLabel('รหัสนักเรียน',{exact:true}).fill('00123456');
+  await page.getByLabel('เลขที่',{exact:true}).fill('1');
+  await page.getByLabel('ชื่อ–นามสกุล',{exact:true}).fill('ทดสอบ นักเรียน');
+  await page.getByLabel('ห้องเรียน',{exact:true}).fill('ม.1/1');
+  await page.getByRole('button',{name:'บันทึก',exact:true}).click();
+  await page.locator('[data-view="exams"]').click();
+  await page.getByRole('button',{name:'สร้างชุดข้อสอบ',exact:true}).click();
+  await page.getByLabel('ชื่อชุดข้อสอบ',{exact:true}).fill('ทดสอบปลายภาค');
+  await page.getByLabel('จำนวนข้อ',{exact:true}).fill('101');
+  await page.getByRole('button',{name:'บันทึก',exact:true}).click();
+  await page.getByRole('button',{name:'เปิด',exact:true}).click();
+  const selects=page.locator('#key-form select');
+  for(let i=0;i<101;i++)await selects.nth(i).selectOption('ก');
+  await page.getByRole('button',{name:'บันทึกเฉลย',exact:true}).click();
+  await page.getByRole('button',{name:'ตรวจสอบก่อนใช้งาน',exact:true}).click();
+  await page.getByRole('button',{name:'ยืนยันเปิดใช้งาน',exact:true}).click();
+  await mkdir('qa',{recursive:true});
+  for(const [name,label] of [['generic','PDF ทั่วไป'],['personalized','PDF รวมรายบุคคล']]){
+    const waiting=page.waitForEvent('download');await page.getByRole('button',{name:label,exact:true}).click();
+    const d=await waiting;await d.saveAs(`qa/${name}.pdf`);
+    const pdf=await PDFDocument.load(await readFile(`qa/${name}.pdf`));assert.equal(pdf.getPageCount(),2);
+    assert.ok(Math.abs(pdf.getPage(0).getWidth()-595.28)<0.01);
+  }
+  await page.screenshot({path:'qa/desktop.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:'qa/mobile.png',fullPage:true});
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await page.reload();assert.equal(await page.locator('#key-form select').count(),0);
+  await page.locator('[data-view="exams"]').click();await page.getByRole('button',{name:'เปิด',exact:true}).click();
+  assert.equal(await page.locator('#key-form select').first().inputValue(),'ก');
+  assert.deepEqual(errors,[]);
+  console.log('PASS: Thai CRUD, leading-zero student, 101 answers, approval, generic/personalized PDFs, persistence, desktop/mobile overflow, no browser errors');
+}finally{await browser.close();}
