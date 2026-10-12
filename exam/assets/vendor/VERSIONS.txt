@@ -1,0 +1,6 @@
+@techstark/opencv-js 4.10.0-release.1 | Apache-2.0
+jspdf 4.2.1 | MIT
+lucide 0.468.0 | ISC
+qrcode-generator 1.5.2 | MIT
+jsqr 1.4.0 | Apache-2.0
+xlsx 0.20.3 | Apache-2.0

@@ -1,0 +1,332 @@
+{
+  "testedAt": "2026-10-12T08:05:52.413Z",
+  "browser": "154.0.4258.62",
+  "node": "v24.20.0",
+  "fixtures": [
+    {
+      "name": "straight",
+      "questions": 20,
+      "correct": 20,
+      "errors": 0,
+      "accuracy": 1,
+      "passed": true,
+      "mismatches": [],
+      "quality": {
+        "brightness": 251.82511177844512,
+        "sharpness": 1456.2426209542878
+      },
+      "marks": [
+        {
+          "x": 60,
+          "y": 60,
+          "area": 529
+        },
+        {
+          "x": 1200,
+          "y": 60,
+          "area": 529
+        },
+        {
+          "x": 1200,
+          "y": 1722,
+          "area": 529
+        },
+        {
+          "x": 60,
+          "y": 1722,
+          "area": 529
+        }
+      ]
+    },
+    {
+      "name": "rotated",
+      "questions": 20,
+      "correct": 20,
+      "errors": 0,
+      "accuracy": 1,
+      "passed": true,
+      "mismatches": [],
+      "quality": {
+        "brightness": 251.82582916249584,
+        "sharpness": 404.23414247580916
+      },
+      "marks": [
+        {
+          "x": 311,
+          "y": 118.5,
+          "area": 546
+        },
+        {
+          "x": 1440,
+          "y": 277.5,
+          "area": 546
+        },
+        {
+          "x": 1209,
+          "y": 1923.5,
+          "area": 546
+        },
+        {
+          "x": 80,
+          "y": 1764.5,
+          "area": 546
+        }
+      ]
+    },
+    {
+      "name": "perspective",
+      "questions": 20,
+      "correct": 20,
+      "errors": 0,
+      "accuracy": 1,
+      "passed": true,
+      "mismatches": [],
+      "quality": {
+        "brightness": 251.82502335669002,
+        "sharpness": 363.3635468802135
+      },
+      "marks": [
+        {
+          "x": 152.5,
+          "y": 149.5,
+          "area": 433
+        },
+        {
+          "x": 1197,
+          "y": 86.5,
+          "area": 444
+        },
+        {
+          "x": 1264.5,
+          "y": 1737.5,
+          "area": 640
+        },
+        {
+          "x": 94,
+          "y": 1792.5,
+          "area": 618.5
+        }
+      ]
+    },
+    {
+      "name": "uneven-light",
+      "questions": 20,
+      "correct": 20,
+      "errors": 0,
+      "accuracy": 1,
+      "passed": true,
+      "mismatches": [],
+      "quality": {
+        "brightness": 204.30390140140142,
+        "sharpness": 693.5459909909911
+      },
+      "marks": [
+        {
+          "x": 60,
+          "y": 60,
+          "area": 529
+        },
+        {
+          "x": 1200,
+          "y": 60,
+          "area": 529
+        },
+        {
+          "x": 1200,
+          "y": 1722,
+          "area": 529
+        },
+        {
+          "x": 60,
+          "y": 1722,
+          "area": 529
+        }
+      ]
+    },
+    {
+      "name": "blank",
+      "questions": 20,
+      "correct": 20,
+      "errors": 0,
+      "accuracy": 1,
+      "passed": true,
+      "mismatches": [],
+      "quality": {
+        "brightness": 251.87235568902236,
+        "sharpness": 1455.1892475809145
+      },
+      "marks": [
+        {
+          "x": 60,
+          "y": 60,
+          "area": 529
+        },
+        {
+          "x": 1200,
+          "y": 60,
+          "area": 529
+        },
+        {
+          "x": 1200,
+          "y": 1722,
+          "area": 529
+        },
+        {
+          "x": 60,
+          "y": 1722,
+          "area": 529
+        }
+      ]
+    },
+    {
+      "name": "multiple",
+      "questions": 20,
+      "correct": 20,
+      "errors": 0,
+      "accuracy": 1,
+      "passed": true,
+      "mismatches": [],
+      "quality": {
+        "brightness": 251.77786786786788,
+        "sharpness": 1457.355814147481
+      },
+      "marks": [
+        {
+          "x": 60,
+          "y": 60,
+          "area": 529
+        },
+        {
+          "x": 1200,
+          "y": 60,
+          "area": 529
+        },
+        {
+          "x": 1200,
+          "y": 1722,
+          "area": 529
+        },
+        {
+          "x": 60,
+          "y": 1722,
+          "area": 529
+        }
+      ]
+    },
+    {
+      "name": "faint",
+      "questions": 20,
+      "correct": 20,
+      "errors": 0,
+      "accuracy": 1,
+      "passed": true,
+      "mismatches": [],
+      "quality": {
+        "brightness": 251.85532198865533,
+        "sharpness": 1455.373812145479
+      },
+      "marks": [
+        {
+          "x": 60,
+          "y": 60,
+          "area": 529
+        },
+        {
+          "x": 1200,
+          "y": 60,
+          "area": 529
+        },
+        {
+          "x": 1200,
+          "y": 1722,
+          "area": 529
+        },
+        {
+          "x": 60,
+          "y": 1722,
+          "area": 529
+        }
+      ]
+    },
+    {
+      "name": "100-questions-4-choices",
+      "questions": 100,
+      "correct": 100,
+      "errors": 0,
+      "accuracy": 1,
+      "passed": true,
+      "mismatches": [],
+      "quality": {
+        "brightness": 240.82356022689356,
+        "sharpness": 6567.428440106773
+      },
+      "marks": [
+        {
+          "x": 60,
+          "y": 60,
+          "area": 529
+        },
+        {
+          "x": 1200,
+          "y": 60,
+          "area": 529
+        },
+        {
+          "x": 1200,
+          "y": 1722,
+          "area": 529
+        },
+        {
+          "x": 60,
+          "y": 1722,
+          "area": 529
+        }
+      ]
+    },
+    {
+      "name": "missing-mark",
+      "expectedError": "จุดอ้างอิง",
+      "error": "ไม่พบจุดอ้างอิงครบ 4 มุม กรุณาถ่ายใหม่ให้เห็นสี่มุมและเว้นขอบรอบกระดาษ",
+      "passed": true
+    },
+    {
+      "name": "unreadable-qr",
+      "expectedError": "QR",
+      "error": "อ่าน QR ไม่ได้ กรุณาถ่ายใหม่ให้ QR ชัด ห้ามพับหรือปิดทับ QR",
+      "passed": true
+    },
+    {
+      "name": "wrong-template",
+      "expectedError": "แม่แบบ",
+      "error": "แม่แบบกระดาษไม่ตรงกับระบบนี้",
+      "passed": true
+    },
+    {
+      "name": "wrong-exam",
+      "expectedError": "คนละชุด",
+      "error": "กระดาษเป็นคนละชุดข้อสอบ กรุณาเลือกชุดที่ตรงกัน",
+      "passed": true
+    }
+  ],
+  "pdfRoundTrip": {
+    "correct": 20,
+    "total": 20
+  },
+  "workflow": {
+    "passed": true,
+    "checks": [
+      "Thai PDF",
+      "CRUD",
+      "manual corrections",
+      "duplicate guard",
+      "result history",
+      "old key version",
+      "IndexedDB persistence",
+      "backup and image restore",
+      "Excel/CSV/JSON exports",
+      "desktop/mobile/tablet layout",
+      "camera teardown",
+      "permission denied"
+    ]
+  }
+}
