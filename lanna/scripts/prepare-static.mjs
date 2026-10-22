@@ -23,7 +23,7 @@ async function filesIn(folder) {
 // Do not ship the standalone root SPA redirect into a shared hosting directory.
 const files = (await filesIn(dist)).filter(path => {
   const name = relative(dist, path).split(sep).join('/');
-  return ['index.html','favicon.svg','og-image.png'].includes(name) || name.startsWith('assets/');
+  return ['index.html','favicon.svg','og-image.png','THIRD_PARTY_NOTICES.txt'].includes(name) || name.startsWith('assets/');
 });
 for (const source of files) {
   const name = relative(dist, source);

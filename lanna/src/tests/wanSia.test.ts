@@ -11,5 +11,5 @@ describe('กฎวันเสียที่ผู้ว่าจ้างอ�
  it('ปฏิเสธวันในสัปดาห์ที่ผิด',()=>expect(()=>isWanSia(1,7)).toThrow());
  it('19 ตุลาคม 2569: จันทร์ เดือนเกี๋ยง ตรงวันเสีย ตาม S1 หน้า 24',()=>expect(wanSia('2026-10-19').verdict).toBe('bad'));
  it('13 ตุลาคม 2569: อังคาร เดือนเกี๋ยง ไม่ตรงวันเสีย ตาม S1 หน้า 24',()=>expect(wanSia('2026-10-13').verdict).toBe('not-bad'));
- it('นอกข้อมูลไม่เดาผล',()=>expect(wanSia('2026-11-01').verdict).toBe('pending'));
+ it('1 พ.ย. 2569: อาทิตย์ เดือนเกี๋ยง ตรงวันเสีย ตาม S1 หน้า 25 และแสดงป้ายผลคำนวณ',()=>{expect(wanSia('2026-11-01').verdict).toBe('bad');expect(wanSia('2026-11-01').evidence).toBe('calculated');});
 });

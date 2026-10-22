@@ -15,6 +15,7 @@ describe('ปฏิทิน: หลักฐาน S1 หน้าไฟล์ 
  const rows = [ ['2026-10-01',12,'waning',5], ['2026-10-11',12,'waning',15], ['2026-10-12',1,'waxing',1], ['2026-10-19',1,'waxing',8], ['2026-10-26',1,'waxing',15], ['2026-10-27',1,'waning',1], ['2026-10-31',1,'waning',5] ] as const;
  it.each(rows)('%s: เดือน/ข้าง/ค่ำตรงภาพ',(iso,month,phase,lunarDay)=>{const result=lannaCalendar(iso);expect(result.status).toBe('verified');if(result.status==='verified')expect(result.day).toMatchObject({month,phase,lunarDay,sourcePage:24,chulaSakarat:1388});});
  it('เปลี่ยนเดือนเกี๋ยงไม่เปลี่ยนจุลศักราช',()=>{const a=lannaCalendar('2026-10-11'),b=lannaCalendar('2026-10-12');if(a.status==='verified'&&b.status==='verified')expect(a.day.chulaSakarat).toBe(b.day.chulaSakarat);else throw Error('missing fixture');});
- it.each(['2026-09-30','2026-11-01','2026-07-15','2027-01-01'])('ไม่คาดคะเนขอบเขต/เดือนซ้ำ/ปีใหม่: %s',iso=>expect(lannaCalendar(iso).status).toBe('unverified'));
+ it.each(['2026-09-30','2026-11-01','2026-07-15','2027-01-01'])('วันนอกตารางเดิมใช้ผลคำนวณที่มีป้ายแยก: %s',iso=>expect(lannaCalendar(iso).status).toBe('calculated'));
+ it.each(['1899-12-31','2201-01-01'])('ไม่คำนวณนอกช่วงที่รับรองการทำงาน: %s',iso=>expect(lannaCalendar(iso).status).toBe('unverified'));
  it('วันที่ผิดไม่ถูกจัดเป็นข้อมูลที่ยืนยัน',()=>expect(lannaCalendar('2026-10-32').status).toBe('unverified'));
 });
