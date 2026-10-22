@@ -4,3 +4,4 @@ tmp/
 *.local
 *.tsbuildinfo
 lanna-netlify.zip
+upload/
