@@ -1,8 +1,31 @@
 [build]
+  command = "npm run build"
   publish = "."
+
+[build.environment]
+  NODE_VERSION = "24"
 
 [functions]
   directory = "netlify/functions"
+
+# Serve the compiled React app instead of the source lanna/index.html.
+[[redirects]]
+  from = "/lanna"
+  to = "/lanna/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/lanna/"
+  to = "/lanna/dist/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/lanna/*"
+  to = "/lanna/dist/:splat"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/run/api/*"

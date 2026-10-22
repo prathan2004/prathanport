@@ -52,7 +52,17 @@ npm run preview
 
 ## Deploy ผ่าน Netlify
 
+### เว็บหลัก prathan.in.th/lanna/ (ตั้งค่าแล้ว)
+
+กรณีเผยแพร่ทั้ง repository `prathanport` เป็นเว็บหลัก ให้ใช้ Base directory ว่าง, Package directory ว่าง, Build command `npm run build`, Publish directory `.` และ config `netlify.toml` ที่ root
+
+root build จะติดตั้ง dependency และ build แอป `lanna` อัตโนมัติ root Netlify config จะ rewrite `/lanna/` ไปยัง `/lanna/dist/index.html` และไฟล์ประกอบไปยัง `/lanna/dist/` โดยคง URL ของผู้ใช้ไว้ กฎ force จำเป็นเพื่อให้ใช้ HTML ที่ build แล้วแทน source `lanna/index.html` ส่วน Vite ใช้ base `./` เพื่อโหลด assets ผ่าน `/lanna/assets/` ได้
+
+หลัง commit/push การแก้ไข ต้องรอ Netlify deploy สำเร็จ การแก้ไฟล์บนเครื่องยังไม่เปลี่ยนเว็บจริง ห้ามอัปโหลด source `lanna/index.html` อย่างเดียว เพราะอ้างถึง TypeScript ที่ต้องผ่าน Vite build ก่อน
+
 ### เชื่อม GitHub
+
+หัวข้อนี้ใช้สำหรับสร้าง Netlify project แยกให้แอป `lanna` เป็นหน้า root ของเว็บใหม่ ไม่ใช่การตั้งค่าของเว็บหลักด้านบน
 
 1. นำโค้ดขึ้น repository ของคุณ แล้วสร้าง Netlify project จาก repository นั้น
 2. หากใช้ repository `prathanport` ให้ตั้ง **Base directory: `lanna`** และ **Package directory: `lanna`** เพื่อเลือก config และ build ของเว็บนี้แทนเว็บอื่นที่ root

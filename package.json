@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "echo Static site ready"
+    "build": "npm --prefix lanna ci && npm --prefix lanna run build"
   },
   "dependencies": {
     "@netlify/blobs": "^9.1.2"
