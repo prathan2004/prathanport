@@ -1,0 +1,4 @@
+import { ArrowUpRight } from 'lucide-react';
+import { sources } from '../data/calendarSources';
+import { LannaMark } from './Header';
+export default function Footer() { return <><section className="sources-section" id="sources"><div><span className="eyebrow">ที่มาของข้อมูล</span><h2>ภูมิปัญญาที่มีแหล่งอ้างอิง</h2><p>แยกสิ่งที่ตรวจสอบแล้ว ออกจากสิ่งที่ยังต้องศึกษา</p></div><div className="source-list">{sources.map(s=><a key={s.id} href={s.url} target="_blank" rel="noreferrer"><span><strong>{s.title}</strong><small>{s.organization}</small><small>{s.note}</small></span><ArrowUpRight size={20}/></a>)}</div></section><footer><div className="footer-brand"><LannaMark/><span>วันดีวันเสียล้านนา<small>สืบสานภูมิปัญญา ด้วยความเข้าใจ</small></span></div><p>ไม่เก็บข้อมูลส่วนบุคคล · ไม่มีระบบสมาชิก<br/>วันที่อ้างอิงเขตเวลา Asia/Bangkok</p><a href="#">กลับด้านบน ↑</a></footer></>; }

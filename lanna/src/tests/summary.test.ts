@@ -1,0 +1,10 @@
+import { it,expect } from 'vitest';
+import { summarize } from '../lib/summary';
+import type { Result,Verdict } from '../lib/wanSia';
+const result=(verdict:Verdict):Result=>({verdict,title:'',explanation:''});
+it('ยังคำนวณไม่ได้ทั้งสองวิธี',()=>expect(summarize(result('pending'),result('pending')).title).toBe('ยังมีข้อมูลไม่เพียงพอที่จะสรุป'));
+it('คำนวณได้วิธีเดียว',()=>expect(summarize(result('bad'),result('pending')).title).toBe('ตรวจสอบได้เพียงหนึ่งวิธี'));
+it('คำนวณได้วิธีเดียว สลับวิธี',()=>expect(summarize(result('pending'),result('not-bad')).title).toBe('ตรวจสอบได้เพียงหนึ่งวิธี'));
+it('ผลขัดแย้งกัน',()=>expect(summarize(result('bad'),result('not-bad')).title).toBe('ทั้งสองวิธีให้ผลแตกต่างกัน'));
+it('ผลสอดคล้องกัน',()=>expect(summarize(result('bad'),result('bad')).title).toBe('ทั้งสองวิธีให้ผลสอดคล้องกัน'));
+it('ไม่ตรงวันเสียไม่ใช่วันมงคลอัตโนมัติ',()=>expect(summarize(result('not-bad'),result('not-bad')).explanation).toContain('ไม่ได้หมายถึงวันมงคล'));
