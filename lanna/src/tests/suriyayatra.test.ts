@@ -3,6 +3,7 @@ import fixtures from './fixtures/rmutl-2569.json';
 import { thaiLunarDate } from '../lib/suriyayatra';
 import { lannaCalendar } from '../lib/lannaCalendar';
 import { wanSia } from '../lib/wanSia';
+import { faTeeSaeng } from '../lib/faTeeSaeng';
 
 describe('สุริยยาตร์เทียบตารางอิสระจาก มทร.ล้านนา พ.ศ.2569–2570',()=>{
  // These 450 expected values were extracted by PDF column positions, not
@@ -34,6 +35,8 @@ describe('ขอบเขตและกรณีสำคัญ',()=>{
     if((same&&n!==p+1)||(!same&&(n!==1||p<29||p>30)))errors.push(iso);
    }
    if(wanSia(iso).verdict==='pending')errors.push(iso+' pending');
+   const fa=faTeeSaeng(iso);
+   if(fa.verdict==='pending'||!Number.isInteger(fa.remainder)||fa.remainder!<0||fa.remainder!>8)errors.push(iso+' invalid fa remainder');
    prev=day;count++;
   }
   expect(count).toBe(109938);expect(errors).toEqual([]);

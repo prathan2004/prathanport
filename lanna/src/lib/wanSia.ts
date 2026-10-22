@@ -2,7 +2,7 @@ import { weekday, weekNames } from './dateUtils';
 import { lannaCalendar } from './lannaCalendar';
 import { monthNames } from '../data/calendarSources';
 export type Verdict = 'bad'|'not-bad'|'pending';
-export interface Result { verdict:Verdict; title:string; explanation:string; evidence?:'verified'|'calculated'; }
+export interface Result { verdict:Verdict; title:string; explanation:string; evidence?:'verified'|'calculated'; evidenceLabel?:string; }
 export const wanSiaRules: readonly (readonly number[])[] = [[0,1],[2],[4,6],[3,5],[0,1],[2],[4,6],[3,5],[0,1],[2],[4,6],[3,5]];
 export function isWanSia(month:number, day:number) {
  if (!Number.isInteger(month)||month<1||month>12||!Number.isInteger(day)||day<0||day>6) throw new Error('เดือนหรือวันในสัปดาห์ไม่ถูกต้อง');
