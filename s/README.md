@@ -2,6 +2,16 @@
 
 เว็บย่อลิงก์ส่วนตัวที่เก็บกฎ HTTP 302 ในไฟล์ `public/_redirects` และใช้ Netlify Functions จัดการไฟล์ผ่าน GitHub Contents API ผู้ที่มีลิงก์สั้นเปิดลิงก์ได้โดยตรง ส่วนการจัดการต้องเข้าสู่ระบบด้วยบัญชีผู้ดูแล ไม่มีฐานข้อมูล ระบบสมัครสมาชิก หรือการนับคลิก
 
+## ใช้งานที่ www.prathan.in.th/s
+
+ใช้โปรเจกต์ Netlify เดิมที่ผูกกับ `www.prathan.in.th` และ repository `prathanport` กำหนด Base directory และ Package directory ให้อยู่ที่ค่าปริยายหรือราก repo เพื่อใช้ `netlify.toml` ที่ราก ค่านี้กำหนด Build command เป็น `node scripts/build-site.mjs` และ Publish directory เป็น `.site-publish` โดย Build จะนำเว็บ ShortLink ไปไว้ใต้ `/s` และแปลงกฎ HTTP 302 ของลิงก์จาก `s/public/_redirects` เป็น `/s/alias` ให้อัตโนมัติ ไฟล์ที่ต้องการเผยแพร่ในส่วนอื่นของไซต์ควรอยู่ใน Git เพื่อให้ Build นำไปด้วย
+
+1. ตั้ง **Environment variables** ในโปรเจกต์ Netlify เดิม โดยใช้ค่าที่อธิบายในหัวข้อ 2–4 ด้านล่าง ตั้ง `SITE_URL=https://www.prathan.in.th` และ `GITHUB_FILE_PATH=s/public/_redirects` กำหนด `GITHUB_BRANCH` ให้ตรงกับ Production branch จริง
+2. Commit และ Push การเปลี่ยนแปลงจากราก repo รวม `scripts/build-site.mjs`, `netlify.toml`, `.gitignore`, `netlify/functions/shortlink-*.mjs` และไฟล์ที่แก้ใน `s` จากนั้นรอ Production Deploy สำเร็จ
+3. เปิด `https://www.prathan.in.th/s` และลอง `https://www.prathan.in.th/s/cmru` ให้ได้ HTTP 302 จากนั้นเข้าบัญชีที่ `https://www.prathan.in.th/s/login.html` และลองสร้างลิงก์ ระบบจะ Commit ไฟล์จากฝั่ง Netlify และลิงก์ใหม่จะตอบ 302 เมื่อ Deploy ของ Commit นั้นขึ้น Production
+
+หากโดเมนใช้โฮสต์รายอื่นอยู่ ให้ชี้ทราฟฟิกส่วนนี้ไปยัง Netlify พร้อม Functions หรือใช้ Netlify เป็นโฮสต์ของไซต์หลัก ดูคำสั่งทดสอบและค่าบัญชีด้านล่าง
+
 ## 1. ติดตั้งบนเครื่อง
 
 ติดตั้ง Node.js 24 LTS พร้อม npm และ Git จากนั้นเปิด PowerShell ใน repository
@@ -68,12 +78,12 @@ curl.exe -sI http://localhost:8888/cmru
 
 เปิด `http://localhost:8888/login.html` จาก hostname เดียวกับ `SITE_URL` เพื่อให้ตรวจ Origin ได้ กฎตัวอย่าง `/cmru` ควรตอบ HTTP 302 พร้อม `Location` ชี้ไปที่เว็บไซต์มหาวิทยาลัย การแก้ไขจาก Dashboard จะเขียนกลับ repository ที่ตั้งไว้จริง หากทดสอบ CRUD ให้ใช้ repository หรือสาขาทดสอบ สำหรับ Redirect บนเครื่อง Netlify Dev อ่านจากไฟล์ใน working tree หลังแก้ผ่าน Dashboard ให้ดึง Commit ล่าสุดจากสาขาทดสอบมาที่เครื่องก่อนตรวจซ้ำ
 
-## 6. Push ขึ้น GitHub และเชื่อม Netlify
+## 6. ทางเลือกสำหรับ Deploy เป็นไซต์ Netlify แยก
 
 สำหรับ `prathanport` ให้รันจากโฟลเดอร์รากของ repository
 
 ```powershell
-git add s netlify.toml .gitignore
+git add s
 git commit -m "Add personal URL shortener"
 git push origin main
 ```
@@ -84,7 +94,7 @@ git push origin main
 4. ตั้ง Production branch ให้ตรงกับ `GITHUB_BRANCH` และเปิด Continuous deployment ตั้งค่าตัวแปร production จากขั้นตอนก่อนหน้า แล้ว Deploy
 5. ตรวจว่าไฟล์ใน Deploy มาจาก `s/public` และมี Functions ทั้ง 8 รายการ เปิดหน้า Login และตรวจ Redirect ตัวอย่างบนโดเมนจริง
 
-ไฟล์ `netlify.toml` ที่รากของ `prathanport` ตอบ 404 สำหรับเส้นทาง `/s` บนไซต์หลัก เพราะไซต์หลักตั้ง Publish ไว้ที่ราก repository ส่วนเว็บไซต์ ShortLink ใช้โดเมนของโปรเจกต์แยกและลิงก์รูปแบบ `https://your-domain/alias`
+เมื่อ Deploy เป็นไซต์แยก ลิงก์สั้นมีรูปแบบ `https://your-domain/alias` หากต้องการ `https://www.prathan.in.th/s/alias` ให้ใช้การตั้งค่าไซต์หลักตามหัวข้อแรก
 
 ใช้ Git-based Deploy เป็นวิธีหลักเพื่อให้ Netlify Deploy อัตโนมัติทุกครั้งที่ Functions Commit หากต้องการ Deploy ด้วย CLI จากโฟลเดอร์ `s` ให้ใช้ `npx netlify link` แล้วเลือกโปรเจกต์ ShortLink จากนั้นรัน `npm run deploy -- --dir=public --functions=netlify/functions` จาก working tree ที่ตรงกับสาขา production
 

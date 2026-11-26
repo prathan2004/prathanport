@@ -7,7 +7,7 @@ import getLinks from '../netlify/functions/get-links.js';
 import create from '../netlify/functions/create-link.js';
 import update from '../netlify/functions/update-link.js';
 import remove from '../netlify/functions/delete-link.js';
-import status from '../netlify/functions/deploy-status.js';
+import status, { deployStatus } from '../netlify/functions/deploy-status.js';
 import { hashPassword } from '../netlify/functions/lib/security.js';
 
 const origin = 'https://short.example.test';
@@ -19,6 +19,7 @@ let revision = 1;
 let conflict = false;
 let cookie;
 let csrf;
+let publishedPrefix = '';
 const fetchOriginal = globalThis.fetch;
 const envOriginal = { ...process.env };
 
@@ -69,7 +70,7 @@ before(async () => {
     assert.equal(options.method, 'HEAD');
     assert.equal(options.redirect, 'manual');
     const rule = published.split(/\r?\n/).map(line => line.trim().split(/\s+/))
-      .find(([path, , code]) => path === url.pathname && code === '302');
+      .find(([path, , code]) => publishedPrefix + path === url.pathname && code === '302');
     return rule ? new Response(null, { status: 302, headers: { Location: rule[1] } }) :
       new Response(null, { status: 404 });
   };
@@ -141,4 +142,7 @@ test('deployment checks distinguish unpublished rules from matching HTTP 302 wit
   published = text;
   const ready = await (await call(status)).json();
   assert.ok(ready.checks.every(check => check.ready === true));
+  publishedPrefix = '/s';
+  const readyUnderS = await (await call(deployStatus('/s'))).json();
+  assert.ok(readyUnderS.checks.every(check => check.ready === true));
 });

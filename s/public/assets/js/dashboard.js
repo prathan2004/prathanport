@@ -1,4 +1,4 @@
-import { $, api, busy, download, setTheme } from './app.js';
+import { $, api, busy, download, pageUrl, setTheme } from './app.js';
 import { copyLink, csvFor, renderLinks, shortUrl, validateForm } from './links.js';
 import { showQr } from './qrcode.js';
 
@@ -33,7 +33,7 @@ function notify(text) {
 }
 
 function handle(error) {
-  if (error.status === 401) location.replace('/login.html');
+  if (error.status === 401) location.replace(pageUrl('login.html'));
   else notify(error.message);
 }
 
@@ -222,7 +222,7 @@ function setup() {
   $('logout').onclick = () => busy($('logout'), async () => {
     try {
       await request('logout', { method: 'POST', data: {} });
-      location.replace('/login.html');
+      location.replace(pageUrl('login.html'));
     } catch (error) { handle(error); }
   });
 

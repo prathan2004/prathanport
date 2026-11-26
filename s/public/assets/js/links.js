@@ -1,6 +1,6 @@
-import { $ } from './app.js';
+import { $, pageUrl } from './app.js';
 
-export const shortUrl = alias => new URL('/' + alias, location.origin).href;
+export const shortUrl = alias => new URL(pageUrl(alias), location.origin).href;
 
 export function validateForm(form) {
   const input = form.elements.url;

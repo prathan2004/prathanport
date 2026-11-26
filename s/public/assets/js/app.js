@@ -1,4 +1,6 @@
 export const $ = id => document.getElementById(id);
+export const basePath = new URL('../../', import.meta.url).pathname;
+export const pageUrl = name => basePath + name;
 
 export function setTheme(theme) {
   document.documentElement.dataset.bsTheme = theme;
@@ -13,7 +15,8 @@ try {
 export async function api(name, { method = 'GET', data, csrf, raw = false, signal } = {}) {
   let result;
   try {
-    result = await fetch('/.netlify/functions/' + name, {
+    const functionPrefix = basePath === '/s/' ? 'shortlink-' : '';
+    result = await fetch('/.netlify/functions/' + functionPrefix + name, {
       method, signal, credentials: 'same-origin', cache: 'no-store',
       headers: data ? { 'Content-Type': 'application/json', ...(csrf && { 'X-CSRF-Token': csrf }) } : {},
       body: data ? JSON.stringify(data) : undefined

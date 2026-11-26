@@ -2,10 +2,10 @@ import { AppError, endpoint, response, siteOrigin } from './lib/security.js';
 import { readFile } from './lib/github.js';
 import { linksFrom } from './lib/redirects.js';
 
-async function probe(origin, { alias, url }) {
+async function probe(origin, prefix, { alias, url }) {
   try {
     // Only contact the configured site. Never follow a user-supplied destination.
-    const result = await fetch(new URL('/' + alias, origin), {
+    const result = await fetch(new URL(prefix + '/' + alias, origin), {
       method: 'HEAD', redirect: 'manual', cache: 'no-store', signal: AbortSignal.timeout(3000)
     });
     const location = result.headers.get('location');
@@ -27,13 +27,19 @@ async function latestDeploy() {
   } catch { return { state: null, message: 'เชื่อมต่อ Netlify API ไม่สำเร็จ' }; }
 }
 
-export default endpoint('GET', async ({ request }) => {
-  const offset = Number(new URL(request.url).searchParams.get('offset') || 0);
-  if (!Number.isSafeInteger(offset) || offset < 0) throw new AppError(400, 'ตำแหน่งรายการไม่ถูกต้อง');
-  const origin = siteOrigin();
-  const [file, deploy] = await Promise.all([readFile(), offset === 0 ? latestDeploy() : null]);
-  const links = linksFrom(file.text);
-  const page = links.slice(offset, offset + 25);
-  const checks = await Promise.all(page.map(async link => ({ ...link, ready: await probe(origin, link) })));
-  return response({ checks, sha: file.sha, deploy, next: offset + page.length < links.length ? offset + page.length : null });
-});
+export function deployStatus(prefix = '') {
+  return endpoint('GET', async ({ request }) => {
+    const offset = Number(new URL(request.url).searchParams.get('offset') || 0);
+    if (!Number.isSafeInteger(offset) || offset < 0) throw new AppError(400, 'ตำแหน่งรายการไม่ถูกต้อง');
+    const origin = siteOrigin();
+    const [file, deploy] = await Promise.all([readFile(), offset === 0 ? latestDeploy() : null]);
+    const links = linksFrom(file.text);
+    const page = links.slice(offset, offset + 25);
+    const checks = await Promise.all(page.map(async link => ({
+      ...link, ready: await probe(origin, prefix, link)
+    })));
+    return response({ checks, sha: file.sha, deploy, next: offset + page.length < links.length ? offset + page.length : null });
+  });
+}
+
+export default deployStatus();
