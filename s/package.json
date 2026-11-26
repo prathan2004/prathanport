@@ -1,0 +1,17 @@
+{
+  "name": "personal-shortlink",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test",
+    "dev": "node --env-file-if-exists=.env node_modules/netlify-cli/bin/run.js dev --functions=netlify/functions",
+    "deploy": "netlify deploy --prod",
+    "hash": "node scripts/hash-password.js"
+  },
+  "devDependencies": {
+    "netlify-cli": "^23.0.0"
+  }
+}

@@ -17,3 +17,16 @@
   from = "/api/water-level"
   to = "/.netlify/functions/water-level"
   status = 200
+
+# The main site publishes the repository root. ShortLink has its own publish directory.
+[[redirects]]
+  from = "/s"
+  to = "/index.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/s/*"
+  to = "/index.html"
+  status = 404
+  force = true

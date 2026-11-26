@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="th" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แดชบอร์ด | My ShortLink</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/assets/css/style.css">
+<script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script type="module" src="/assets/js/dashboard.js"></script>
+</head>
+<body>
+<header class="topbar">
+<div class="d-flex align-items-center gap-3">
+<button class="btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="เปิดเมนู"><i class="bi bi-list" aria-hidden="true"></i></button>
+<a class="brand" href="/"><i class="bi bi-link-45deg" aria-hidden="true"></i><span>My ShortLink</span></a></div>
+<div class="account"><i class="bi bi-person-circle" aria-hidden="true"></i> <span id="account"></span></div>
+</header>
+<div class="dashboard-shell">
+<aside id="sidebar" class="offcanvas-lg offcanvas-start sidebar" tabindex="-1" aria-labelledby="sidebar-title">
+<div class="offcanvas-header"><h2 id="sidebar-title" class="offcanvas-title fs-5">My ShortLink</h2><button class="btn-close" type="button" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="ปิดเมนู"></button></div>
+<nav class="offcanvas-body flex-column" aria-label="เมนูหลัก">
+<a class="side-link" href="#overview"><i class="bi bi-speedometer2" aria-hidden="true"></i> Dashboard</a>
+<a class="side-link" href="#create"><i class="bi bi-plus-circle" aria-hidden="true"></i> Create Link</a>
+<a class="side-link" href="#manage"><i class="bi bi-link-45deg" aria-hidden="true"></i> Manage Links</a>
+<a class="side-link" href="#backup"><i class="bi bi-download" aria-hidden="true"></i> Backup & Export</a>
+<a class="side-link" href="#settings"><i class="bi bi-gear" aria-hidden="true"></i> Settings</a>
+<button class="side-link logout" id="logout" type="button"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Logout</button>
+</nav></aside>
+<main id="main" class="dashboard-main" hidden>
+<section id="overview" class="mb-4">
+<div class="section-header"><div><h1>แดชบอร์ด</h1><p class="text-body-secondary mb-0">จัดการลิงก์สั้นและตรวจสอบสถานะการเผยแพร่</p></div>
+<button class="btn btn-outline-secondary" type="button" id="refresh"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i> รีเฟรช</button></div>
+<div id="load-error" class="alert alert-danger" role="alert" hidden></div>
+<div class="row g-3" aria-live="polite">
+<div class="col-6 col-xl-3"><div class="card metric"><span class="metric-icon"><i class="bi bi-collection" aria-hidden="true"></i></span><span class="text-body-secondary">ลิงก์ทั้งหมด</span><strong id="total">—</strong></div></div>
+<div class="col-6 col-xl-3"><div class="card metric"><span class="metric-icon"><i class="bi bi-check2-circle" aria-hidden="true"></i></span><span class="text-body-secondary">พร้อมใช้งาน</span><strong id="ready">—</strong></div></div>
+<div class="col-6 col-xl-3"><div class="card metric"><span class="metric-icon"><i class="bi bi-github" aria-hidden="true"></i></span><span class="text-body-secondary">การเชื่อมต่อ GitHub</span><strong id="github">—</strong></div></div>
+<div class="col-6 col-xl-3"><div class="card metric"><span class="metric-icon"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i></span><span class="text-body-secondary">Deploy ล่าสุด</span><strong id="deploy">—</strong></div></div>
+</div></section>
+<section id="create" class="card panel mb-4">
+<div class="section-header"><h2><i class="bi bi-plus-circle" aria-hidden="true"></i> สร้างลิงก์สั้น</h2></div>
+<form id="create-form" class="row g-3 align-items-end">
+<div class="col-md"><label class="form-label" for="new-url">URL ปลายทาง</label><input class="form-control" id="new-url" name="url" type="url" placeholder="https://example.com" maxlength="2048" required></div>
+<div class="col-md-4"><label class="form-label" for="alias">Alias <span class="text-body-secondary fw-normal">(ไม่บังคับ)</span></label>
+<input class="form-control" id="alias" name="alias" placeholder="สุ่ม 6 ตัวเมื่อเว้นว่าง" pattern="[A-Za-z0-9_\-]{1,80}" maxlength="80"></div>
+<div class="col-md-auto"><button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus-lg" aria-hidden="true"></i> สร้างลิงก์</button></div>
+</form>
+<div class="result mt-3" id="created" hidden aria-live="polite">
+<div><a id="created-link" target="_blank" rel="noopener noreferrer"></a><div class="text-body-secondary" id="created-state"></div></div>
+<div class="d-flex gap-2"><button id="created-copy" class="btn btn-sm btn-outline-primary" type="button"><i class="bi bi-clipboard" aria-hidden="true"></i> คัดลอก</button><a id="created-open" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer">เปิดลิงก์</a></div>
+</div></section>
+<section id="manage" class="card panel mb-4">
+<div class="section-header"><h2><i class="bi bi-link-45deg" aria-hidden="true"></i> จัดการลิงก์</h2><input id="search" class="form-control search" type="search" placeholder="ค้นหา Alias หรือ URL" aria-label="ค้นหา Alias หรือ URL"></div>
+<div id="list-state" class="empty" role="status"></div>
+<div class="table-responsive" id="link-table" hidden>
+<table class="table align-middle mb-0"><thead><tr>
+<th scope="col">ลำดับ</th><th scope="col">Alias</th><th scope="col">ลิงก์สั้น</th><th scope="col">URL ปลายทาง</th><th scope="col">จัดการ</th>
+</tr></thead><tbody id="rows"></tbody></table></div>
+</section>
+<div class="row g-4">
+<div class="col-xl-7"><section id="backup" class="card panel h-100">
+<div class="section-header"><h2><i class="bi bi-download" aria-hidden="true"></i> สำรองและส่งออก</h2></div>
+<div class="d-flex flex-wrap gap-2">
+<button id="download" type="button" class="btn btn-outline-primary" disabled>ดาวน์โหลด _redirects</button>
+<button id="csv" type="button" class="btn btn-outline-primary" disabled>ส่งออก CSV</button>
+<a id="history" class="btn btn-outline-secondary" target="_blank" rel="noopener noreferrer" hidden>ประวัติใน GitHub</a></div>
+</section></div>
+<div class="col-xl-5"><section id="settings" class="card panel h-100">
+<div class="section-header"><h2><i class="bi bi-gear" aria-hidden="true"></i> ตั้งค่า</h2></div>
+<div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="theme"><label class="form-check-label" for="theme">โหมดมืด</label></div>
+</section></div></div>
+</main></div>
+<div id="boot" class="boot" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>กำลังตรวจสอบบัญชี</div>
+<div class="modal fade" id="edit-modal" tabindex="-1" aria-labelledby="edit-modal-title" aria-hidden="true">
+<div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+<div class="modal-header"><h2 class="modal-title fs-5" id="edit-modal-title">แก้ไข URL ปลายทาง</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button></div>
+<div class="modal-body"><form id="edit-form"><p id="edit-alias" class="text-body-secondary"></p><label class="form-label" for="edit-url">URL ปลายทาง</label><input class="form-control" id="edit-url" name="url" type="url" placeholder="https://example.com" maxlength="2048" required></form></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button><button class="btn btn-primary" form="edit-form" type="submit">บันทึก</button></div>
+</div></div></div>
+<div class="modal fade" id="delete-modal" tabindex="-1" aria-labelledby="delete-modal-title" aria-hidden="true">
+<div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+<div class="modal-header"><h2 class="modal-title fs-5" id="delete-modal-title">ลบลิงก์สั้น</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button></div>
+<div class="modal-body"><p id="delete-message" class="mb-0"></p></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button><button class="btn btn-danger" id="delete-confirm" type="button">ยืนยันการลบ</button></div>
+</div></div></div>
+<div class="modal fade" id="qr-modal" tabindex="-1" aria-labelledby="qr-modal-title" aria-hidden="true">
+<div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+<div class="modal-header"><h2 class="modal-title fs-5" id="qr-modal-title">QR Code</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button></div>
+<div class="modal-body"><div id="qr-code" class="qr-code mx-auto"></div><p id="qr-url" class="text-center text-break mt-3 mb-0"></p></div><div class="modal-footer"><button class="btn btn-primary" id="qr-download" type="button"><i class="bi bi-download" aria-hidden="true"></i> ดาวน์โหลด PNG</button></div>
+</div></div></div>
+<div class="toast-container position-fixed bottom-0 end-0 p-3"><div class="toast align-items-center" id="toast" role="status" aria-live="polite" aria-atomic="true">
+<div class="d-flex"><div id="toast-text" class="toast-body"></div><button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="ปิด"></button></div></div></div>
+</body>
+</html>
