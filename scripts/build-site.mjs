@@ -14,8 +14,9 @@ await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 const paths = execFileSync('git', ['ls-files', '-z', '--cached'], { cwd: root, encoding: 'utf8' })
   .split('\0').filter(Boolean);
-for (const path of new Set(paths)) {
-  if (/^(?:s\/|netlify\/|scripts\/|\.git)/.test(path) || ['_redirects', '_headers'].includes(path) ||
+const tracked = new Set(paths);
+for (const path of tracked) {
+  if (/^(?:s\/|netlify\/|scripts\/|\.git)/.test(path) || path === '_redirects' ||
       path.split('/').some(part => /^\.env(?:\.|$)/.test(part))) continue;
   const target = join(output, path);
   await mkdir(dirname(target), { recursive: true });
@@ -39,9 +40,11 @@ for (const file of await readdir(source, { withFileTypes: true })) {
 // Netlify reads redirects only at the published root. Mount the managed 302 rules under /s.
 const redirects = linksFrom(await readFile(join(source, '_redirects'), 'utf8'))
   .map(({ alias, url }) => '/s/' + alias + ' ' + url + ' 302');
+const mainRedirects = tracked.has('_redirects')
+  ? await readFile(join(root, '_redirects'), 'utf8') : '';
 await writeFile(join(output, '_redirects'), [
   '/s /s/index.html 200',
   ...redirects,
   '/s/* /s/404.html 404',
-  ''
+  mainRedirects.replace(/^\uFEFF/, '')
 ].join('\n'));

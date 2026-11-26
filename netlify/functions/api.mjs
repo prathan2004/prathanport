@@ -10,21 +10,21 @@ export default async function handler(request) {
     const method = request.method.toUpperCase();
     const body = method === "GET" || method === "DELETE" ? {} : await request.json().catch(() => ({}));
 
-    if (method === "GET" && path === "/leaderboard") return publicLeaderboard();
-    if (method === "POST" && path === "/signup") return signup(body);
-    if (method === "POST" && path === "/login") return login(body);
-    if (method === "POST" && path === "/logout") return logout(request);
-    if (method === "GET" && path === "/dashboard") return dashboard(request);
-    if (method === "POST" && path === "/runs") return createRun(request, body);
-    if (path.startsWith("/runs/") && method === "PUT") return updateRun(request, path, body);
-    if (path.startsWith("/runs/") && method === "DELETE") return deleteRun(request, path);
-    if (method === "POST" && path === "/admin/seasons") return createSeason(request, body);
-    if (path.startsWith("/admin/seasons/") && path.endsWith("/current") && method === "POST") return setCurrentSeason(request, path);
-    if (path.startsWith("/admin/seasons/") && method === "DELETE") return deleteSeason(request, path);
-    if (path.startsWith("/admin/users/") && method === "PUT") return adminUpdateUser(request, path, body);
-    if (path.startsWith("/admin/users/") && method === "DELETE") return adminDeleteUser(request, path);
-    if (path.startsWith("/admin/runs/") && method === "PUT") return adminUpdateRun(request, path, body);
-    if (path.startsWith("/admin/runs/") && method === "DELETE") return adminDeleteRun(request, path);
+    if (method === "GET" && path === "/leaderboard") return await publicLeaderboard();
+    if (method === "POST" && path === "/signup") return await signup(body);
+    if (method === "POST" && path === "/login") return await login(body);
+    if (method === "POST" && path === "/logout") return await logout(request);
+    if (method === "GET" && path === "/dashboard") return await dashboard(request);
+    if (method === "POST" && path === "/runs") return await createRun(request, body);
+    if (path.startsWith("/runs/") && method === "PUT") return await updateRun(request, path, body);
+    if (path.startsWith("/runs/") && method === "DELETE") return await deleteRun(request, path);
+    if (method === "POST" && path === "/admin/seasons") return await createSeason(request, body);
+    if (path.startsWith("/admin/seasons/") && path.endsWith("/current") && method === "POST") return await setCurrentSeason(request, path);
+    if (path.startsWith("/admin/seasons/") && method === "DELETE") return await deleteSeason(request, path);
+    if (path.startsWith("/admin/users/") && method === "PUT") return await adminUpdateUser(request, path, body);
+    if (path.startsWith("/admin/users/") && method === "DELETE") return await adminDeleteUser(request, path);
+    if (path.startsWith("/admin/runs/") && method === "PUT") return await adminUpdateRun(request, path, body);
+    if (path.startsWith("/admin/runs/") && method === "DELETE") return await adminDeleteRun(request, path);
 
     return json({ error: "ไม่พบ API นี้" }, 404);
   } catch (error) {
@@ -35,6 +35,7 @@ export default async function handler(request) {
 
 export const config = {
   path: ["/api/*", "/run/api/*"],
+  excludedPath: "/api/water-level",
 };
 
 function normalizePath(path) {
